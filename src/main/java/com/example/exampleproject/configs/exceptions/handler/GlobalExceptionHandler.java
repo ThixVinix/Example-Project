@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
+import com.example.exampleproject.configs.exceptions.ErrorMapResponse;
 import com.example.exampleproject.configs.exceptions.ErrorResponse;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -19,9 +21,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +36,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex,
                                                                          WebRequest request) {
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
@@ -45,18 +49,33 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
-                                                                               WebRequest request) {
-        String errorMessage = ex.getBindingResult().getFieldErrors()
-                .stream()
-                .map(error -> String.format("%s: %s", error.getField(), error.getDefaultMessage()))
-                .collect(Collectors.joining(", "));
+    public ResponseEntity<ErrorMapResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
+                                                                                  WebRequest request) {
+        Locale locale = getLocaleFromRequest(request);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        Map<String, String> errorMessages = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        error -> error.getDefaultMessage() != null ?
+                                error.getDefaultMessage() : MessageUtils.getMessage(
+                                "argument.type.invalid", locale),
+                        (existingValue, newValue) -> {
+                            if (existingValue.endsWith(".")) {
+                                existingValue =
+                                        existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
+                            } else {
+                                existingValue = existingValue + "; " + newValue;
+                            }
+                            return existingValue;
+                        }
+                ));
+
+        ErrorMapResponse errorResponse = ErrorMapResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message(errorMessage)
+                .messages(errorMessages)
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -71,7 +90,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .error(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase())
-                .message(ex.getMessage())
+                .message(ex.getMethod())
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -83,29 +102,29 @@ public class GlobalExceptionHandler {
             BusinessException.class,
             MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
-
         Locale locale = getLocaleFromRequest(request);
-        String errorMessage = getBadRequestMessage(ex, locale);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message(errorMessage)
+                .message(getBadRequestMessage(ex, locale))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({Exception.class, Throwable.class})
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+        Locale locale = getLocaleFromRequest(request);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
-                .message(ex.getMessage())
+                .message(ex.getMessage() != null ? ex.getMessage() : MessageUtils.getMessage(
+                        "unknown.exception.error", locale))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -140,54 +159,57 @@ public class GlobalExceptionHandler {
 
     private String getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx, Locale locale) {
         String expectedTypeName = (mismatchEx.getRequiredType() != null) ?
-                mismatchEx.getRequiredType().getSimpleName() : "unknownType";
+                mismatchEx.getRequiredType().getSimpleName() : null;
 
-        if ("LocalDate".equals(expectedTypeName)) {
-            String expectedFormat = getExpectedDateFormat(mismatchEx);
-            if (expectedFormat != null) {
-                return MessageUtils.getMessage(
-                        "argument.type.mismatch.date",
-                        locale,
-                        mismatchEx.getName(),
-                        expectedFormat,
-                        mismatchEx.getValue());
-            } else {
-                return MessageUtils.getMessage(
-                        "argument.type.mismatch.date.default",
-                        locale,
-                        mismatchEx.getName(),
-                        mismatchEx.getValue());
-            }
-
-        } else {
-            return MessageUtils.getMessage(
-                    "argument.type.mismatch",
+        return switch (expectedTypeName) {
+            case null -> MessageUtils.getMessage(
+                    "argument.type.mismatch.without.format",
                     locale,
                     mismatchEx.getName(),
+                    mismatchEx.getValue());
+            case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx, locale);
+            default -> MessageUtils.getMessage(
+                    "argument.type.mismatch.default",
+                    locale, mismatchEx.getName(),
                     expectedTypeName,
                     mismatchEx.getValue());
-        }
+        };
     }
 
-    private String getExpectedDateFormat(MethodArgumentTypeMismatchException ex) {
-        try {
+    private String handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx, Locale locale) {
+        Optional<String> expectedDateFormat = getExpectedDateFormat(mismatchEx);
+        return expectedDateFormat
+                .map(format ->
+                        MessageUtils.getMessage(
+                                "argument.type.mismatch.with.format",
+                                locale,
+                                mismatchEx.getName(),
+                                format,
+                                mismatchEx.getValue()))
+                .orElseGet(() ->
+                        MessageUtils.getMessage(
+                                "argument.type.mismatch.without.format",
+                                locale,
+                                mismatchEx.getName(),
+                                mismatchEx.getValue()));
+    }
 
+    private Optional<String> getExpectedDateFormat(MethodArgumentTypeMismatchException ex) {
+        try {
             Method method = ex.getParameter().getMethod();
 
             if (method != null) {
                 for (Parameter param : method.getParameters()) {
                     if (param != null && param.isAnnotationPresent(DateTimeFormat.class)) {
                         DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
-                        if (LocalDate.class.equals(param.getType())) {
-                            return format.pattern();
-                        }
+                        return Optional.of(format.pattern());
                     }
                 }
             }
         } catch (Exception e) {
             log.warn("Error when trying to recover expected date format. {}", e.getMessage());
         }
-        return null;
+        return Optional.empty();
     }
 }
 
