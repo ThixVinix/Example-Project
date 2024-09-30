@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
+import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.utils.messages.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -7,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -19,6 +21,14 @@ public class ExceptionHandlerHelper {
     public static Locale getLocaleFromRequest(WebRequest request) {
         String lang = request.getParameter("lang");
         return (lang != null) ? Locale.forLanguageTag(lang) : Locale.getDefault();
+    }
+
+    public static String getNotFoundMessage(Exception ex, Locale locale) {
+        if (ex instanceof NoResourceFoundException) {
+            return MessageUtils.getMessage("resource.url.not.found", locale);
+        }
+
+        return MessageUtils.getMessage("resource.not.found", locale);
     }
 
     public static String getBadRequestMessage(Exception ex, Locale locale) {

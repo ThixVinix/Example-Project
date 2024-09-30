@@ -6,6 +6,7 @@ import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerHelper;
 import com.example.exampleproject.utils.messages.MessageUtils;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -28,15 +30,16 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex,
+    @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
                                                                          WebRequest request) {
+        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
-                .message(ex.getMessage())
+                .message(ExceptionHandlerHelper.getNotFoundMessage(ex, locale))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -81,11 +84,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, WebRequest request) {
 
+        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .error(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase())
-                .message(ex.getMethod())
+                .message(MessageUtils.getMessage(
+                        "http.method.not.supported",
+                        locale,
+                        ex.getMethod()))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -95,7 +103,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class,
             MissingServletRequestParameterException.class,
             BusinessException.class,
-            MethodArgumentTypeMismatchException.class})
+            MethodArgumentTypeMismatchException.class,
+            ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
         Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
 
