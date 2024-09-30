@@ -23,18 +23,21 @@ public class GreetingController {
                             @RequestParam(value = "nome")
                             String nome,
                             @RequestParam(value = "dataInicial")
-                                    @DateTimeFormat(pattern = "yyyy-MM-dd")
+                            @DateTimeFormat(pattern = "yyyy-MM-dd")
                             LocalDate dataInicial) {
 
         if (nome == null || nome.isEmpty()) {
-            throw new ResourceNotFoundException(MessageUtils.getMessage("resource.not.found", locale));
+            throw new ResourceNotFoundException();
         }
 
         return MessageUtils.getMessage("access.success", locale, nome);
     }
 
-    @PostMapping("/test-post-mapping")
-    public String testPostMapping(@RequestBody @Valid TestPostRequest request) {
+    @PostMapping("/test-post-mapping/{code}")
+    public String testPostMapping(@PathVariable("code")
+                                  String code,
+                                  @RequestBody @Valid
+                                  TestPostRequest request) {
         return "Deu tudo certo com o cadastro.";
     }
 
