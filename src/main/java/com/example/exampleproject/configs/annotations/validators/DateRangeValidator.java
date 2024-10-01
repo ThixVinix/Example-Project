@@ -15,13 +15,11 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
 
     private String dateAField;
     private String dateBField;
-    private String message;
 
     @Override
     public void initialize(ValidDateRange constraintAnnotation) {
         this.dateAField = constraintAnnotation.dateAField();
         this.dateBField = constraintAnnotation.dateBField();
-        this.message = constraintAnnotation.message();
     }
 
     /**
@@ -93,9 +91,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             case LocalDateTime localDateTime -> localDateTime.atZone(ZoneId.systemDefault()).toInstant();
             case ZonedDateTime zonedDateTime -> zonedDateTime.toInstant();
             case Date date -> date.toInstant();
-            case null, default -> {
-                throw new IllegalArgumentException("Unsupported date type: " + dateObject);
-            }
+            case null, default -> throw new IllegalArgumentException("Unsupported date type: " + dateObject);
         };
     }
 }
