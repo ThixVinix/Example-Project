@@ -22,7 +22,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -33,13 +32,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
                                                                          WebRequest request) {
-        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
-                .message(ExceptionHandlerHelper.getNotFoundMessage(ex, locale))
+                .message(ExceptionHandlerHelper.getNotFoundMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -49,15 +47,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorMapResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
                                                                                   WebRequest request) {
-        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
 
         Map<String, String> errorMessages = ex.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
                         FieldError::getField,
                         error -> error.getDefaultMessage() != null ?
-                                error.getDefaultMessage() : MessageUtils.getMessage(
-                                "argument.type.invalid", locale),
+                                error.getDefaultMessage() : MessageUtils.getMessage("argument.type.invalid"),
                         (existingValue, newValue) -> {
                             if (existingValue.endsWith(".")) {
                                 existingValue =
@@ -84,15 +80,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, WebRequest request) {
 
-        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
-
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .error(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase())
                 .message(MessageUtils.getMessage(
                         "http.method.not.supported",
-                        locale,
                         ex.getMethod()))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
@@ -106,13 +99,11 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
-        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
-
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message(ExceptionHandlerHelper.getBadRequestMessage(ex, locale))
+                .message(ExceptionHandlerHelper.getBadRequestMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -121,14 +112,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({Exception.class, Throwable.class})
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        Locale locale = ExceptionHandlerHelper.getLocaleFromRequest(request);
+
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
                 .message(ex.getMessage() != null ?
-                        ex.getMessage() : MessageUtils.getMessage("unknown.exception.error", locale))
+                        ex.getMessage() : MessageUtils.getMessage("unknown.exception.error"))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
