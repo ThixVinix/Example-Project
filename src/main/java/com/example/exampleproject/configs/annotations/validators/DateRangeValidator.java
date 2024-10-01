@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.ValidDateRange;
+import com.example.exampleproject.utils.messages.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
      */
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
+
         try {
             Field dateA = value.getClass().getDeclaredField(dateAField);
             Field dateB = value.getClass().getDeclaredField(dateBField);
@@ -43,7 +45,8 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             Object dateBValue = dateB.get(value);
 
             if (dateAValue == null || dateBValue == null) {
-                addConstraintViolation(context);
+                addConstraintViolation(context,
+                        MessageUtils.getMessage("field.date.range.empty", dateAField, dateBField));
                 return false;
             }
 
@@ -51,14 +54,15 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             Instant instantB = toInstant(dateBValue);
 
             if (instantA.isAfter(instantB)) {
-                addConstraintViolation(context);
+                addConstraintViolation(context,
+                        MessageUtils.getMessage("field.date.range.invalid", dateAField, dateBField));
                 return false;
             }
 
             return true;
         } catch (Exception e) {
-            log.warn("Error validating date range: {}", e.getMessage(), e);
-            addConstraintViolation(context);
+            log.warn("Erro ao validar o intervalo de datas: {}", e.getMessage(), e);
+            addConstraintViolation(context, e.getMessage());
             return false;
         }
     }
@@ -68,13 +72,13 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
      *
      * @param context the {@link ConstraintValidatorContext} into which the violation should be added
      */
-    private void addConstraintViolation(ConstraintValidatorContext context) {
+    private void addConstraintViolation(ConstraintValidatorContext context, String message) {
         context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(
-                        message.replace("{dateAField}", dateAField)
-                                .replace("{dateBField}", dateBField))
+        context.buildConstraintViolationWithTemplate(message)
+                .addPropertyNode(dateAField)
                 .addConstraintViolation();
     }
+
 
     /**
      * Converts various date/time types to Instant.
@@ -90,7 +94,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             case ZonedDateTime zonedDateTime -> zonedDateTime.toInstant();
             case Date date -> date.toInstant();
             case null, default -> {
-                throw new IllegalArgumentException("Unsupported date type");
+                throw new IllegalArgumentException("Unsupported date type: " + dateObject);
             }
         };
     }
