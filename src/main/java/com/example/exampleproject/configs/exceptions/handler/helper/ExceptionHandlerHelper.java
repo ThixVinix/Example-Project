@@ -1,90 +1,84 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
-import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
+import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.messages.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.Locale;
 import java.util.Optional;
 
 @Slf4j
 public class ExceptionHandlerHelper {
 
-    public static Locale getLocaleFromRequest(WebRequest request) {
-        String lang = request.getParameter("lang");
-        return (lang != null) ? Locale.forLanguageTag(lang) : Locale.getDefault();
-    }
-
-    public static String getNotFoundMessage(Exception ex, Locale locale) {
+    public static String getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException) {
-            return MessageUtils.getMessage("resource.url.not.found", locale);
+            return MessageUtils.getMessage("resource.url.not.found");
         }
 
-        return MessageUtils.getMessage("resource.not.found", locale);
+        return MessageUtils.getMessage("resource.not.found");
     }
 
-    public static String getBadRequestMessage(Exception ex, Locale locale) {
+    public static String getBadRequestMessage(Exception ex) {
         switch (ex) {
-            case HttpMessageNotReadableException _ -> {
-                return MessageUtils.getMessage("json.malformed", locale);
+            case HttpMessageNotReadableException httpEx -> {
+                if (httpEx.getRootCause() instanceof BusinessException
+                        && httpEx.getRootCause().getMessage() != null) {
+                    return httpEx.getRootCause().getMessage();
+                }
+                return MessageUtils.getMessage("json.malformed");
             }
             case MissingServletRequestParameterException missingEx -> {
-                return MessageUtils.getMessage("missing.parameter", locale, missingEx.getParameterName());
+                return MessageUtils.getMessage("missing.parameter", missingEx.getParameterName());
             }
             case MethodArgumentTypeMismatchException mismatchEx -> {
-                return getMismatchMessage(mismatchEx, locale);
+                return getMismatchMessage(mismatchEx);
             }
             case null, default -> {
                 if (ex != null && ex.getMessage() != null) {
                     return ex.getMessage();
                 } else {
-                    return MessageUtils.getMessage("unknown.bad.request.error", locale);
+                    return MessageUtils.getMessage("unknown.bad.request.error");
                 }
             }
         }
     }
 
-    public static String getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx, Locale locale) {
+    public static String getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
         String expectedTypeName = (mismatchEx.getRequiredType() != null) ?
                 mismatchEx.getRequiredType().getSimpleName() : null;
 
         return switch (expectedTypeName) {
             case null -> MessageUtils.getMessage(
                     "argument.type.mismatch.without.format",
-                    locale,
                     mismatchEx.getName(),
                     mismatchEx.getValue());
-            case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx, locale);
+            case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx);
             default -> MessageUtils.getMessage(
                     "argument.type.mismatch.default",
-                    locale, mismatchEx.getName(),
+                    mismatchEx.getName(),
                     expectedTypeName,
                     mismatchEx.getValue());
         };
     }
 
-    private static String handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx, Locale locale) {
+    private static String handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx) {
         Optional<String> expectedDateFormat = getExpectedDateFormat(mismatchEx);
         return expectedDateFormat
                 .map(format ->
                         MessageUtils.getMessage(
                                 "argument.type.mismatch.with.format",
-                                locale,
                                 mismatchEx.getName(),
                                 format,
                                 mismatchEx.getValue()))
                 .orElseGet(() ->
                         MessageUtils.getMessage(
                                 "argument.type.mismatch.without.format",
-                                locale,
                                 mismatchEx.getName(),
                                 mismatchEx.getValue()));
     }
