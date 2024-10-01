@@ -19,8 +19,7 @@ public class GreetingController {
     }
 
     @GetMapping("/login")
-    public String testLogin(Locale locale,
-                            @RequestParam(value = "nome")
+    public String testLogin(@RequestParam(value = "nome")
                             String nome,
                             @RequestParam(value = "dataInicial")
                             @DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -30,7 +29,7 @@ public class GreetingController {
             throw new ResourceNotFoundException();
         }
 
-        return MessageUtils.getMessage("access.success", locale, nome);
+        return MessageUtils.getMessage("access.success", nome);
     }
 
     @PostMapping("/test-post-mapping/{code}")
