@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
                                                                          WebRequest request) {
-
+        log.error("Resource not found: {}", ex.getMessage(), ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorMapResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
                                                                                   WebRequest request) {
-
+        log.error("Method argument not valid: {}", ex.getMessage(), ex);
         Map<String, String> errorMessages = ex.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
@@ -79,7 +79,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, WebRequest request) {
-
+        log.error("HTTP request method not supported: {}", ex.getMessage(), ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
@@ -99,6 +99,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
+        log.error("Bad request: {}", ex.getMessage(), ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({Exception.class, Throwable.class})
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-
+        log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
