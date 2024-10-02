@@ -8,18 +8,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Locale;
+import java.util.Map;
 
 @RestController
 public class GreetingController {
 
-    @GetMapping("/greeting")
-    public String greet(Locale locale) {
-        return MessageUtils.getMessage("greeting", locale);
-    }
-
-    @GetMapping("/login")
-    public String testLogin(@RequestParam(value = "nome")
+    @GetMapping("/search")
+    public String searchGreeting(@RequestParam(value = "nome")
                             String nome,
                             @RequestParam(value = "dataInicial")
                             @DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -32,12 +27,27 @@ public class GreetingController {
         return MessageUtils.getMessage("access.success", nome);
     }
 
-    @PostMapping("/test-post-mapping/{code}")
-    public String testPostMapping(@PathVariable("code")
+    @PostMapping("/create/{code}")
+    public String createGreeting(@PathVariable("code")
                                   String code,
                                   @RequestBody @Valid
                                   TestPostRequest request) {
-        return "Deu tudo certo com o cadastro.";
+        return "Criação realizada com sucesso.";
+    }
+
+    @PutMapping("/update")
+    public String updateGreeting(@RequestParam("name") String name, @RequestBody @Valid TestPostRequest request) {
+        return "Atualização realizada com sucesso.";
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteGreeting(@PathVariable("id") Long id) {
+        return "Registro deletado com sucesso.";
+    }
+
+    @PatchMapping("/partial-update/{id}")
+    public String partialUpdateGreeting(@PathVariable("id") Long id, @RequestBody Map<String, Object> updates) {
+        return "Atualização parcial realizada com sucesso.";
     }
 
 }
