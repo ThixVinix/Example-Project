@@ -59,7 +59,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
 
             return true;
         } catch (Exception e) {
-            log.warn("Erro ao validar o intervalo de datas: {}", e.getMessage(), e);
+            log.warn("Error validating date range: {}", e.getMessage(), e);
             addConstraintViolation(context, e.getMessage());
             return false;
         }
