@@ -16,9 +16,13 @@ import java.time.format.DateTimeParseException;
 @SuppressWarnings("unused")
 public class CustomLocalDateDeserializer extends JsonDeserializer<LocalDate> {
 
-    private static final String expectedFormat = "yyyy-MM-dd";
+    private static final String EXPECTED_FORMAT = "yyyy-MM-dd";
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(expectedFormat);
+    private final DateTimeFormatter formatter;
+
+    public CustomLocalDateDeserializer() {
+        this.formatter = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
+    }
 
     /**
      * Deserializes a JSON string representation of a date into a {@link LocalDate} object.
@@ -46,7 +50,7 @@ public class CustomLocalDateDeserializer extends JsonDeserializer<LocalDate> {
                     MessageUtils.getMessage("invalid.datetime.format",
                             p.getParsingContext().getCurrentName(),
                             date,
-                            expectedFormat));
+                            EXPECTED_FORMAT));
         }
     }
 }

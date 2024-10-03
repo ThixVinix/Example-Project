@@ -16,9 +16,13 @@ import java.time.format.DateTimeParseException;
 @SuppressWarnings("unused")
 public class CustomZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
 
-    private static final String expectedFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    private static final String EXPECTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(expectedFormat);
+    private final DateTimeFormatter formatter;
+
+    public CustomZonedDateTimeDeserializer() {
+        this.formatter = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
+    }
 
     /**
      * Deserializes JSON content into a {@link ZonedDateTime} object.
@@ -47,7 +51,7 @@ public class CustomZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateT
                     MessageUtils.getMessage("invalid.datetime.format",
                             p.getParsingContext().getCurrentName(),
                             date,
-                            expectedFormat));
+                            EXPECTED_FORMAT));
         }
     }
 }

@@ -16,9 +16,13 @@ import java.util.Date;
 @SuppressWarnings("unused")
 public class CustomDateDeserializer extends JsonDeserializer<Date> {
 
-    private static final String expectedFormat = "yyyy-MM-dd HH:mm:ss";
+    private static final String EXPECTED_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
-    private static final SimpleDateFormat formatter = new SimpleDateFormat(expectedFormat);
+    private final SimpleDateFormat formatter;
+
+    public CustomDateDeserializer() {
+        this.formatter = new SimpleDateFormat(EXPECTED_FORMAT);
+    }
 
     /**
      * Deserializes a JSON string into a Date object using a specific date format.
@@ -47,7 +51,7 @@ public class CustomDateDeserializer extends JsonDeserializer<Date> {
                     MessageUtils.getMessage("invalid.datetime.format",
                             p.getParsingContext().getCurrentName(),
                             date,
-                            expectedFormat));
+                            EXPECTED_FORMAT));
         }
     }
 }
