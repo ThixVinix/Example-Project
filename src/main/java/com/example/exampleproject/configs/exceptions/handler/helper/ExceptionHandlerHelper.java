@@ -5,82 +5,142 @@ import com.example.exampleproject.utils.messages.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ExceptionHandlerHelper {
 
-    public static String getNotFoundMessage(Exception ex) {
-        if (ex instanceof NoResourceFoundException) {
-            return MessageUtils.getMessage("resource.url.not.found");
-        }
-
-        return MessageUtils.getMessage("resource.not.found");
+    private ExceptionHandlerHelper() {
+        throw new IllegalArgumentException("Utility class cannot be instantiated");
     }
 
-    public static String getBadRequestMessage(Exception ex) {
+    private static final String MESSAGE_KEY = "message";
+
+    public static Map<String, String> getNotFoundMessage(Exception ex) {
+        if (ex instanceof NoResourceFoundException) {
+            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("resource.url.not.found"));
+        }
+
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("resource.not.found"));
+    }
+
+    public static Map<String, String> getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException ex) {
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("http.method.not.supported", ex.getMethod()));
+    }
+
+    public static Map<String, String> getInternalServerErrorMessage(Exception ex) {
+        return Map.of(MESSAGE_KEY,
+                ex.getMessage() != null ? ex.getMessage() : MessageUtils.getMessage("unknown.exception.error"));
+    }
+
+    public static Map<String, String> getBadRequestMessage(Exception ex) {
         switch (ex) {
-            case HttpMessageNotReadableException httpEx -> {
-                if (httpEx.getRootCause() instanceof BusinessException
-                        && httpEx.getRootCause().getMessage() != null) {
-                    return httpEx.getRootCause().getMessage();
-                }
-                return MessageUtils.getMessage("json.malformed");
+            case MethodArgumentNotValidException notValidEx -> {
+                return getMethodArgumentNotValidMessage(notValidEx);
+            }
+            case HttpMessageNotReadableException notReadableEx -> {
+                return getNotReadableMessage(notReadableEx);
             }
             case MissingServletRequestParameterException missingEx -> {
-                return MessageUtils.getMessage("missing.parameter", missingEx.getParameterName());
+                return getMissingServletRequestParameterMessage(missingEx);
             }
             case MethodArgumentTypeMismatchException mismatchEx -> {
                 return getMismatchMessage(mismatchEx);
             }
             case null, default -> {
-                if (ex != null && ex.getMessage() != null) {
-                    return ex.getMessage();
-                } else {
-                    return MessageUtils.getMessage("unknown.bad.request.error");
-                }
+                return getDefaultBadRequestMessage(ex);
             }
         }
     }
 
-    public static String getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
-        String expectedTypeName = (mismatchEx.getRequiredType() != null) ?
-                mismatchEx.getRequiredType().getSimpleName() : null;
+    private static Map<String, String> getMethodArgumentNotValidMessage(MethodArgumentNotValidException notValidEx) {
+        return notValidEx.getBindingResult().getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        error -> error.getDefaultMessage() != null ?
+                                error.getDefaultMessage() :
+                                MessageUtils.getMessage("argument.type.invalid"),
+                        (existingValue, newValue) -> {
+                            if (existingValue.endsWith(".")) {
+                                existingValue =
+                                        existingValue.substring(0, existingValue.length() - 1) + "; "
+                                                + newValue;
+                            } else {
+                                existingValue = existingValue + "; " + newValue;
+                            }
+                            return existingValue;
+                        }
+                ));
+    }
+
+    private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
+        Throwable rootCause = httpEx.getRootCause();
+        if (rootCause != null && rootCause.getMessage() != null && rootCause instanceof BusinessException) {
+            return Map.of(MESSAGE_KEY, rootCause.getMessage());
+        }
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("json.malformed"));
+    }
+
+    private static Map<String, String> getMissingServletRequestParameterMessage(
+            MissingServletRequestParameterException missingEx) {
+        return Map.of(MESSAGE_KEY,
+                MessageUtils.getMessage("missing.parameter", missingEx.getParameterName()));
+    }
+
+    private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
+        if (ex != null && ex.getMessage() != null) {
+            return Map.of(MESSAGE_KEY, ex.getMessage());
+        } else {
+            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("unknown.bad.request.error"));
+        }
+    }
+
+    public static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
+        String expectedTypeName =
+                Optional.ofNullable(mismatchEx.getRequiredType())
+                        .map(Class::getSimpleName)
+                        .orElse(null);
 
         return switch (expectedTypeName) {
-            case null -> MessageUtils.getMessage(
+            case null -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
                     "argument.type.mismatch.without.format",
                     mismatchEx.getName(),
-                    mismatchEx.getValue());
+                    mismatchEx.getValue()));
             case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx);
-            default -> MessageUtils.getMessage(
+            default -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
                     "argument.type.mismatch.default",
                     mismatchEx.getName(),
                     expectedTypeName,
-                    mismatchEx.getValue());
+                    mismatchEx.getValue()));
         };
     }
 
-    private static String handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx) {
+    private static Map<String, String> handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx) {
         Optional<String> expectedDateFormat = getExpectedDateFormat(mismatchEx);
         return expectedDateFormat
                 .map(format ->
-                        MessageUtils.getMessage(
+                        Map.of(MESSAGE_KEY, MessageUtils.getMessage(
                                 "argument.type.mismatch.with.format",
                                 mismatchEx.getName(),
                                 format,
-                                mismatchEx.getValue()))
+                                mismatchEx.getValue())))
                 .orElseGet(() ->
-                        MessageUtils.getMessage(
+                        Map.of(MESSAGE_KEY, MessageUtils.getMessage(
                                 "argument.type.mismatch.without.format",
                                 mismatchEx.getName(),
-                                mismatchEx.getValue()));
+                                mismatchEx.getValue())));
     }
 
     private static Optional<String> getExpectedDateFormat(MethodArgumentTypeMismatchException ex) {
