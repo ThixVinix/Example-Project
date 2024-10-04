@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class ExceptionHandlerMessageHelper {
 
     private ExceptionHandlerMessageHelper() {
-        throw new IllegalArgumentException("Utility class cannot be instantiated");
+        throw new IllegalStateException("Utility class cannot be instantiated");
     }
 
     private static final String MESSAGE_KEY = "message";
