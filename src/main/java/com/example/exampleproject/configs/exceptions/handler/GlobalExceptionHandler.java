@@ -3,7 +3,7 @@ package com.example.exampleproject.configs.exceptions.handler;
 import com.example.exampleproject.configs.exceptions.ErrorResponse;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
-import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerHelper;
+import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
-                .messages(ExceptionHandlerHelper.getNotFoundMessage(ex))
+                .messages(ExceptionHandlerMessageHelper.getNotFoundMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -44,11 +44,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex, WebRequest request) {
         log.error("HTTP request method not supported: {}", ex.getMessage(), ex);
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .error(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase())
-                .messages(ExceptionHandlerHelper.getMethodNotAllowedMessage(ex))
+                .messages(ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -63,11 +64,12 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .messages(ExceptionHandlerHelper.getBadRequestMessage(ex))
+                .messages(ExceptionHandlerMessageHelper.getBadRequestMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -82,7 +84,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
-                .messages(ExceptionHandlerHelper.getInternalServerErrorMessage(ex))
+                .messages(ExceptionHandlerMessageHelper.getInternalServerErrorMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
