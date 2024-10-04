@@ -7,7 +7,6 @@ import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.*;
-import java.lang.reflect.Field;
 import java.util.Date;
 
 @Slf4j
@@ -33,14 +32,8 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
     public boolean isValid(Object value, ConstraintValidatorContext context) {
 
         try {
-            Field dateA = value.getClass().getDeclaredField(dateAField);
-            Field dateB = value.getClass().getDeclaredField(dateBField);
-
-            dateA.setAccessible(true);
-            dateB.setAccessible(true);
-
-            Object dateAValue = dateA.get(value);
-            Object dateBValue = dateB.get(value);
+            Object dateAValue = value.getClass().getMethod(dateAField).invoke(value);
+            Object dateBValue = value.getClass().getMethod(dateBField).invoke(value);
 
             if (dateAValue == null || dateBValue == null) {
                 addConstraintViolation(context,
