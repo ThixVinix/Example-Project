@@ -19,9 +19,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ExceptionHandlerHelper {
+public class ExceptionHandlerMessageHelper {
 
-    private ExceptionHandlerHelper() {
+    private ExceptionHandlerMessageHelper() {
         throw new IllegalArgumentException("Utility class cannot be instantiated");
     }
 
@@ -29,19 +29,22 @@ public class ExceptionHandlerHelper {
 
     public static Map<String, String> getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException) {
-            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("resource.url.not.found"));
+            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.url.not.found"));
         }
 
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("resource.not.found"));
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.not.found"));
     }
 
     public static Map<String, String> getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException ex) {
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("http.method.not.supported", ex.getMethod()));
+        return Map.of(MESSAGE_KEY,
+                MessageUtils.getMessage("msg.exception.handler.http.method.not.supported", ex.getMethod()));
     }
 
     public static Map<String, String> getInternalServerErrorMessage(Exception ex) {
         return Map.of(MESSAGE_KEY,
-                ex.getMessage() != null ? ex.getMessage() : MessageUtils.getMessage("unknown.exception.error"));
+                ex.getMessage() != null ?
+                        ex.getMessage() :
+                        MessageUtils.getMessage("msg.exception.handler.unknown.exception.error"));
     }
 
     public static Map<String, String> getBadRequestMessage(Exception ex) {
@@ -71,7 +74,7 @@ public class ExceptionHandlerHelper {
                         FieldError::getField,
                         error -> error.getDefaultMessage() != null ?
                                 error.getDefaultMessage() :
-                                MessageUtils.getMessage("argument.type.invalid"),
+                                MessageUtils.getMessage("msg.exception.handler.argument.type.invalid"),
                         (existingValue, newValue) -> {
                             if (existingValue.endsWith(".")) {
                                 existingValue =
@@ -90,21 +93,13 @@ public class ExceptionHandlerHelper {
         if (rootCause != null && rootCause.getMessage() != null && rootCause instanceof BusinessException) {
             return Map.of(MESSAGE_KEY, rootCause.getMessage());
         }
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("json.malformed"));
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.json.malformed"));
     }
 
     private static Map<String, String> getMissingServletRequestParameterMessage(
             MissingServletRequestParameterException missingEx) {
         return Map.of(MESSAGE_KEY,
-                MessageUtils.getMessage("missing.parameter", missingEx.getParameterName()));
-    }
-
-    private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
-        if (ex != null && ex.getMessage() != null) {
-            return Map.of(MESSAGE_KEY, ex.getMessage());
-        } else {
-            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("unknown.bad.request.error"));
-        }
+                MessageUtils.getMessage("msg.exception.handler.missing.parameter", missingEx.getParameterName()));
     }
 
     public static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
@@ -115,12 +110,12 @@ public class ExceptionHandlerHelper {
 
         return switch (expectedTypeName) {
             case null -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                    "argument.type.mismatch.without.format",
+                    "msg.exception.handler.argument.type.mismatch.without.format",
                     mismatchEx.getName(),
                     mismatchEx.getValue()));
             case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx);
             default -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                    "argument.type.mismatch.default",
+                    "msg.exception.handler.argument.type.mismatch.default",
                     mismatchEx.getName(),
                     expectedTypeName,
                     mismatchEx.getValue()));
@@ -132,13 +127,13 @@ public class ExceptionHandlerHelper {
         return expectedDateFormat
                 .map(format ->
                         Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                                "argument.type.mismatch.with.format",
+                                "msg.exception.handler.argument.type.mismatch.with.format",
                                 mismatchEx.getName(),
                                 format,
                                 mismatchEx.getValue())))
                 .orElseGet(() ->
                         Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                                "argument.type.mismatch.without.format",
+                                "msg.exception.handler.argument.type.mismatch.without.format",
                                 mismatchEx.getName(),
                                 mismatchEx.getValue())));
     }
@@ -159,6 +154,14 @@ public class ExceptionHandlerHelper {
             log.warn("Error when trying to recover expected date format. {}", e.getMessage());
         }
         return Optional.empty();
+    }
+
+    private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
+        if (ex != null && ex.getMessage() != null) {
+            return Map.of(MESSAGE_KEY, ex.getMessage());
+        } else {
+            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error"));
+        }
     }
 
 }
