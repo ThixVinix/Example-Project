@@ -37,7 +37,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
 
             if (dateAValue == null || dateBValue == null) {
                 addConstraintViolation(context,
-                        MessageUtils.getMessage("field.date.range.empty", dateAField, dateBField));
+                        MessageUtils.getMessage("msg.validation.request.field.date.range.empty", dateAField, dateBField));
                 return false;
             }
 
@@ -46,7 +46,7 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
 
             if (instantA.isAfter(instantB)) {
                 addConstraintViolation(context,
-                        MessageUtils.getMessage("field.date.range.invalid", dateAField, dateBField));
+                        MessageUtils.getMessage("msg.validation.request.field.date.range.invalid", dateAField, dateBField));
                 return false;
             }
 
