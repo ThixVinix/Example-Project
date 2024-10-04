@@ -47,7 +47,7 @@ public class CustomLocalDateDeserializer extends JsonDeserializer<LocalDate> {
         } catch (DateTimeParseException e) {
             log.warn(e.getMessage(), e);
             throw new BusinessException(
-                    MessageUtils.getMessage("invalid.datetime.format",
+                    MessageUtils.getMessage("msg.deserialization.invalid.datetime.format",
                             p.getParsingContext().getCurrentName(),
                             date,
                             EXPECTED_FORMAT));
