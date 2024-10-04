@@ -21,45 +21,47 @@ public record TestPostRequest(
         @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
         LocalDateTime dataFinal,
 
-        @NotBlank(message = "{field.name.required}")
+        @NotBlank
         String nome,
 
-        @NotNull(message = "{field.birthdate.required}")
-        @Past(message = "{field.birthdate.past}")
+        @NotNull
+        @Past
         @JsonDeserialize(using = CustomLocalDateDeserializer.class)
         LocalDate dataNascimento,
 
-        @NotBlank(message = "{field.email.required}")
+        @NotBlank
         @Email
         String email,
 
-        @NotBlank(message = "{field.cpf.required}")
-        @CPF(message = "{field.cpf.invalid}")
-        @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}", message = "{field.cpf.invalidFormat}")
+        @NotBlank
+        @CPF
+        @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
+                message = "{msg.validation.request.field.cpf.invalidFormat}")
         String cpf,
 
-        @NotNull(message = "{field.age.required}")
-        @Min(value = 0, message = "{field.age.minimum}")
-        @Max(value = Byte.MAX_VALUE, message = "{field.age.maximum}")
+        @NotNull
+        @Min(value = 0)
+        @Max(value = Byte.MAX_VALUE)
         Byte idade,
 
-        @NotBlank(message = "{field.base64Image.required}")
+        @NotBlank
         String imagemBase64,
 
-        @NotBlank(message = "{field.phoneNumber.required}")
-        @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}", message = "{field.phoneNumber.invalidFormat}")
+        @NotBlank
+        @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
+                message = "{msg.validation.request.field.phoneNumber.invalidFormat}")
         String telefone,
 
-        @Size(min = 3, max = 30, message = "{field.username.size}")
+        @Size(min = 3, max = 30)
         String username,
 
-        @Future(message = "{field.expiryDate.future}")
-        @NotNull(message = "{field.expiryDate.required}")
+        @Future
+        @NotNull
         @JsonDeserialize(using = CustomLocalDateDeserializer.class)
         LocalDate dataDeValidade,
 
-        @DecimalMin(value = "0.0", inclusive = false, message = "{field.price.min}")
-        @Digits(integer = 5, fraction = 2, message = "{field.price.invalidFormat}")
+        @DecimalMin(value = "0.0", inclusive = false)
+        @Digits(integer = 5, fraction = 2)
         BigDecimal preco
 ) {
 }
