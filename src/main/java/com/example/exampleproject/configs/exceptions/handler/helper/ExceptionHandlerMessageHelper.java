@@ -102,7 +102,7 @@ public class ExceptionHandlerMessageHelper {
                 MessageUtils.getMessage("msg.exception.handler.missing.parameter", missingEx.getParameterName()));
     }
 
-    public static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
+    private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
         String expectedTypeName =
                 Optional.ofNullable(mismatchEx.getRequiredType())
                         .map(Class::getSimpleName)
