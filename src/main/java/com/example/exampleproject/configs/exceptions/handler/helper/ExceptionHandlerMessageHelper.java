@@ -27,6 +27,12 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String MESSAGE_KEY = "message";
 
+    /**
+     * Generates a not found message based on the provided exception.
+     *
+     * @param ex the exception that occurred
+     * @return a map containing a not found message
+     */
     public static Map<String, String> getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException) {
             return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.url.not.found"));
@@ -35,11 +41,23 @@ public class ExceptionHandlerMessageHelper {
         return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.not.found"));
     }
 
+    /**
+     * Generates a method not allowed message based on the given exception.
+     *
+     * @param ex the HttpRequestMethodNotSupportedException containing the unsupported method information
+     * @return a map containing the method not allowed message
+     */
     public static Map<String, String> getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException ex) {
         return Map.of(MESSAGE_KEY,
                 MessageUtils.getMessage("msg.exception.handler.http.method.not.supported", ex.getMethod()));
     }
 
+    /**
+     * Generates an internal server error message based on the provided exception.
+     *
+     * @param ex the exception from which the error message will be generated
+     * @return a map containing the error message with a specific key
+     */
     public static Map<String, String> getInternalServerErrorMessage(Exception ex) {
         return Map.of(MESSAGE_KEY,
                 ex.getMessage() != null ?
@@ -47,6 +65,12 @@ public class ExceptionHandlerMessageHelper {
                         MessageUtils.getMessage("msg.exception.handler.unknown.exception.error"));
     }
 
+    /**
+     * Constructs a detailed error message based on the type of the provided exception.
+     *
+     * @param ex The exception that caused the bad request.
+     * @return A map containing specific details about the bad request derived from the exception.
+     */
     public static Map<String, String> getBadRequestMessage(Exception ex) {
         switch (ex) {
             case MethodArgumentNotValidException notValidEx -> {
