@@ -144,7 +144,8 @@ class ExceptionHandlerMessageHelperTest {
             "pt_BR|Argumento inválido.",
             "en_US|Invalid argument."
     }, delimiter = CSV_DELIMITER)
-    void getBadRequestMessage_WithMethodArgumentNotValidException_NoDefaultMessage(String languageTag, String expectedMessage) {
+    void getBadRequestMessage_WithMethodArgumentNotValidException_NoDefaultMessage(String languageTag,
+                                                                                   String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
@@ -485,7 +486,11 @@ class ExceptionHandlerMessageHelperTest {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
             "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
     }, delimiter = CSV_DELIMITER)
-    void getBadRequestMessage_WithMethodArgumentTypeMismatchException_WithoutDateTimeFormatAnnotation(String languageTag, String parameter, String receivedValue, String expectedMessage) {
+    void getBadRequestMessage_WithMethodArgumentTypeMismatchException_WithoutDateTimeFormatAnnotation(
+            String languageTag,
+            String parameter,
+            String receivedValue,
+            String expectedMessage) {
 
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
@@ -525,7 +530,10 @@ class ExceptionHandlerMessageHelperTest {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
             "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
     }, delimiter = CSV_DELIMITER)
-    void getBadRequestMessage_WithMethodArgumentTypeMismatchException_MethodNull(String languageTag, String parameter, String receivedValue, String expectedMessage) {
+    void getBadRequestMessage_WithMethodArgumentTypeMismatchException_MethodNull(String languageTag,
+                                                                                 String parameter,
+                                                                                 String receivedValue,
+                                                                                 String expectedMessage) {
 
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
@@ -555,7 +563,10 @@ class ExceptionHandlerMessageHelperTest {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
             "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
     }, delimiter = CSV_DELIMITER)
-    void getExpectedDateFormat_CatchesException(String languageTag, String parameter, String receivedValue, String expectedMessage) {
+    void getExpectedDateFormat_CatchesException(String languageTag,
+                                                String parameter,
+                                                String receivedValue,
+                                                String expectedMessage) {
 
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
