@@ -229,12 +229,11 @@ class ExceptionHandlerMessageHelperTest {
     @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedType={2} | receivedValue={3} | expectedMessage={4}")
     @CsvSource(value = {
-            "pt_BR|parameter|String|ValorRecebido|Falha ao converter o valor ValorRecebido para o tipo requerido String para o parâmetro parameter.",
-            "en_US|parameter|String|ReceivedValue|Failed to convert value ReceivedValue to required type String for parameter parameter."
+            "pt_BR|parameter|ValorRecebido|Falha ao converter o valor ValorRecebido para o tipo requerido String para o parâmetro parameter.",
+            "en_US|parameter|ReceivedValue|Failed to convert value ReceivedValue to required type String for parameter parameter."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException(String languageTag,
                                                                       String parameter,
-                                                                      String expectedType,
                                                                       String receivedValue,
                                                                       String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
