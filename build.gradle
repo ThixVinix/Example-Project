@@ -32,10 +32,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    //JUNIT5
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:+'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:+'
-    testImplementation 'org.junit.platform:junit-platform-launcher:+'
+    // Dependência JUnit 5 API
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
+
+    // Dependência para o mecanismo JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
+
+    // Dependência opcional para gerar relatórios
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.11.2'
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0'
