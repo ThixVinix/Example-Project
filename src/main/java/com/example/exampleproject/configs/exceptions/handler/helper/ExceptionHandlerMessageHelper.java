@@ -168,7 +168,7 @@ public class ExceptionHandlerMessageHelper {
 
             if (method != null) {
                 for (Parameter param : method.getParameters()) {
-                    if (param != null && param.isAnnotationPresent(DateTimeFormat.class)) {
+                    if (param.isAnnotationPresent(DateTimeFormat.class)) {
                         DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
                         return Optional.of(format.pattern());
                     }
@@ -187,5 +187,7 @@ public class ExceptionHandlerMessageHelper {
             return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error"));
         }
     }
+
+
 
 }
