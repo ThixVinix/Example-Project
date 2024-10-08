@@ -31,6 +31,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+/**
+ * Tests for class {@link ExceptionHandlerMessageHelper}
+ */
 @SpringBootTest
 @Tag(value = "ExceptionHandlerMessageHelper_Tests")
 @DisplayName("ExceptionHandlerMessageHelper Tests")
@@ -51,6 +54,10 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(defaultLocale);
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(1)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentNotValidException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -75,6 +82,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("field"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(2)
     @DisplayName("Test getBadRequestMessage() with HttpMessageNotReadableException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -96,6 +107,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(3)
     @DisplayName("Test getNotReadableMessage() with BusinessException root cause")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -118,6 +133,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(4)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentNotValidException without default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -152,6 +171,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("field"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(5)
     @DisplayName("Test getNotReadableMessage() with null root cause message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -177,6 +200,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(6)
     @DisplayName("Test getNotReadableMessage() with non-BusinessException root cause")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -202,6 +229,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(7)
     @DisplayName("Test getBadRequestMessage() with MissingServletRequestParameterException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameterName={1} | expectedMessage={2}")
@@ -225,6 +256,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(8)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedType={2} | receivedValue={3} | expectedMessage={4}")
@@ -251,6 +286,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(9)
     @DisplayName("Test getBadRequestMessage() with multiple FieldErrors")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
@@ -298,6 +337,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(combinedMessage, result.get("field1"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(10)
     @DisplayName("Test getBadRequestMessage() with multiple FieldErrors triggering else condition")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
@@ -345,6 +388,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(combinedMessage, result.get("field1"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(11)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException triggering case null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
@@ -370,6 +417,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(12)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
     @ParameterizedTest(name = "Test {index} => type={0} | locale={1} | parameter={2} | receivedValue={3} | expectedDatePattern={4} | expectedMessage={5}")
@@ -423,6 +474,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(13)
     @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException without DateTimeFormat annotation")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
@@ -459,6 +514,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(14)
     @DisplayName("Test getBadRequestMessage() where getMethod() returns null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
@@ -485,6 +544,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(15)
     @DisplayName("Test getExpectedDateFormat() catches exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedMessage={2}")
@@ -511,6 +574,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(16)
     @DisplayName("Test getBadRequestMessage() with generic Exception for default case")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1} | expectedMessage={2}")
@@ -533,6 +600,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(17)
     @DisplayName("Test getBadRequestMessage() with generic Exception that returns default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -553,6 +624,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
     @Order(18)
     @DisplayName("Test getBadRequestMessage() with null exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -570,6 +645,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
+     */
     @Order(19)
     @DisplayName("Test getNotFoundMessage() with NoResourceFoundException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -591,6 +670,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
+     */
     @Order(20)
     @DisplayName("Test getNotFoundMessage() with general exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -612,6 +695,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
+     */
     @Order(21)
     @DisplayName("Test getMethodNotAllowedMessage() with HttpRequestMethodNotSupportedException")
     @ParameterizedTest(name = "Test {index} => method={0} | locale={1} | expectedMessageKey={2}")
@@ -633,6 +720,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
+     */
     @Order(22)
     @DisplayName("Test getInternalServerErrorMessage() with non-null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1}")
@@ -654,6 +745,10 @@ class ExceptionHandlerMessageHelperTest {
         assertEquals(expectedMessage, result.get("message"));
     }
 
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
+     */
     @Order(23)
     @DisplayName("Test getInternalServerErrorMessage() with null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessageKey={1}")
