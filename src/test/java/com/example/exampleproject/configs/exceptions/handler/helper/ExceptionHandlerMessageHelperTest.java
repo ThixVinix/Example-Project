@@ -733,7 +733,7 @@ class ExceptionHandlerMessageHelperTest {
 
     /**
      * Method test for
-     * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
+     * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
     @Order(22)
     @DisplayName("Test getInternalServerErrorMessage() with non-null exception message")
