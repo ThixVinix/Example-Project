@@ -470,14 +470,14 @@ class ExceptionHandlerMessageHelperTest {
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
     @ParameterizedTest(name = "Test {index} => type={0} | locale={1} | parameter={2} | receivedValue={3} | expectedDatePattern={4} | expectedMessage={5}")
     @CsvSource(value = {
-            "java.time.LocalDate|pt_BR|data|ValorRecebido|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: ValorRecebido.",
-            "java.time.LocalDate|en_US|date|ReceivedValue|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: ReceivedValue.",
-            "java.time.LocalDateTime|pt_BR|dataHora|ValorRecebido|'dd/MM/yyyy HH:mm:ss'|O parâmetro dataHora deve estar no formato dd/MM/yyyy HH:mm:ss, valor recebido: ValorRecebido.",
-            "java.time.LocalDateTime|en_US|dateTime|ReceivedValue|'dd/MM/yyyy HH:mm:ss'|The parameter dateTime must be in the format dd/MM/yyyy HH:mm:ss, received value: ReceivedValue.",
-            "java.util.Date|pt_BR|data|ValorRecebido|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: ValorRecebido.",
-            "java.util.Date|en_US|date|ReceivedValue|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: ReceivedValue.",
-            "java.time.ZonedDateTime|pt_BR|dataHoraZona|ValorRecebido|'dd/MM/yyyy HH:mm:ss Z'|O parâmetro dataHoraZona deve estar no formato dd/MM/yyyy HH:mm:ss Z, valor recebido: ValorRecebido.",
-            "java.time.ZonedDateTime|en_US|zonedDateTime|ReceivedValue|'dd/MM/yyyy HH:mm:ss Z'|The parameter zonedDateTime must be in the format dd/MM/yyyy HH:mm:ss Z, received value: ReceivedValue."
+            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.",
+            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.",
+            "java.time.LocalDateTime|pt_BR|dataHora|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|O parâmetro dataHora deve estar no formato dd/MM/yyyy HH:mm:ss, valor recebido: yyyy-MM-dd.",
+            "java.time.LocalDateTime|en_US|dateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|The parameter dateTime must be in the format dd/MM/yyyy HH:mm:ss, received value: yyyy-MM-dd.",
+            "java.util.Date|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.",
+            "java.util.Date|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.",
+            "java.time.ZonedDateTime|pt_BR|dataHoraZona|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|O parâmetro dataHoraZona deve estar no formato dd/MM/yyyy HH:mm:ss Z, valor recebido: yyyy-MM-dd.",
+            "java.time.ZonedDateTime|en_US|zonedDateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|The parameter zonedDateTime must be in the format dd/MM/yyyy HH:mm:ss Z, received value: yyyy-MM-dd."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_ForDateTypes(String typeClassName,
                                                                                    String languageTag,
