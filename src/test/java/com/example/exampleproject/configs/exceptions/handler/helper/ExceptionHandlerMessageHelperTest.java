@@ -41,7 +41,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ExceptionHandlerMessageHelperTest {
 
+    private static final String GET_BAD_REQUEST_MESSAGE = "getBadRequestMessage";
+
+    private static final String GET_NOT_FOUND_MESSAGE = "getNotFoundMessage";
+
+    private static final String GET_METHOD_ALLOWED_MESSAGE = "getMethodNotAllowedMessage";
+
+    private static final String GET_INTERNAL_SERVER_ERROR_MESSAGE = "getInternalServerErrorMessage";
+
     private static final char CSV_DELIMITER = '|';
+
     private Locale defaultLocale;
 
     @BeforeEach
@@ -59,7 +68,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(1)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentNotValidException")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentNotValidException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Mensagem de argumento não válido em português",
@@ -79,7 +89,8 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("field"));
+        assertEquals(expectedMessage, result.get("field"),
+                "Checks if the invalid argument message is returned correctly for the locale " + languageTag);
     }
 
     /**
@@ -87,7 +98,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(2)
-    @DisplayName("Test getBadRequestMessage() with HttpMessageNotReadableException")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with HttpMessageNotReadableException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Requisição JSON malformada.",
@@ -104,7 +116,8 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the malformed JSON message is returned correctly for the locale " + languageTag);
     }
 
     /**
@@ -112,7 +125,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(3)
-    @DisplayName("Test getNotReadableMessage() with BusinessException root cause")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with BusinessException root cause")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Mensagem de exceção de negócio em português",
@@ -130,7 +144,8 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(notReadableException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the business exception message is returned correctly for the locale " + languageTag);
     }
 
     /**
@@ -138,7 +153,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(4)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentNotValidException without default message")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentNotValidException without default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Argumento inválido.",
@@ -169,7 +185,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("field"));
+        assertEquals(expectedMessage, result.get("field"),
+                "Checks if the invalid argument message without default message is returned correctly " +
+                        "for the locale " + languageTag);
     }
 
     /**
@@ -177,7 +195,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(5)
-    @DisplayName("Test getNotReadableMessage() with null root cause message")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null root cause message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Requisição JSON malformada.",
@@ -198,7 +217,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the malformed JSON request message is returned correctly " +
+                        "for the locale " + languageTag + " when root cause message is null.");
     }
 
     /**
@@ -206,7 +227,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(6)
-    @DisplayName("Test getNotReadableMessage() with non-BusinessException root cause")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with non-BusinessException root cause")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Requisição JSON malformada.",
@@ -227,7 +249,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the malformed JSON request message is returned correctly " +
+                        "for the locale " + languageTag + " when root cause is a non-BusinessException.");
     }
 
     /**
@@ -235,7 +259,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(7)
-    @DisplayName("Test getBadRequestMessage() with MissingServletRequestParameterException")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MissingServletRequestParameterException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameterName={1} | expectedMessage={2}")
     @CsvSource(value = {
             "pt_BR|requiredParam|Parâmetro obrigatório ausente: requiredParam.",
@@ -254,7 +279,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the missing required parameter message is returned correctly " +
+                        "for the locale " + languageTag + " with parameter named " + parameterName + ".");
     }
 
     /**
@@ -262,7 +289,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(8)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedType={2} | receivedValue={3} | expectedMessage={4}")
     @CsvSource(value = {
             "pt_BR|parameter|ValorRecebido|Falha ao converter o valor ValorRecebido para o tipo requerido String para o parâmetro parameter.",
@@ -284,7 +312,10 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the conversion error message is returned correctly " +
+                        "for the locale " + languageTag + " when trying to convert value " + receivedValue +
+                        " for parameter " + parameter + ".");
     }
 
     /**
@@ -292,7 +323,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(9)
-    @DisplayName("Test getBadRequestMessage() with multiple FieldErrors")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with multiple FieldErrors")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
     @CsvSource(value = {
             "pt_BR|Mensagem de erro um.|Mensagem de erro dois.",
@@ -335,7 +367,10 @@ class ExceptionHandlerMessageHelperTest {
         String combinedMessage = field1Message.endsWith(".")
                 ? field1Message.substring(0, field1Message.length() - 1) + "; " + field2Message
                 : field1Message + "; " + field2Message;
-        assertEquals(combinedMessage, result.get("field1"));
+        assertEquals(combinedMessage, result.get("field1"),
+                "Checks if the concatenated field error message is returned correctly " +
+                        "for the locale " + languageTag + " with field error messages: "
+                        + field1Message + " and " + field2Message + ".");
     }
 
     /**
@@ -343,7 +378,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(10)
-    @DisplayName("Test getBadRequestMessage() with multiple FieldErrors triggering else condition")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with multiple FieldErrors triggering else condition")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
     @CsvSource(value = {
             "pt_BR|Mensagem de erro sem ponto|Mensagem de erro dois",
@@ -386,7 +422,10 @@ class ExceptionHandlerMessageHelperTest {
 
         // Assert
         String combinedMessage = field1Message + "; " + field2Message;
-        assertEquals(combinedMessage, result.get("field1"));
+        assertEquals(combinedMessage, result.get("field1"),
+                "Checks if the concatenated field error message (without a dot) is returned correctly " +
+                        "for the locale " + languageTag + " with field error messages: "
+                        + field1Message + " and " + field2Message + ".");
     }
 
     /**
@@ -394,7 +433,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(11)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException triggering case null")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException triggering case null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
     @CsvSource(value = {
             "pt_BR|parameter|ValorRecebido|O parâmetro parameter está no formato inválido, valor recebido: ValorRecebido.",
@@ -415,7 +455,10 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the invalid format message is returned correctly " +
+                        "for the locale " + languageTag + " with parameter " + parameter +
+                        " and received value " + receivedValue + ".");
     }
 
     /**
@@ -423,7 +466,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(12)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
     @ParameterizedTest(name = "Test {index} => type={0} | locale={1} | parameter={2} | receivedValue={3} | expectedDatePattern={4} | expectedMessage={5}")
     @CsvSource(value = {
             "java.time.LocalDate|pt_BR|data|ValorRecebido|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: ValorRecebido.",
@@ -472,7 +516,11 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the date formatting error message is returned correctly " +
+                        "for the type " + typeClassName + " and locale " + languageTag +
+                        " with parameter " + parameter + " and received value " + receivedValue +
+                        ". Expected date pattern: " + expectedDatePattern + ".");
     }
 
     /**
@@ -480,7 +528,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(13)
-    @DisplayName("Test getBadRequestMessage() with MethodArgumentTypeMismatchException without DateTimeFormat annotation")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException without DateTimeFormat annotation")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
     @CsvSource(value = {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
@@ -516,7 +565,10 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the invalid format message is returned correctly " +
+                        "for the locale " + languageTag + " with parameter " + parameter +
+                        " and received value " + receivedValue + " without DateTimeFormat annotation.");
     }
 
     /**
@@ -524,7 +576,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(14)
-    @DisplayName("Test getBadRequestMessage() where getMethod() returns null")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - where getMethod() returns null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
     @CsvSource(value = {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
@@ -549,7 +602,10 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the invalid format message is returned correctly " +
+                        "for the locale " + languageTag + " with parameter " + parameter +
+                        " and received value " + receivedValue + " when getMethod() returns null.");
     }
 
     /**
@@ -557,7 +613,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(15)
-    @DisplayName("Test getExpectedDateFormat() catches exception")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - get expected date format catches exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedMessage={2}")
     @CsvSource(value = {
             "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
@@ -582,7 +639,10 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the invalid format message is returned correctly " +
+                        "for the locale " + languageTag + " with parameter " + parameter +
+                        " and received value " + receivedValue + " when getMethod() throws an exception.");
     }
 
     /**
@@ -590,7 +650,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(16)
-    @DisplayName("Test getBadRequestMessage() with generic Exception for default case")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception for default case")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1} | expectedMessage={2}")
     @CsvSource(value = {
             "pt_BR|Mensagem genérica de exceção|Mensagem genérica de exceção",
@@ -608,7 +669,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(genericException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the generic exception message is returned correctly " +
+                        "for the locale " + languageTag + " with the exception message: " + exceptionMessage);
     }
 
     /**
@@ -616,7 +679,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(17)
-    @DisplayName("Test getBadRequestMessage() with generic Exception that returns default message")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception that returns default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
@@ -632,7 +696,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(genericException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the default message is returned correctly " +
+                        "for the locale " + languageTag + " when the exception message is null.");
     }
 
     /**
@@ -640,7 +706,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(18)
-    @DisplayName("Test getBadRequestMessage() with null exception")
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
@@ -653,7 +720,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(null);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the default message is returned correctly " +
+                        "for the locale " + languageTag + " when the exception is null.");
     }
 
     /**
@@ -661,7 +730,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
     @Order(19)
-    @DisplayName("Test getNotFoundMessage() with NoResourceFoundException")
+    @Tag(value = GET_NOT_FOUND_MESSAGE)
+    @DisplayName(GET_NOT_FOUND_MESSAGE + " - with NoResourceFoundException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|O recurso solicitado não foi encontrado. Por favor, verifique a URL enviada e tente novamente.",
@@ -678,7 +748,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the resource not found message is returned correctly " +
+                        "for the locale " + languageTag + " when the exception is NoResourceFoundException.");
     }
 
     /**
@@ -686,7 +758,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
     @Order(20)
-    @DisplayName("Test getNotFoundMessage() with general exception")
+    @Tag(value = GET_NOT_FOUND_MESSAGE)
+    @DisplayName(GET_NOT_FOUND_MESSAGE + " - with general exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Recurso não encontrado.",
@@ -703,7 +776,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the resource not found message is returned correctly " +
+                        "for the locale " + languageTag + " when the exception is generic.");
     }
 
     /**
@@ -711,7 +786,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
      */
     @Order(21)
-    @DisplayName("Test getMethodNotAllowedMessage() with HttpRequestMethodNotSupportedException")
+    @Tag(value = GET_METHOD_ALLOWED_MESSAGE)
+    @DisplayName(GET_METHOD_ALLOWED_MESSAGE + " - with HttpRequestMethodNotSupportedException")
     @ParameterizedTest(name = "Test {index} => method={0} | locale={1} | expectedMessageKey={2}")
     @CsvSource(value = {
             "POST|pt_BR|O método HTTP POST não é suportado para essa URL, por favor verifique a documentação para métodos permitidos.",
@@ -728,7 +804,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the method not allowed message is returned correctly " +
+                        "for the HTTP method " + method + " and locale " + languageTag + ".");
     }
 
     /**
@@ -736,7 +814,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
     @Order(22)
-    @DisplayName("Test getInternalServerErrorMessage() with non-null exception message")
+    @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
+    @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with non-null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1}")
     @CsvSource(value = {
             "pt_BR|Esta é uma mensagem de erro.",
@@ -753,7 +832,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the internal server error message is returned correctly " +
+                        "for the locale " + languageTag + " with the exception message: " + expectedMessage + ".");
     }
 
     /**
@@ -761,7 +842,8 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
     @Order(23)
-    @DisplayName("Test getInternalServerErrorMessage() with null exception message")
+    @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
+    @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessageKey={1}")
     @CsvSource(value = {
             "pt_BR|Erro inesperado, tente novamente mais tarde.",
@@ -778,7 +860,9 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"));
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the default internal server error message is returned correctly " +
+                        "for the locale " + languageTag + " when the exception message is null.");
     }
 
 
