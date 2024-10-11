@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
             BusinessException.class,
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class})
-    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
