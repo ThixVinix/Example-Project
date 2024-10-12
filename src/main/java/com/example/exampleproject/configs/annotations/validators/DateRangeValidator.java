@@ -1,7 +1,8 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.ValidDateRange;
-import com.example.exampleproject.utils.messages.MessageUtils;
+import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.utils.ZoneUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -82,8 +83,8 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
      */
     private Instant toInstant(Object dateObject) {
         return switch (dateObject) {
-            case LocalDate localDate -> localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-            case LocalDateTime localDateTime -> localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+            case LocalDate localDate -> localDate.atStartOfDay(ZoneUtils.getProjectZoneId()).toInstant();
+            case LocalDateTime localDateTime -> localDateTime.atZone(ZoneUtils.getProjectZoneId()).toInstant();
             case ZonedDateTime zonedDateTime -> zonedDateTime.toInstant();
             case Date date -> date.toInstant();
             case null, default -> throw new IllegalArgumentException("Unsupported date type: " + dateObject);
