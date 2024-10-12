@@ -2,7 +2,7 @@ package com.example.exampleproject.controllers;
 
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.dto.request.TestPostRequest;
-import com.example.exampleproject.utils.messages.MessageUtils;
+import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;

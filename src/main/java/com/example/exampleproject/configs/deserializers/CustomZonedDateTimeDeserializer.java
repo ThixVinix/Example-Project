@@ -1,7 +1,7 @@
 package com.example.exampleproject.configs.deserializers;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
-import com.example.exampleproject.utils.messages.MessageUtils;
+import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;

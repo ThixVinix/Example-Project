@@ -1,7 +1,7 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
-import com.example.exampleproject.utils.messages.MessageUtils;
+import com.example.exampleproject.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
