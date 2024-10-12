@@ -1,4 +1,4 @@
-package com.example.exampleproject.utils.messages;
+package com.example.exampleproject.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
