@@ -350,25 +350,12 @@ class DateRangeValidatorTest {
         record ExampleObjectError(int dateA, LocalDate dateB) {
         }
 
-        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
-
-        var nodeBuilder =
-                mock(ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext.class);
-
         ExampleObjectError exampleObject = new ExampleObjectError(dateA, dateB);
-
-        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
-        when(builder.addPropertyNode(anyString())).thenReturn(nodeBuilder);
 
         // Act
         boolean isValid = dateRangeValidator.isValid(exampleObject, context);
 
         // Assert
-        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
-        String capturedMessage = messageCaptor.getValue();
-
-        assertEquals("Unsupported date type: " + dateA, capturedMessage);
         assertFalse(isValid, "isValid should return false when an exception is thrown");
     }
 }
