@@ -36,6 +36,10 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
             Object dateAValue = value.getClass().getMethod(dateAField).invoke(value);
             Object dateBValue = value.getClass().getMethod(dateBField).invoke(value);
 
+            if (dateAValue == null && dateBValue == null) {
+                return true;
+            }
+
             if (dateAValue == null || dateBValue == null) {
                 addConstraintViolation(context,
                         MessageUtils.getMessage(
