@@ -99,11 +99,12 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
      * @throws IllegalArgumentException Unsupported date type
      */
     private Instant toInstant(Object dateObject) {
+        ZoneId projectZoneId = ZoneUtils.getProjectZoneId();
         return switch (dateObject) {
-            case LocalDate localDate -> localDate.atStartOfDay(ZoneUtils.getProjectZoneId()).toInstant();
-            case LocalDateTime localDateTime -> localDateTime.atZone(ZoneUtils.getProjectZoneId()).toInstant();
-            case ZonedDateTime zonedDateTime -> zonedDateTime.toInstant();
-            case Date date -> date.toInstant();
+            case LocalDate localDate -> localDate.atStartOfDay(projectZoneId).toInstant();
+            case LocalDateTime localDateTime -> localDateTime.atZone(projectZoneId).toInstant();
+            case ZonedDateTime zonedDateTime -> zonedDateTime.withZoneSameInstant(projectZoneId).toInstant();
+            case Date date -> date.toInstant().atZone(projectZoneId).toInstant();
             case null, default -> throw new IllegalArgumentException("Unsupported date type: " + dateObject);
         };
     }
