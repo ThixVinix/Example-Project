@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Repeatable(ValidDateRanges.class)
 public @interface ValidDateRange {
 
-    String message() default "Datas inválidas ou fora de ordem: {dateAField} e {dateBField}";
+    String message() default "Invalid or out of order dates: {dateAField} e {dateBField}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 
