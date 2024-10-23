@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.ValidDateRange;
+import com.example.exampleproject.utils.DateUtils;
 import com.example.exampleproject.utils.MessageUtils;
 import com.example.exampleproject.utils.ZoneUtils;
 import jakarta.validation.ConstraintValidator;
@@ -54,8 +55,8 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
                 return false;
             }
 
-            Instant instantA = toInstant(dateAValue);
-            Instant instantB = toInstant(dateBValue);
+            Instant instantA = DateUtils.toInstant(dateAValue);
+            Instant instantB = DateUtils.toInstant(dateBValue);
 
             if (instantA.isAfter(instantB)) {
                 addConstraintViolationDateA(context,
@@ -90,22 +91,4 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
                 .addConstraintViolation();
     }
 
-
-    /**
-     * Converts various date/time types to Instant.
-     *
-     * @param dateObject the date/time object to convert
-     * @return the Instant representation of the date/time object
-     * @throws IllegalArgumentException Unsupported date type
-     */
-    private Instant toInstant(Object dateObject) {
-        ZoneId projectZoneId = ZoneUtils.getProjectZoneId();
-        return switch (dateObject) {
-            case LocalDate localDate -> localDate.atStartOfDay(projectZoneId).toInstant();
-            case LocalDateTime localDateTime -> localDateTime.atZone(projectZoneId).toInstant();
-            case ZonedDateTime zonedDateTime -> zonedDateTime.withZoneSameInstant(projectZoneId).toInstant();
-            case Date date -> date.toInstant().atZone(projectZoneId).toInstant();
-            case null, default -> throw new IllegalArgumentException("Unsupported date type: " + dateObject);
-        };
-    }
 }
