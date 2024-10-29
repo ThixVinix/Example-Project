@@ -1,11 +1,13 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -13,6 +15,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -79,11 +82,12 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
-        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        when(exception.getBindingResult()).thenReturn(bindingResult);
-        FieldError fieldError = new FieldError("object", "field", expectedMessage);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+        BindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "target");
+        FieldError fieldError = new FieldError("target", "field", expectedMessage);
+        bindingResult.addError(fieldError);
+
+        MethodParameter methodParameter = Mockito.mock(MethodParameter.class);
+        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(methodParameter, bindingResult);
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
@@ -165,27 +169,32 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
-        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
-        when(exception.getBindingResult()).thenReturn(bindingResult);
 
-        // Criação do FieldError sem mensagem padrão (defaultMessage)
+        class MockTarget {
+            @JsonProperty("jsonField")
+            private String fielName;
+        }
+
         FieldError fieldError = new FieldError(
                 "object",
-                "field",
+                "fieldName",
                 "rejectedValue",
-
                 false,
                 null,
                 null,
                 null);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
 
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(exception.getTarget()).thenReturn(new MockTarget());
+
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("field"),
+        assertEquals(expectedMessage, result.get("fieldName"),
                 "Checks if the invalid argument message without default message is returned correctly " +
                         "for the locale " + languageTag);
     }
@@ -334,43 +343,51 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
-        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
-        when(exception.getBindingResult()).thenReturn(bindingResult);
 
-        FieldError fieldError1 =
-                new FieldError(
-                        "object",
-                        "field1",
-                        "rejectedValue1",
-                        false,
-                        null,
-                        null,
-                        field1Message);
+        class MockTarget {
+            @JsonProperty("jsonField1")
+            private String field1;
 
-        FieldError fieldError2 =
-                new FieldError(
-                        "object",
-                        "field1",
-                        "rejectedValue2",
-                        false,
-                        null,
-                        null,
-                        field2Message);
+            @JsonProperty("jsonField2")
+            private String field2;
+        }
+
+        FieldError fieldError1 = new FieldError(
+                "object",
+                "field1",
+                "rejectedValue1",
+                false,
+                null,
+                null,
+                field1Message);
+
+        FieldError fieldError2 = new FieldError(
+                "object",
+                "field2",
+                "rejectedValue2",
+                false,
+                null,
+                null,
+                field2Message);
 
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError1, fieldError2));
+
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(exception.getTarget()).thenReturn(new MockTarget());
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        String combinedMessage = field1Message.endsWith(".")
-                ? field1Message.substring(0, field1Message.length() - 1) + "; " + field2Message
-                : field1Message + "; " + field2Message;
-        assertEquals(combinedMessage, result.get("field1"),
-                "Checks if the concatenated field error message is returned correctly " +
-                        "for the locale " + languageTag + " with field error messages: "
-                        + field1Message + " and " + field2Message + ".");
+        assertEquals(field1Message, result.get("jsonField1"),
+                "Checks if the first field error message is returned correctly " +
+                        "for the locale " + languageTag);
+
+        assertEquals(field2Message, result.get("jsonField2"),
+                "Checks if the second field error message is returned correctly " +
+                        "for the locale " + languageTag);
     }
 
     /**
@@ -391,38 +408,43 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
-        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
-        when(exception.getBindingResult()).thenReturn(bindingResult);
 
-        FieldError fieldError1 =
-                new FieldError(
-                        "object",
-                        "field1",
-                        "rejectedValue1",
-                        false,
-                        null,
-                        null,
-                        field1Message);
+        class MockTarget {
+            @JsonProperty("jsonField1")
+            private String field1;
+        }
 
-        FieldError fieldError2 =
-                new FieldError(
-                        "object",
-                        "field1",
-                        "rejectedValue2",
-                        false,
-                        null,
-                        null,
-                        field2Message);
+        FieldError fieldError1 = new FieldError(
+                "object",
+                "field1",
+                "rejectedValue1",
+                false,
+                null,
+                null,
+                field1Message);
+
+        FieldError fieldError2 = new FieldError(
+                "object",
+                "field1",
+                "rejectedValue2",
+                false,
+                null,
+                null,
+                field2Message);
 
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError1, fieldError2));
+
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(exception.getTarget()).thenReturn(new MockTarget());
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
         String combinedMessage = field1Message + "; " + field2Message;
-        assertEquals(combinedMessage, result.get("field1"),
+        assertEquals(combinedMessage, result.get("jsonField1"),
                 "Checks if the concatenated field error message (without a dot) is returned correctly " +
                         "for the locale " + languageTag + " with field error messages: "
                         + field1Message + " and " + field2Message + ".");
