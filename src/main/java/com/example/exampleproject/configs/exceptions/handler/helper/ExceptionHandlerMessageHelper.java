@@ -2,16 +2,17 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Map;
@@ -95,7 +96,26 @@ public class ExceptionHandlerMessageHelper {
         return notValidEx.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
-                        FieldError::getField,
+                        error -> {
+                            String originalFieldName = error.getField();
+                            String jsonPropertyName = null;
+
+                            try {
+                                Object target = notValidEx.getTarget();
+                                if (target != null) {
+                                    Field field = target.getClass().getDeclaredField(originalFieldName);
+                                    JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+                                    if (jsonProperty != null) {
+                                        jsonPropertyName = jsonProperty.value();
+                                    }
+                                }
+                            } catch (NoSuchFieldException | SecurityException ex) {
+                                log.warn(ex.getMessage(), ex);
+                                return originalFieldName;
+                            }
+
+                            return jsonPropertyName;
+                        },
                         error -> error.getDefaultMessage() != null ?
                                 error.getDefaultMessage() :
                                 MessageUtils.getMessage("msg.exception.handler.argument.type.invalid"),
@@ -187,7 +207,6 @@ public class ExceptionHandlerMessageHelper {
             return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error"));
         }
     }
-
 
 
 }
