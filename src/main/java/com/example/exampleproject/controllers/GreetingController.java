@@ -1,37 +1,48 @@
 package com.example.exampleproject.controllers;
 
-import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.dto.request.TestPostRequest;
-import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.dto.response.TestPostResponse;
+import com.example.exampleproject.utils.DateUtils;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Map;
 
 @RestController
 public class GreetingController {
 
     @GetMapping("/search")
-    public String searchGreeting(@RequestParam(value = "nome")
-                            String nome,
-                            @RequestParam(value = "dataInicial")
-                            @DateTimeFormat(pattern = "yyyy-MM-dd")
-                            LocalDate dataInicial) {
+    public TestPostResponse searchGreeting(@RequestParam(value = "nome")
+                                           String name,
+                                           @RequestParam(value = "dataInicial", required = false)
+                                           @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                           LocalDate initialDate,
+                                           @RequestParam(value = "dataFinal", required = false)
+                                           @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                           LocalDate finalDate) {
 
-        if (nome == null || nome.isEmpty()) {
-            throw new ResourceNotFoundException();
-        }
+        DateUtils.checkDateRange(initialDate, "dataInicial", finalDate, "dataFinal");
 
-        return MessageUtils.getMessage("access.success", nome);
+        return TestPostResponse.builder()
+                .date(new Date())
+                .localDateTime(LocalDateTime.now())
+                .localDate(LocalDate.now())
+                .zonedDateTime(ZonedDateTime.now())
+                .localTime(LocalTime.now())
+                .build();
     }
 
     @PostMapping("/create/{code}")
     public String createGreeting(@PathVariable("code")
-                                  String code,
-                                  @RequestBody @Valid
-                                  TestPostRequest request) {
+                                 String code,
+                                 @RequestBody @Valid
+                                 TestPostRequest request) {
         return "Criação realizada com sucesso.";
     }
 
