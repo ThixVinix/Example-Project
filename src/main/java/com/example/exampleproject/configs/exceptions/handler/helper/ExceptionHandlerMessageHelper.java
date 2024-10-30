@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -96,40 +97,41 @@ public class ExceptionHandlerMessageHelper {
         return notValidEx.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
-                        error -> {
-                            String originalFieldName = error.getField();
-                            String jsonPropertyName = null;
-
-                            try {
-                                Object target = notValidEx.getTarget();
-                                if (target != null) {
-                                    Field field = target.getClass().getDeclaredField(originalFieldName);
-                                    JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-                                    if (jsonProperty != null) {
-                                        jsonPropertyName = jsonProperty.value();
-                                    }
-                                }
-                            } catch (NoSuchFieldException | SecurityException ex) {
-                                log.warn(ex.getMessage(), ex);
-                                return originalFieldName;
-                            }
-
-                            return jsonPropertyName;
-                        },
-                        error -> error.getDefaultMessage() != null ?
-                                error.getDefaultMessage() :
-                                MessageUtils.getMessage("msg.exception.handler.argument.type.invalid"),
-                        (existingValue, newValue) -> {
-                            if (existingValue.endsWith(".")) {
-                                existingValue =
-                                        existingValue.substring(0, existingValue.length() - 1) + "; "
-                                                + newValue;
-                            } else {
-                                existingValue = existingValue + "; " + newValue;
-                            }
-                            return existingValue;
-                        }
+                        error -> getFieldName(notValidEx, error.getField()),
+                        ExceptionHandlerMessageHelper::getErrorMessage,
+                        ExceptionHandlerMessageHelper::mergeErrorMessages
                 ));
+    }
+
+    private static String getFieldName(MethodArgumentNotValidException notValidEx, String originalFieldName) {
+        try {
+            Object target = notValidEx.getTarget();
+            if (target != null) {
+                Field field = target.getClass().getDeclaredField(originalFieldName);
+                JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+                if (jsonProperty != null) {
+                    return jsonProperty.value();
+                }
+            }
+        } catch (NoSuchFieldException | SecurityException ex) {
+            log.warn(ex.getMessage(), ex);
+        }
+        return originalFieldName;
+    }
+
+    private static String getErrorMessage(FieldError error) {
+        return error.getDefaultMessage() != null
+                ? error.getDefaultMessage()
+                : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
+    }
+
+    private static String mergeErrorMessages(String existingValue, String newValue) {
+        if (existingValue.endsWith(".")) {
+            existingValue = existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
+        } else {
+            existingValue = existingValue + "; " + newValue;
+        }
+        return existingValue;
     }
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
