@@ -346,11 +346,8 @@ class ExceptionHandlerMessageHelperTest {
         BindingResult bindingResult = mock(BindingResult.class);
 
         class MockTarget {
-            @JsonProperty("jsonField1")
+            @JsonProperty("jsonField")
             private String field1;
-
-            @JsonProperty("jsonField2")
-            private String field2;
         }
 
         FieldError fieldError1 = new FieldError(
@@ -364,7 +361,7 @@ class ExceptionHandlerMessageHelperTest {
 
         FieldError fieldError2 = new FieldError(
                 "object",
-                "field2",
+                "field1",
                 "rejectedValue2",
                 false,
                 null,
@@ -381,12 +378,15 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(field1Message, result.get("jsonField1"),
-                "Checks if the first field error message is returned correctly " +
-                        "for the locale " + languageTag);
+        String combinedMessage;
+        if (field1Message.endsWith(".")) {
+            combinedMessage = field1Message.substring(0, field1Message.length() - 1) + "; " + field2Message;
+        } else {
+            combinedMessage = field1Message + "; " + field2Message;
+        }
 
-        assertEquals(field2Message, result.get("jsonField2"),
-                "Checks if the second field error message is returned correctly " +
+        assertEquals(combinedMessage, result.get("jsonField"),
+                "Checks if the concatenated field error message is returned correctly " +
                         "for the locale " + languageTag);
     }
 
@@ -489,6 +489,95 @@ class ExceptionHandlerMessageHelperTest {
      */
     @Order(12)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with target not null and without JsonProperty fields")
+    @ParameterizedTest(name = "Test {index} => locale={0} | field1Message={1}")
+    @CsvSource(value = {
+            "pt_BR|Mensagem de erro um.",
+            "en_US|Error message one."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_TargetNotNull_WithoutJsonPropertyFields(String languageTag, String field1Message) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        BindingResult bindingResult = mock(BindingResult.class);
+
+        class MockTarget {
+            @SuppressWarnings("unused")
+            private String field1;
+        }
+
+        FieldError fieldError1 = new FieldError(
+                "object",
+                "field1",
+                "rejectedValue1",
+                false,
+                null,
+                null,
+                field1Message);
+
+        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError1));
+
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(exception.getTarget()).thenReturn(new MockTarget());
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
+
+        // Assert
+        assertEquals(field1Message, result.get("field1"),
+                "Checks if the field error message is returned correctly with the original field name " +
+                        "for the locale " + languageTag);
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
+    @Order(13)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null target")
+    @ParameterizedTest(name = "Test {index} => locale={0} | field1Message={1}")
+    @CsvSource(value = {
+            "pt_BR|Mensagem de erro um.",
+            "en_US|Error message one."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithNullTarget(String languageTag, String field1Message) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        BindingResult bindingResult = mock(BindingResult.class);
+
+        FieldError fieldError1 = new FieldError(
+                "object",
+                "field1",
+                "rejectedValue1",
+                false,
+                null,
+                null,
+                field1Message);
+
+        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError1));
+
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+        when(exception.getBindingResult()).thenReturn(bindingResult);
+        when(exception.getTarget()).thenReturn(null);  // `target` será `null`
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
+
+        // Assert
+        assertEquals(field1Message, result.get("field1"),
+                "Checks if the field error message is returned correctly with the original field name " +
+                        "for the locale " + languageTag + " when target is null");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
+    @Order(14)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
     @ParameterizedTest(name = "Test {index} => type={0} | locale={1} | parameter={2} | receivedValue={3} | expectedDatePattern={4} | expectedMessage={5}")
     @CsvSource(value = {
@@ -549,7 +638,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(13)
+    @Order(15)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException without DateTimeFormat annotation")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
@@ -597,7 +686,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(14)
+    @Order(16)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - where getMethod() returns null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
@@ -634,7 +723,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(15)
+    @Order(17)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - get expected date format catches exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedMessage={2}")
@@ -671,7 +760,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(16)
+    @Order(18)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception for default case")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1} | expectedMessage={2}")
@@ -700,7 +789,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(17)
+    @Order(19)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception that returns default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -727,7 +816,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(18)
+    @Order(20)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -751,7 +840,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
-    @Order(19)
+    @Order(21)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with NoResourceFoundException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -779,7 +868,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
-    @Order(20)
+    @Order(22)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with general exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -807,7 +896,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
      */
-    @Order(21)
+    @Order(23)
     @Tag(value = GET_METHOD_ALLOWED_MESSAGE)
     @DisplayName(GET_METHOD_ALLOWED_MESSAGE + " - with HttpRequestMethodNotSupportedException")
     @ParameterizedTest(name = "Test {index} => method={0} | locale={1} | expectedMessageKey={2}")
@@ -835,7 +924,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(22)
+    @Order(24)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with non-null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1}")
@@ -863,7 +952,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(23)
+    @Order(25)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessageKey={1}")
