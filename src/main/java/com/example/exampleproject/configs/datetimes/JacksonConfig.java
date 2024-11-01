@@ -1,20 +1,15 @@
-package com.example.exampleproject.configs.deserializers;
+package com.example.exampleproject.configs.datetimes;
 
+import com.example.exampleproject.configs.datetimes.deserializers.*;
+import com.example.exampleproject.configs.datetimes.serializers.*;
 import com.example.exampleproject.utils.ZoneUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.std.DateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.text.SimpleDateFormat;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -24,11 +19,6 @@ import java.util.Date;
  */
 @Configuration
 public class JacksonConfig {
-
-    private static final String DATE_FORMAT_PATTERN = "dd/MM/yyyy";
-    private static final String DATE_TIME_FORMAT_PATTERN = "dd/MM/yyyy HH:mm:ss";
-    private static final String ZONED_DATE_TIME_FORMAT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-    private static final String TIME_FORMAT_PATTERN = "HH:mm:ss";
 
     /**
      * Configures an {@link ObjectMapper} to handle custom serialization and deserialization
@@ -55,32 +45,27 @@ public class JacksonConfig {
     }
 
     private JavaTimeModule createJavaTimeModule() {
+
+        ZoneId projectZoneId = ZoneUtils.getProjectZoneId();
+
         JavaTimeModule module = new JavaTimeModule();
 
-        DateTimeFormatter dateFormatter = createFormatter(DATE_FORMAT_PATTERN);
-        module.addSerializer(LocalDate.class, new LocalDateSerializer(dateFormatter));
+        module.addSerializer(LocalDate.class, new CustomLocalDateSerializer(projectZoneId));
         module.addDeserializer(LocalDate.class, new CustomLocalDateDeserializer());
 
-        DateTimeFormatter dateTimeFormatter = createFormatter(DATE_TIME_FORMAT_PATTERN);
-        module.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(dateTimeFormatter));
+        module.addSerializer(LocalDateTime.class, new CustomLocalDateTimeSerializer(projectZoneId));
         module.addDeserializer(LocalDateTime.class, new CustomLocalDateTimeDeserializer());
 
-        DateTimeFormatter zonedDateTimeFormatter = createFormatter(ZONED_DATE_TIME_FORMAT_PATTERN);
-        module.addSerializer(ZonedDateTime.class, new ZonedDateTimeSerializer(zonedDateTimeFormatter));
+        module.addSerializer(ZonedDateTime.class, new CustomZonedDateTimeSerializer(projectZoneId));
         module.addDeserializer(ZonedDateTime.class, new CustomZonedDateTimeDeserializer());
 
-        DateTimeFormatter timeFormatter = createFormatter(TIME_FORMAT_PATTERN);
-        module.addSerializer(LocalTime.class, new LocalTimeSerializer(timeFormatter));
+        module.addSerializer(LocalTime.class, new CustomLocalTimeSerializer(projectZoneId));
         module.addDeserializer(LocalTime.class, new CustomLocalTimeDeserializer());
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_TIME_FORMAT_PATTERN);
-        module.addSerializer(Date.class, new DateSerializer(false, simpleDateFormat));
+        module.addSerializer(Date.class, new CustomDateSerializer(projectZoneId));
         module.addDeserializer(Date.class, new CustomDateDeserializer());
 
         return module;
     }
 
-    private DateTimeFormatter createFormatter(String pattern) {
-        return DateTimeFormatter.ofPattern(pattern).withZone(ZoneUtils.getProjectZoneId());
-    }
 }
