@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 
 /**
  * Custom serializer for {@link ZonedDateTime} that converts the ZonedDateTime
@@ -17,12 +18,17 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 public class CustomZonedDateTimeSerializer extends JsonSerializer<ZonedDateTime> {
 
-    private static final String EXPECTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-    private final DateTimeFormatter formatter;
+    private static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+            .appendLiteral(' ')
+            .optionalStart()
+            .appendZoneId()
+            .optionalEnd()
+            .toFormatter();
+
     private final ZoneId zoneId;
 
     public CustomZonedDateTimeSerializer(ZoneId zoneId) {
-        this.formatter = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
         this.zoneId = zoneId;
     }
 
@@ -39,7 +45,8 @@ public class CustomZonedDateTimeSerializer extends JsonSerializer<ZonedDateTime>
         if (value == null) {
             gen.writeNull();
         } else {
-            String dateString = value.withZoneSameLocal(zoneId).format(formatter);
+            ZonedDateTime zonedValue = value.withZoneSameInstant(zoneId);
+            String dateString = zonedValue.format(FORMATTER);
             gen.writeString(dateString);
         }
     }
