@@ -1,4 +1,4 @@
-package com.example.exampleproject.configs.deserializers;
+package com.example.exampleproject.configs.datetimes.deserializers;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
@@ -8,34 +8,36 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+/**
+ * A custom deserializer for {@link LocalDate}, which expects the input date string
+ * to be in the format {@value EXPECTED_FORMAT}.
+ */
 @Slf4j
-@SuppressWarnings("unused")
-public class CustomZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
+public class CustomLocalDateDeserializer extends JsonDeserializer<LocalDate> {
 
-    private static final String EXPECTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    private static final String EXPECTED_FORMAT = "yyyy-MM-dd";
 
     private final DateTimeFormatter formatter;
 
-    public CustomZonedDateTimeDeserializer() {
+    public CustomLocalDateDeserializer() {
         this.formatter = DateTimeFormatter.ofPattern(EXPECTED_FORMAT);
     }
 
     /**
-     * Deserializes JSON content into a {@link ZonedDateTime} object.
+     * Deserializes a JSON string representation of a date into a {@link LocalDate} object.
      *
-     * @param p    the {@link JsonParser} used to read JSON content.
-     * @param ctxt the {@link DeserializationContext} that can be used to access contextual information about the
-     *             deserialization process.
-     * @return a {@link ZonedDateTime} instance parsed from the JSON string.
-     * @throws IOException       if there is an issue during parsing or reading JSON content.
-     * @throws BusinessException if the input string cannot be parsed into a {@link ZonedDateTime}
+     * @param p    the JSON parser to read the date string from
+     * @param ctxt the deserialization context
+     * @return the deserialized {@link LocalDate} object, or null if the input string is null or empty
+     * @throws IOException       if an I/O error occurs during deserialization
+     * @throws BusinessException if the input string cannot be parsed into a {@link LocalDate}
      */
     @Override
-    public ZonedDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
         String date = p.getText();
 
@@ -44,7 +46,7 @@ public class CustomZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateT
         }
 
         try {
-            return ZonedDateTime.parse(date, formatter);
+            return LocalDate.parse(date, formatter);
         } catch (DateTimeParseException e) {
             log.warn(e.getMessage(), e);
             throw new BusinessException(

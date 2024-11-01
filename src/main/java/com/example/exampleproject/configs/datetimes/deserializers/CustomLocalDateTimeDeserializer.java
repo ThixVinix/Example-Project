@@ -1,4 +1,4 @@
-package com.example.exampleproject.configs.deserializers;
+package com.example.exampleproject.configs.datetimes.deserializers;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
@@ -12,8 +12,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+/**
+ * A custom deserializer for {@link LocalDateTime}, which expects the input date string
+ * to be in the format {@value EXPECTED_FORMAT}.
+ */
 @Slf4j
-@SuppressWarnings("unused")
 public class CustomLocalDateTimeDeserializer extends JsonDeserializer<LocalDateTime> {
 
     private static final String EXPECTED_FORMAT = "yyyy-MM-dd HH:mm:ss";
