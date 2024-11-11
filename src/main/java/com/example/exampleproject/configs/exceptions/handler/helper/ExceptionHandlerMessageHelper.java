@@ -1,13 +1,11 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
-import com.example.exampleproject.enums.RequestTypeEnum;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -25,10 +23,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -153,7 +147,6 @@ public class ExceptionHandlerMessageHelper {
     }
 
 
-
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
         Throwable rootCause = httpEx.getRootCause();
         if (rootCause != null && rootCause.getMessage() != null && rootCause instanceof BusinessException) {
@@ -176,7 +169,7 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
 
-        Optional<Pair<Parameter, RequestTypeEnum>> parameterAndRequestType = searchRequestTypeEnum(mismatchEx);
+        Optional<Parameter> parameter = searchParameter(mismatchEx);
 
         String expectedTypeName =
                 Optional.ofNullable(mismatchEx.getRequiredType())
@@ -184,32 +177,28 @@ public class ExceptionHandlerMessageHelper {
                         .orElse(null);
 
         return switch (expectedTypeName) {
-            case null -> Map.of(MESSAGE_KEY,
+            case null -> Map.of(mismatchEx.getName(),
                     MessageUtils.getMessage(
-                            getMismatchWithoutFormatMessage(
-                                    parameterAndRequestType
-                                            .map(Pair::getRight).orElse(RequestTypeEnum.REQUEST_UNKNOWN_TYPE)),
-                            mismatchEx.getName(),
+                            "msg.exception.handler.argument.type.mismatch.without.format",
                             mismatchEx.getValue()));
             case LOCAL_DATE_TYPE,
                  LOCAL_DATE_TIME_TYPE,
                  ZONED_DATE_TIME_TYPE,
                  LOCAL_TIME_TYPE,
                  DATE_TYPE -> getDateTimeMismatchMessage(
-                    mismatchEx, expectedTypeName, parameterAndRequestType.orElse(null));
-            default -> Map.of(MESSAGE_KEY, getDefaultMismatchMessage(mismatchEx, expectedTypeName));
+                    mismatchEx, expectedTypeName, parameter.orElse(null));
+            default -> getDefaultMismatchMessage(mismatchEx, expectedTypeName);
         };
     }
 
-    private static Optional<Pair<Parameter, RequestTypeEnum>> searchRequestTypeEnum(
+    private static Optional<Parameter> searchParameter(
             MethodArgumentTypeMismatchException mismatchEx) {
         try {
             Method method = mismatchEx.getParameter().getMethod();
             if (method != null) {
                 for (Parameter param : method.getParameters()) {
-                    Optional<RequestTypeEnum> requestTypeEnum = getRequestTypeEnum(mismatchEx, param);
-                    if (requestTypeEnum.isPresent()) {
-                        return Optional.of(Pair.of(param, requestTypeEnum.get()));
+                    if (containsRequestTypeAnnotation(mismatchEx, param)) {
+                        return Optional.of(param);
                     }
                 }
             }
@@ -222,84 +211,59 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
                                                                   String expectTypeName,
-                                                                  Pair<Parameter, RequestTypeEnum>
-                                                                               parameterAndRequestType) {
-        if (Objects.nonNull(parameterAndRequestType)) {
-            Parameter parameter = parameterAndRequestType.getLeft();
-            RequestTypeEnum requestTypeEnum = parameterAndRequestType.getRight();
-            String formatPatternMessage =
-                    extractDateTimeFormatPatternMessage(mismatchEx, parameter, requestTypeEnum);
-
-            return Map.of(MESSAGE_KEY, formatPatternMessage);
+                                                                  Parameter parameter) {
+        if (Objects.nonNull(parameter)) {
+            return extractDateTimeFormatPatternMessage(mismatchEx, parameter);
         }
 
-        return Map.of(MESSAGE_KEY, getDefaultMismatchMessage(mismatchEx, expectTypeName));
+        return getDefaultMismatchMessage(mismatchEx, expectTypeName);
     }
 
-    private static String getMismatchWithFormatMessage(RequestTypeEnum requestTypeEnum) {
-        return switch (requestTypeEnum) {
-            case REQUEST_PARAM_TYPE -> "msg.exception.handler.argument.type.mismatch.param.with.format";
-            case REQUEST_HEADER_TYPE -> "msg.exception.handler.argument.type.mismatch.header.with.format";
-            case REQUEST_UNKNOWN_TYPE -> "msg.exception.handler.argument.type.mismatch.unknown.with.format";
-        };
-    }
-
-    private static String getMismatchWithoutFormatMessage(RequestTypeEnum requestTypeEnum) {
-        return switch (requestTypeEnum) {
-            case REQUEST_PARAM_TYPE -> "msg.exception.handler.argument.type.mismatch.param.without.format";
-            case REQUEST_HEADER_TYPE -> "msg.exception.handler.argument.type.mismatch.header.without.format";
-            case REQUEST_UNKNOWN_TYPE -> "msg.exception.handler.argument.type.mismatch.unknown.without.format";
-        };
-    }
-
-    private static String getDefaultMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
-                                                    String expectedTypeName) {
-        return MessageUtils.getMessage(
+    private static Map<String, String> getDefaultMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
+                                                                 String expectedTypeName) {
+        return Map.of(mismatchEx.getName(), MessageUtils.getMessage(
                 "msg.exception.handler.argument.type.mismatch.default",
-                mismatchEx.getName(),
                 expectedTypeName,
-                mismatchEx.getValue());
+                mismatchEx.getValue()));
     }
 
-    private static Optional<RequestTypeEnum> getRequestTypeEnum(MethodArgumentTypeMismatchException ex,
-                                                                Parameter param) {
+    private static boolean containsRequestTypeAnnotation(MethodArgumentTypeMismatchException ex,
+                                                         Parameter param) {
 
         Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
         Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
 
         if (requestParam.isPresent()
                 && (requestParam.get().value().trim().isEmpty() || requestParam.get().value().equals(ex.getName()))) {
-            return Optional.of(RequestTypeEnum.REQUEST_PARAM_TYPE);
+            return true;
         }
 
         if (requestHeader.isPresent()
                 && (requestHeader.get().value().trim().isEmpty() || requestHeader.get().value().equals(ex.getName()))) {
-            return Optional.of(RequestTypeEnum.REQUEST_HEADER_TYPE);
+            return true;
         }
 
-        return Optional.empty();
+        return false;
     }
 
-    private static String extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
-                                                              Parameter param,
-                                                              RequestTypeEnum requestTypeEnum) {
+    private static Map<String, String> extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
+                                                                           Parameter param) {
         String paramName = getParamName(param);
 
         if (param.isAnnotationPresent(DateTimeFormat.class)) {
             DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
-            return MessageUtils.getMessage(
-                    getMismatchWithFormatMessage(requestTypeEnum),
-                    paramName,
+            return Map.of(paramName, MessageUtils.getMessage(
+                    "msg.exception.handler.argument.type.mismatch.with.format",
                     format.pattern(),
-                    ex.getValue());
+                    ex.getValue()));
         } else {
             Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
 
             return defaultDateTimePatternOptional
-                    .map(s -> MessageUtils.getMessage(
-                            getMismatchWithFormatMessage(requestTypeEnum), paramName, s, ex.getValue()))
-                    .orElseGet(() -> MessageUtils.getMessage(
-                            getMismatchWithoutFormatMessage(requestTypeEnum), paramName, ex.getValue()));
+                    .map(s -> Map.of(paramName, MessageUtils.getMessage(
+                            "msg.exception.handler.argument.type.mismatch.with.format", s, ex.getValue())))
+                    .orElseGet(() -> Map.of(paramName, MessageUtils.getMessage(
+                            "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
         }
     }
 
