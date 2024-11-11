@@ -11,10 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -61,7 +63,9 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class,
             BusinessException.class,
             MethodArgumentTypeMismatchException.class,
-            ConstraintViolationException.class})
+            ConstraintViolationException.class,
+            MissingRequestHeaderException.class,
+            HandlerMethodValidationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
 

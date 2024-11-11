@@ -1,23 +1,35 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
+import com.example.exampleproject.enums.RequestTypeEnum;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +40,12 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static final String MESSAGE_KEY = "message";
+
+    private static final String LOCAL_DATE_TYPE = "LocalDate";
+    private static final String LOCAL_DATE_TIME_TYPE = "LocalDateTime";
+    private static final String ZONED_DATE_TIME_TYPE = "ZonedDateTime";
+    private static final String LOCAL_TIME_TYPE = "LocalTime";
+    private static final String DATE_TYPE = "Date";
 
     /**
      * Generates a not found message based on the provided exception.
@@ -84,8 +102,17 @@ public class ExceptionHandlerMessageHelper {
             case MissingServletRequestParameterException missingEx -> {
                 return getMissingServletRequestParameterMessage(missingEx);
             }
+            case MissingRequestHeaderException missingRequestHeaderException -> {
+                return getMissingRequestHeaderMessage(missingRequestHeaderException);
+            }
             case MethodArgumentTypeMismatchException mismatchEx -> {
                 return getMismatchMessage(mismatchEx);
+            }
+            case ConstraintViolationException constraintViolationEx -> {
+                return getConstraintViolationMessage(constraintViolationEx);
+            }
+            case HandlerMethodValidationException handlerMethodEx -> {
+                return getHandlerMethodValidationMessage(handlerMethodEx);
             }
             case null, default -> {
                 return getDefaultBadRequestMessage(ex);
@@ -125,14 +152,7 @@ public class ExceptionHandlerMessageHelper {
                 : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
     }
 
-    private static String mergeErrorMessages(String existingValue, String newValue) {
-        if (existingValue.endsWith(".")) {
-            existingValue = existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
-        } else {
-            existingValue = existingValue + "; " + newValue;
-        }
-        return existingValue;
-    }
+
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
         Throwable rootCause = httpEx.getRootCause();
@@ -148,58 +168,242 @@ public class ExceptionHandlerMessageHelper {
                 MessageUtils.getMessage("msg.exception.handler.missing.parameter", missingEx.getParameterName()));
     }
 
+    private static Map<String, String> getMissingRequestHeaderMessage(MissingRequestHeaderException missingEx) {
+        return Map.of(MESSAGE_KEY,
+                MessageUtils.getMessage("msg.exception.handler.missing.header", missingEx.getHeaderName()));
+    }
+
+
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
+
+        Optional<Pair<Parameter, RequestTypeEnum>> parameterAndRequestType = searchRequestTypeEnum(mismatchEx);
+
         String expectedTypeName =
                 Optional.ofNullable(mismatchEx.getRequiredType())
                         .map(Class::getSimpleName)
                         .orElse(null);
 
         return switch (expectedTypeName) {
-            case null -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                    "msg.exception.handler.argument.type.mismatch.without.format",
-                    mismatchEx.getName(),
-                    mismatchEx.getValue()));
-            case "LocalDate", "LocalDateTime", "Date", "ZonedDateTime" -> handleDateMismatch(mismatchEx);
-            default -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                    "msg.exception.handler.argument.type.mismatch.default",
-                    mismatchEx.getName(),
-                    expectedTypeName,
-                    mismatchEx.getValue()));
+            case null -> Map.of(MESSAGE_KEY,
+                    MessageUtils.getMessage(
+                            getMismatchWithoutFormatMessage(
+                                    parameterAndRequestType
+                                            .map(Pair::getRight).orElse(RequestTypeEnum.REQUEST_UNKNOWN_TYPE)),
+                            mismatchEx.getName(),
+                            mismatchEx.getValue()));
+            case LOCAL_DATE_TYPE,
+                 LOCAL_DATE_TIME_TYPE,
+                 ZONED_DATE_TIME_TYPE,
+                 LOCAL_TIME_TYPE,
+                 DATE_TYPE -> getDateTimeMismatchMessage(
+                    mismatchEx, expectedTypeName, parameterAndRequestType.orElse(null));
+            default -> Map.of(MESSAGE_KEY, getDefaultMismatchMessage(mismatchEx, expectedTypeName));
         };
     }
 
-    private static Map<String, String> handleDateMismatch(MethodArgumentTypeMismatchException mismatchEx) {
-        Optional<String> expectedDateFormat = getExpectedDateFormat(mismatchEx);
-        return expectedDateFormat
-                .map(format ->
-                        Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                                "msg.exception.handler.argument.type.mismatch.with.format",
-                                mismatchEx.getName(),
-                                format,
-                                mismatchEx.getValue())))
-                .orElseGet(() ->
-                        Map.of(MESSAGE_KEY, MessageUtils.getMessage(
-                                "msg.exception.handler.argument.type.mismatch.without.format",
-                                mismatchEx.getName(),
-                                mismatchEx.getValue())));
-    }
-
-    private static Optional<String> getExpectedDateFormat(MethodArgumentTypeMismatchException ex) {
+    private static Optional<Pair<Parameter, RequestTypeEnum>> searchRequestTypeEnum(
+            MethodArgumentTypeMismatchException mismatchEx) {
         try {
-            Method method = ex.getParameter().getMethod();
-
+            Method method = mismatchEx.getParameter().getMethod();
             if (method != null) {
                 for (Parameter param : method.getParameters()) {
-                    if (param.isAnnotationPresent(DateTimeFormat.class)) {
-                        DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
-                        return Optional.of(format.pattern());
+                    Optional<RequestTypeEnum> requestTypeEnum = getRequestTypeEnum(mismatchEx, param);
+                    if (requestTypeEnum.isPresent()) {
+                        return Optional.of(Pair.of(param, requestTypeEnum.get()));
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("Error when trying to recover expected date format. {}", e.getMessage());
+            log.warn("Error when trying to recover request type. {}", e.getMessage());
         }
         return Optional.empty();
+    }
+
+
+    private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
+                                                                  String expectTypeName,
+                                                                  Pair<Parameter, RequestTypeEnum>
+                                                                               parameterAndRequestType) {
+        if (Objects.nonNull(parameterAndRequestType)) {
+            Parameter parameter = parameterAndRequestType.getLeft();
+            RequestTypeEnum requestTypeEnum = parameterAndRequestType.getRight();
+            String formatPatternMessage =
+                    extractDateTimeFormatPatternMessage(mismatchEx, parameter, requestTypeEnum);
+
+            return Map.of(MESSAGE_KEY, formatPatternMessage);
+        }
+
+        return Map.of(MESSAGE_KEY, getDefaultMismatchMessage(mismatchEx, expectTypeName));
+    }
+
+    private static String getMismatchWithFormatMessage(RequestTypeEnum requestTypeEnum) {
+        return switch (requestTypeEnum) {
+            case REQUEST_PARAM_TYPE -> "msg.exception.handler.argument.type.mismatch.param.with.format";
+            case REQUEST_HEADER_TYPE -> "msg.exception.handler.argument.type.mismatch.header.with.format";
+            case REQUEST_UNKNOWN_TYPE -> "msg.exception.handler.argument.type.mismatch.unknown.with.format";
+        };
+    }
+
+    private static String getMismatchWithoutFormatMessage(RequestTypeEnum requestTypeEnum) {
+        return switch (requestTypeEnum) {
+            case REQUEST_PARAM_TYPE -> "msg.exception.handler.argument.type.mismatch.param.without.format";
+            case REQUEST_HEADER_TYPE -> "msg.exception.handler.argument.type.mismatch.header.without.format";
+            case REQUEST_UNKNOWN_TYPE -> "msg.exception.handler.argument.type.mismatch.unknown.without.format";
+        };
+    }
+
+    private static String getDefaultMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
+                                                    String expectedTypeName) {
+        return MessageUtils.getMessage(
+                "msg.exception.handler.argument.type.mismatch.default",
+                mismatchEx.getName(),
+                expectedTypeName,
+                mismatchEx.getValue());
+    }
+
+    private static Optional<RequestTypeEnum> getRequestTypeEnum(MethodArgumentTypeMismatchException ex,
+                                                                Parameter param) {
+
+        Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
+        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
+
+        if (requestParam.isPresent()
+                && (requestParam.get().value().trim().isEmpty() || requestParam.get().value().equals(ex.getName()))) {
+            return Optional.of(RequestTypeEnum.REQUEST_PARAM_TYPE);
+        }
+
+        if (requestHeader.isPresent()
+                && (requestHeader.get().value().trim().isEmpty() || requestHeader.get().value().equals(ex.getName()))) {
+            return Optional.of(RequestTypeEnum.REQUEST_HEADER_TYPE);
+        }
+
+        return Optional.empty();
+    }
+
+    private static String extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
+                                                              Parameter param,
+                                                              RequestTypeEnum requestTypeEnum) {
+        String paramName = getParamName(param);
+
+        if (param.isAnnotationPresent(DateTimeFormat.class)) {
+            DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
+            return MessageUtils.getMessage(
+                    getMismatchWithFormatMessage(requestTypeEnum),
+                    paramName,
+                    format.pattern(),
+                    ex.getValue());
+        } else {
+            Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
+
+            return defaultDateTimePatternOptional
+                    .map(s -> MessageUtils.getMessage(
+                            getMismatchWithFormatMessage(requestTypeEnum), paramName, s, ex.getValue()))
+                    .orElseGet(() -> MessageUtils.getMessage(
+                            getMismatchWithoutFormatMessage(requestTypeEnum), paramName, ex.getValue()));
+        }
+    }
+
+    private static Optional<String> getDefaultDateTimePatternForType(Class<?> type) {
+        return switch (type.getSimpleName()) {
+            case LOCAL_DATE_TYPE -> Optional.of("yyyy-MM-dd");
+            case LOCAL_DATE_TIME_TYPE -> Optional.of("yyyy-MM-dd'T'HH:mm:ss");
+            case ZONED_DATE_TIME_TYPE -> Optional.of("yyyy-MM-dd'T'HH:mm:ss.SSSXXX'Z'");
+            case LOCAL_TIME_TYPE -> Optional.of("HH:mm:ss");
+            default -> Optional.empty();
+        };
+    }
+
+    private static String getParamName(Parameter param) {
+        Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
+        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
+
+        if (requestParam.isPresent()) {
+            return requestParam.get().value().trim().isEmpty() ? param.getName() : requestParam.get().value().trim();
+        } else if (requestHeader.isPresent()) {
+            return requestHeader.get().value().isEmpty() ? param.getName() : requestHeader.get().value().trim();
+        }
+
+        return param.getName();
+    }
+
+    public static Map<String, String> getConstraintViolationMessage(ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            String fieldName = getParameterName(violation);
+            String errorMessage = violation.getMessage();
+            if (errors.containsKey(fieldName)) {
+                errorMessage = mergeErrorMessages(errors.get(fieldName), errorMessage);
+            }
+            errors.put(fieldName, errorMessage);
+        }
+
+        return errors;
+    }
+
+    private static String getParameterName(ConstraintViolation<?> violation) {
+        try {
+            Object rootBean = violation.getRootBean();
+            String[] propertyPathSegments = violation.getPropertyPath().toString().split("\\.");
+            String rootMethodName = propertyPathSegments[0];
+            Method matchedMethod = findMethodByName(rootBean, rootMethodName);
+            if (matchedMethod != null) {
+                for (Parameter parameter : matchedMethod.getParameters()) {
+                    if (violation.getPropertyPath().toString().contains(parameter.getName())) {
+                        String parameterName = getRequestParameterName(parameter);
+                        if (parameterName != null) {
+                            return parameterName;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        String[] fieldParts = violation.getPropertyPath().toString().split("\\.");
+        return fieldParts[fieldParts.length - 1];
+    }
+
+    private static Method findMethodByName(Object rootBean, String methodName) {
+        for (Method method : rootBean.getClass().getDeclaredMethods()) {
+            if (method.getName().equals(methodName)) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    private static String getRequestParameterName(Parameter parameter) {
+        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+        if (requestParam != null) {
+            return !requestParam.value().isEmpty() ? requestParam.value() : parameter.getName();
+        }
+        RequestHeader requestHeader = parameter.getAnnotation(RequestHeader.class);
+        if (requestHeader != null) {
+            return !requestHeader.value().isEmpty() ? requestHeader.value() : parameter.getName();
+        }
+        PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
+        if (pathVariable != null) {
+            return !pathVariable.value().isEmpty() ? pathVariable.value() : parameter.getName();
+        }
+        return null;
+    }
+
+    private static String mergeErrorMessages(String existingValue, String newValue) {
+        if (existingValue.endsWith(".")) {
+            existingValue = existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
+        } else {
+            existingValue = existingValue + "; " + newValue;
+        }
+        return existingValue;
+    }
+
+    private static Map<String, String> getHandlerMethodValidationMessage(HandlerMethodValidationException ex) {
+        log.error(ex.getMessage(), ex);
+
+        log.warn("Please check if the controller class is using the \"@Validated\" annotation to improve the mapping " +
+                "of errors with custom messages.");
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.validation.failure"));
     }
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
