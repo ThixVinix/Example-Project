@@ -20,6 +20,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -146,7 +147,6 @@ public class ExceptionHandlerMessageHelper {
                 : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
     }
 
-
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
         Throwable rootCause = httpEx.getRootCause();
         if (rootCause != null && rootCause.getMessage() != null && rootCause instanceof BusinessException) {
@@ -165,7 +165,6 @@ public class ExceptionHandlerMessageHelper {
         return Map.of(MESSAGE_KEY,
                 MessageUtils.getMessage("msg.exception.handler.missing.header", missingEx.getHeaderName()));
     }
-
 
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
 
@@ -208,7 +207,6 @@ public class ExceptionHandlerMessageHelper {
         return Optional.empty();
     }
 
-
     private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
                                                                   String expectTypeName,
                                                                   Parameter parameter) {
@@ -227,28 +225,13 @@ public class ExceptionHandlerMessageHelper {
                 mismatchEx.getValue()));
     }
 
-    private static boolean containsRequestTypeAnnotation(MethodArgumentTypeMismatchException ex,
-                                                         Parameter param) {
-
-        Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
-
-        if (requestParam.isPresent()
-                && (requestParam.get().value().trim().isEmpty() || requestParam.get().value().equals(ex.getName()))) {
-            return true;
-        }
-
-        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
-
-        if (requestHeader.isPresent()
-                && (requestHeader.get().value().trim().isEmpty() || requestHeader.get().value().equals(ex.getName()))) {
-            return true;
-        }
-
-        Optional<PathVariable> requestPathVariable = Optional.ofNullable(param.getAnnotation(PathVariable.class));
-
-        return requestPathVariable.isPresent()
-                && (requestPathVariable.get().value().trim().isEmpty()
-                || requestPathVariable.get().value().equals(ex.getName()));
+    private static boolean containsRequestTypeAnnotation(MethodArgumentTypeMismatchException ex, Parameter param) {
+        return getAnnotationValue(param, RequestParam.class)
+                .map(value -> value.equals(ex.getName())).orElse(false)
+                || getAnnotationValue(param, RequestHeader.class)
+                .map(value -> value.equals(ex.getName())).orElse(false)
+                || getAnnotationValue(param, PathVariable.class)
+                .map(value -> value.equals(ex.getName())).orElse(false);
     }
 
     private static Map<String, String> extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
@@ -256,10 +239,10 @@ public class ExceptionHandlerMessageHelper {
         String paramName = getParamName(param);
 
         if (param.isAnnotationPresent(DateTimeFormat.class)) {
-            DateTimeFormat format = param.getAnnotation(DateTimeFormat.class);
+            DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
             return Map.of(paramName, MessageUtils.getMessage(
                     "msg.exception.handler.argument.type.mismatch.with.format",
-                    format.pattern(),
+                    dateTimeFormat.pattern(),
                     ex.getValue()));
         } else {
             Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
@@ -283,19 +266,10 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static String getParamName(Parameter param) {
-        Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
-        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
-        Optional<PathVariable> requestPath = Optional.ofNullable(param.getAnnotation(PathVariable.class));
-
-        if (requestParam.isPresent()) {
-            return requestParam.get().value().trim().isEmpty() ? param.getName() : requestParam.get().value().trim();
-        } else if (requestHeader.isPresent()) {
-            return requestHeader.get().value().trim().isEmpty() ? param.getName() : requestHeader.get().value().trim();
-        } else if (requestPath.isPresent()) {
-            return requestPath.get().value().trim().isEmpty() ? param.getName() : requestPath.get().value().trim();
-        }
-
-        return param.getName();
+        return getAnnotationValue(param, RequestParam.class)
+                .or(() -> getAnnotationValue(param, RequestHeader.class))
+                .or(() -> getAnnotationValue(param, PathVariable.class))
+                .orElse(param.getName());
     }
 
     public static Map<String, String> getConstraintViolationMessage(ConstraintViolationException ex) {
@@ -322,10 +296,7 @@ public class ExceptionHandlerMessageHelper {
             if (matchedMethod != null) {
                 for (Parameter parameter : matchedMethod.getParameters()) {
                     if (violation.getPropertyPath().toString().contains(parameter.getName())) {
-                        String parameterName = getRequestParameterName(parameter);
-                        if (parameterName != null) {
-                            return parameterName;
-                        }
+                        return getParamName(parameter);
                     }
                 }
             }
@@ -345,22 +316,6 @@ public class ExceptionHandlerMessageHelper {
         return null;
     }
 
-    private static String getRequestParameterName(Parameter parameter) {
-        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
-        if (requestParam != null) {
-            return !requestParam.value().isEmpty() ? requestParam.value() : parameter.getName();
-        }
-        RequestHeader requestHeader = parameter.getAnnotation(RequestHeader.class);
-        if (requestHeader != null) {
-            return !requestHeader.value().isEmpty() ? requestHeader.value() : parameter.getName();
-        }
-        PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
-        if (pathVariable != null) {
-            return !pathVariable.value().isEmpty() ? pathVariable.value() : parameter.getName();
-        }
-        return null;
-    }
-
     private static String mergeErrorMessages(String existingValue, String newValue) {
         if (existingValue.endsWith(".")) {
             existingValue = existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
@@ -368,6 +323,18 @@ public class ExceptionHandlerMessageHelper {
             existingValue = existingValue + "; " + newValue;
         }
         return existingValue;
+    }
+
+    private static Optional<String> getAnnotationValue(Parameter param, Class<? extends Annotation> annotationClass) {
+        Annotation annotation = param.getAnnotation(annotationClass);
+        if (annotation instanceof RequestParam requestParam) {
+            return Optional.of(requestParam.value().trim().isEmpty() ? param.getName() : requestParam.value().trim());
+        } else if (annotation instanceof RequestHeader requestHeader) {
+            return Optional.of(requestHeader.value().trim().isEmpty() ? param.getName() : requestHeader.value().trim());
+        } else if (annotation instanceof PathVariable requestPath) {
+            return Optional.of(requestPath.value().trim().isEmpty() ? param.getName() : requestPath.value().trim());
+        }
+        return Optional.empty();
     }
 
     private static Map<String, String> getHandlerMethodValidationMessage(HandlerMethodValidationException ex) {
@@ -385,6 +352,5 @@ public class ExceptionHandlerMessageHelper {
             return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error"));
         }
     }
-
 
 }
