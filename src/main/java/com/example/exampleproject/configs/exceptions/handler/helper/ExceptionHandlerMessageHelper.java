@@ -231,19 +231,24 @@ public class ExceptionHandlerMessageHelper {
                                                          Parameter param) {
 
         Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
-        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
 
         if (requestParam.isPresent()
                 && (requestParam.get().value().trim().isEmpty() || requestParam.get().value().equals(ex.getName()))) {
             return true;
         }
 
+        Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
+
         if (requestHeader.isPresent()
                 && (requestHeader.get().value().trim().isEmpty() || requestHeader.get().value().equals(ex.getName()))) {
             return true;
         }
 
-        return false;
+        Optional<PathVariable> requestPathVariable = Optional.ofNullable(param.getAnnotation(PathVariable.class));
+
+        return requestPathVariable.isPresent()
+                && (requestPathVariable.get().value().trim().isEmpty()
+                || requestPathVariable.get().value().equals(ex.getName()));
     }
 
     private static Map<String, String> extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
@@ -280,11 +285,14 @@ public class ExceptionHandlerMessageHelper {
     private static String getParamName(Parameter param) {
         Optional<RequestParam> requestParam = Optional.ofNullable(param.getAnnotation(RequestParam.class));
         Optional<RequestHeader> requestHeader = Optional.ofNullable(param.getAnnotation(RequestHeader.class));
+        Optional<PathVariable> requestPath = Optional.ofNullable(param.getAnnotation(PathVariable.class));
 
         if (requestParam.isPresent()) {
             return requestParam.get().value().trim().isEmpty() ? param.getName() : requestParam.get().value().trim();
         } else if (requestHeader.isPresent()) {
-            return requestHeader.get().value().isEmpty() ? param.getName() : requestHeader.get().value().trim();
+            return requestHeader.get().value().trim().isEmpty() ? param.getName() : requestHeader.get().value().trim();
+        } else if (requestPath.isPresent()) {
+            return requestPath.get().value().trim().isEmpty() ? param.getName() : requestPath.get().value().trim();
         }
 
         return param.getName();
