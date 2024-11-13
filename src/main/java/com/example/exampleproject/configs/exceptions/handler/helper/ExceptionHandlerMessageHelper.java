@@ -131,8 +131,8 @@ public class ExceptionHandlerMessageHelper {
             if (target != null) {
                 Field field = target.getClass().getDeclaredField(originalFieldName);
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-                if (jsonProperty != null) {
-                    return jsonProperty.value();
+                if (jsonProperty != null && !jsonProperty.value().trim().isEmpty()) {
+                    return jsonProperty.value().trim();
                 }
             }
         } catch (NoSuchFieldException | SecurityException ex) {
@@ -240,19 +240,22 @@ public class ExceptionHandlerMessageHelper {
 
         if (param.isAnnotationPresent(DateTimeFormat.class)) {
             DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
-            return Map.of(paramName, MessageUtils.getMessage(
-                    "msg.exception.handler.argument.type.mismatch.with.format",
-                    dateTimeFormat.pattern(),
-                    ex.getValue()));
-        } else {
-            Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
 
-            return defaultDateTimePatternOptional
-                    .map(s -> Map.of(paramName, MessageUtils.getMessage(
-                            "msg.exception.handler.argument.type.mismatch.with.format", s, ex.getValue())))
-                    .orElseGet(() -> Map.of(paramName, MessageUtils.getMessage(
-                            "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
+            if (!dateTimeFormat.pattern().trim().isEmpty()) {
+                return Map.of(paramName, MessageUtils.getMessage(
+                        "msg.exception.handler.argument.type.mismatch.with.format",
+                        dateTimeFormat.pattern().trim(),
+                        ex.getValue()));
+            }
         }
+
+        Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
+
+        return defaultDateTimePatternOptional
+                .map(s -> Map.of(paramName, MessageUtils.getMessage(
+                        "msg.exception.handler.argument.type.mismatch.with.format", s, ex.getValue())))
+                .orElseGet(() -> Map.of(paramName, MessageUtils.getMessage(
+                        "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
     }
 
     private static Optional<String> getDefaultDateTimePatternForType(Class<?> type) {
