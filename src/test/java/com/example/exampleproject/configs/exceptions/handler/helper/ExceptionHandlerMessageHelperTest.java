@@ -20,18 +20,20 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -299,11 +301,45 @@ class ExceptionHandlerMessageHelperTest {
      */
     @Order(8)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MissingRequestHeaderException")
+    @ParameterizedTest(name = "Test {index} => locale={0} | headerName={1} | expectedMessage={2}")
+    @CsvSource(value = {
+            "pt_BR|requiredHeader|Cabeçalho obrigatório ausente: requiredHeader.",
+            "en_US|requiredHeader|Missing required header: requiredHeader."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithMissingRequestHeaderException(String languageTag,
+                                                                String headerName,
+                                                                String expectedMessage) throws NoSuchMethodException {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        Method method = getClass().getDeclaredMethod("getBadRequestMessage_WithMissingRequestHeaderException",
+                String.class, String.class, String.class);
+        MethodParameter methodParameter = new MethodParameter(method, 1);
+
+        MissingRequestHeaderException exception =
+                new MissingRequestHeaderException(headerName, methodParameter);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
+
+        // Assert
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the missing required header message is returned correctly " +
+                        "for the locale " + languageTag + " with header named " + headerName + ".");
+    }
+
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
+    @Order(9)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedType={2} | receivedValue={3} | expectedMessage={4}")
     @CsvSource(value = {
-            "pt_BR|parameter|ValorRecebido|Falha ao converter o valor ValorRecebido para o tipo requerido String para o parâmetro parameter.",
-            "en_US|parameter|ReceivedValue|Failed to convert value ReceivedValue to required type String for parameter parameter."
+            "pt_BR|parameter|ValorRecebido|Não é possível converter o valor ValorRecebido para o tipo requerido String.",
+            "en_US|parameter|ReceivedValue|It is not possible to convert the value ReceivedValue to the required type String."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException(String languageTag,
                                                                       String parameter,
@@ -321,7 +357,7 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the conversion error message is returned correctly " +
                         "for the locale " + languageTag + " when trying to convert value " + receivedValue +
                         " for parameter " + parameter + ".");
@@ -331,7 +367,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(9)
+    @Order(10)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with multiple FieldErrors")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
@@ -394,7 +430,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(10)
+    @Order(11)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with multiple FieldErrors triggering else condition")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedKey={1} | field1Message={2} | field2Message={3}")
@@ -454,13 +490,13 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(11)
+    @Order(12)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException triggering case null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
     @CsvSource(value = {
-            "pt_BR|parameter|ValorRecebido|O parâmetro parameter está no formato inválido, valor recebido: ValorRecebido.",
-            "en_US|parameter|ReceivedValue|The parameter parameter is in an invalid format. Received value: ReceivedValue."
+            "pt_BR|parameter|ValorRecebido|Está no formato inválido, valor recebido: ValorRecebido.",
+            "en_US|parameter|ReceivedValue|It is in invalid format, received value: ReceivedValue."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_TriggerNullCase(
             String languageTag, String parameter, String receivedValue, String expectedMessage) {
@@ -477,7 +513,7 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the invalid format message is returned correctly " +
                         "for the locale " + languageTag + " with parameter " + parameter +
                         " and received value " + receivedValue + ".");
@@ -487,7 +523,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(12)
+    @Order(13)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with target not null and without JsonProperty fields")
     @ParameterizedTest(name = "Test {index} => locale={0} | field1Message={1}")
@@ -534,7 +570,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(13)
+    @Order(14)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null target")
     @ParameterizedTest(name = "Test {index} => locale={0} | field1Message={1}")
@@ -576,28 +612,27 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(14)
-    @Tag(value = GET_BAD_REQUEST_MESSAGE)
-    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime")
-    @ParameterizedTest(name = "Test {index} => type={0} | locale={1} | parameter={2} | receivedValue={3} | expectedDatePattern={4} | expectedMessage={5}")
+    @Order(15)
+    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime with DateTimeFormat annotation")
+    @ParameterizedTest(name = "Test {index} => typeClass={0}, locale={1}, parameter={2}, receivedValue={3}, expectedDatePattern={4}, expectedMessage={5}, annotationType={6}")
     @CsvSource(value = {
-            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.",
-            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.",
-            "java.time.LocalDateTime|pt_BR|dataHora|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|O parâmetro dataHora deve estar no formato dd/MM/yyyy HH:mm:ss, valor recebido: yyyy-MM-dd.",
-            "java.time.LocalDateTime|en_US|dateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|The parameter dateTime must be in the format dd/MM/yyyy HH:mm:ss, received value: yyyy-MM-dd.",
-            "java.util.Date|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|O parâmetro data deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.",
-            "java.util.Date|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|The parameter date must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.",
-            "java.time.ZonedDateTime|pt_BR|dataHoraZona|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|O parâmetro dataHoraZona deve estar no formato dd/MM/yyyy HH:mm:ss Z, valor recebido: yyyy-MM-dd.",
-            "java.time.ZonedDateTime|en_US|zonedDateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|The parameter zonedDateTime must be in the format dd/MM/yyyy HH:mm:ss Z, received value: yyyy-MM-dd."
-    }, delimiter = CSV_DELIMITER)
+            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|RequestParam",
+            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|RequestParam",
+            "java.time.LocalDateTime|pt_BR|dataHora|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|Deve estar no formato dd/MM/yyyy HH:mm:ss, valor recebido: yyyy-MM-dd.|RequestHeader",
+            "java.time.LocalDateTime|en_US|dateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|Must be in the format dd/MM/yyyy HH:mm:ss, received value: yyyy-MM-dd.|RequestHeader",
+            "java.util.Date|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|PathVariable",
+            "java.util.Date|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|PathVariable",
+            "java.time.ZonedDateTime|pt_BR|dataHoraZona|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|Deve estar no formato dd/MM/yyyy HH:mm:ss Z, valor recebido: yyyy-MM-dd.|RequestParam",
+            "java.time.ZonedDateTime|en_US|zonedDateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|Must be in the format dd/MM/yyyy HH:mm:ss Z, received value: yyyy-MM-dd.|RequestParam"
+    }, delimiter = '|')
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_ForDateTypes(String typeClassName,
                                                                                    String languageTag,
                                                                                    String parameter,
                                                                                    String receivedValue,
                                                                                    String expectedDatePattern,
-                                                                                   String expectedMessage)
-            throws ClassNotFoundException {
-
+                                                                                   String expectedMessage,
+                                                                                   String annotationType) throws ClassNotFoundException {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
@@ -605,10 +640,12 @@ class ExceptionHandlerMessageHelperTest {
         Parameter mockMethodParameter = mock(Parameter.class);
         DateTimeFormat mockDateTimeFormat = mock(DateTimeFormat.class);
 
-        when(mockMethodParameter.isAnnotationPresent(DateTimeFormat.class)).thenReturn(true);
-        when(mockMethodParameter.getAnnotation(DateTimeFormat.class)).thenReturn(mockDateTimeFormat);
-        when(mockDateTimeFormat.pattern()).thenReturn(expectedDatePattern);
+        Mockito.lenient().when(mockMethodParameter.isAnnotationPresent(DateTimeFormat.class)).thenReturn(true);
+        Mockito.lenient().when(mockMethodParameter.getAnnotation(DateTimeFormat.class)).thenReturn(mockDateTimeFormat);
+        Mockito.lenient().when(mockDateTimeFormat.pattern()).thenReturn(expectedDatePattern);
         when(mockMethod.getParameters()).thenReturn(new Parameter[]{mockMethodParameter});
+
+        mockAnnotation(mockMethodParameter, annotationType, parameter);
 
         Class<?> typeClass = Class.forName(typeClassName);
 
@@ -627,7 +664,7 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the date formatting error message is returned correctly " +
                         "for the type " + typeClassName + " and locale " + languageTag +
                         " with parameter " + parameter + " and received value " + receivedValue +
@@ -638,19 +675,28 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(15)
+    @Order(16)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException without DateTimeFormat annotation")
-    @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
+    @ParameterizedTest(name = "Test {index} => typeClassName={0} | locale={1} | parameter={2} | receivedValue={3} | expectedMessage={4}")
     @CsvSource(value = {
-            "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
-            "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
+            "java.time.LocalDate|pt_BR|data|ValorRecebido|Deve estar no formato yyyy-MM-dd, valor recebido: ValorRecebido.",
+            "java.time.LocalDate|en_US|date|ReceivedValue|Must be in the format yyyy-MM-dd, received value: ReceivedValue.",
+            "java.time.LocalDateTime|pt_BR|dataHora|ValorRecebido|Deve estar no formato yyyy-MM-dd'T'HH:mm:ss, valor recebido: ValorRecebido.",
+            "java.time.LocalDateTime|en_US|dateTime|ReceivedValue|Must be in the format yyyy-MM-dd'T'HH:mm:ss, received value: ReceivedValue.",
+            "java.time.LocalTime|pt_BR|hora|ValorRecebido|Deve estar no formato HH:mm:ss, valor recebido: ValorRecebido.",
+            "java.time.LocalTime|en_US|time|ReceivedValue|Must be in the format HH:mm:ss, received value: ReceivedValue.",
+            "java.time.ZonedDateTime|pt_BR|dataHoraZona|ValorRecebido|Deve estar no formato yyyy-MM-dd'T'HH:mm:ss.SSSXXX'Z', valor recebido: ValorRecebido.",
+            "java.time.ZonedDateTime|en_US|zonedDateTime|ReceivedValue|Must be in the format yyyy-MM-dd'T'HH:mm:ss.SSSXXX'Z', received value: ReceivedValue.",
+            "java.util.Date|pt_BR|data|ValorRecebido|Está no formato inválido, valor recebido: ValorRecebido.",
+            "java.util.Date|en_US|date|ReceivedValue|It is in invalid format, received value: ReceivedValue."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_WithoutDateTimeFormatAnnotation(
+            String typeClassName,
             String languageTag,
             String parameter,
             String receivedValue,
-            String expectedMessage) {
+            String expectedMessage) throws ClassNotFoundException {
 
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
@@ -658,25 +704,32 @@ class ExceptionHandlerMessageHelperTest {
         Method mockMethod = mock(Method.class);
         Parameter mockMethodParameter = mock(Parameter.class);
 
+        Class<?> typeClass = Class.forName(typeClassName);
+
         when(mockMethodParameter.isAnnotationPresent(DateTimeFormat.class)).thenReturn(false);
+        when(mockMethodParameter.getType()).thenAnswer(_ -> typeClass);
         when(mockMethod.getParameters()).thenReturn(new Parameter[]{mockMethodParameter});
+
+        RequestParam mockRequestParam = mock(RequestParam.class);
+        when(mockRequestParam.value()).thenReturn(parameter);
+        when(mockMethodParameter.getAnnotation(RequestParam.class)).thenReturn(mockRequestParam);
 
         MethodParameter customParameter = new MethodParameter(mockMethod, -1) {
             @Override
             @Nonnull
             public Class<?> getParameterType() {
-                return LocalDate.class;
+                return typeClass;
             }
         };
 
         MethodArgumentTypeMismatchException exception = new MethodArgumentTypeMismatchException(
-                receivedValue, LocalDate.class, parameter, customParameter, new IllegalArgumentException());
+                receivedValue, typeClass, parameter, customParameter, new IllegalArgumentException());
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the invalid format message is returned correctly " +
                         "for the locale " + languageTag + " with parameter " + parameter +
                         " and received value " + receivedValue + " without DateTimeFormat annotation.");
@@ -686,13 +739,13 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(16)
+    @Order(17)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - where getMethod() returns null")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | receivedValue={2} | expectedMessage={3}")
     @CsvSource(value = {
-            "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
-            "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
+            "pt_BR|data|ValorRecebido|Não é possível converter o valor ValorRecebido para o tipo requerido LocalDate.",
+            "en_US|date|ReceivedValue|It is not possible to convert the value ReceivedValue to the required type LocalDate."
     }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_MethodNull(String languageTag,
                                                                                  String parameter,
@@ -713,7 +766,7 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the invalid format message is returned correctly " +
                         "for the locale " + languageTag + " with parameter " + parameter +
                         " and received value " + receivedValue + " when getMethod() returns null.");
@@ -723,18 +776,18 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(17)
+    @Order(18)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - get expected date format catches exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | parameter={1} | expectedMessage={2}")
     @CsvSource(value = {
-            "pt_BR|data|ValorRecebido|O parâmetro data está no formato inválido, valor recebido: ValorRecebido.",
-            "en_US|date|ReceivedValue|The parameter date is in an invalid format. Received value: ReceivedValue."
+            "pt_BR|data|ValorRecebido|Não é possível converter o valor ValorRecebido para o tipo requerido LocalDate.",
+            "en_US|date|ReceivedValue|It is not possible to convert the value ReceivedValue to the required type LocalDate."
     }, delimiter = CSV_DELIMITER)
-    void getExpectedDateFormat_CatchesException(String languageTag,
-                                                String parameter,
-                                                String receivedValue,
-                                                String expectedMessage) {
+    void getExpectedDateFormat_ForMissingParameter_CatchesException(String languageTag,
+                                                                    String parameter,
+                                                                    String receivedValue,
+                                                                    String expectedMessage) {
 
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
@@ -750,7 +803,7 @@ class ExceptionHandlerMessageHelperTest {
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result.get(parameter),
                 "Checks if the invalid format message is returned correctly " +
                         "for the locale " + languageTag + " with parameter " + parameter +
                         " and received value " + receivedValue + " when getMethod() throws an exception.");
@@ -760,7 +813,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(18)
+    @Order(19)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception for default case")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1} | expectedMessage={2}")
@@ -789,7 +842,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(19)
+    @Order(20)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with generic Exception that returns default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -816,7 +869,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
-    @Order(20)
+    @Order(21)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with null exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -840,7 +893,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
-    @Order(21)
+    @Order(22)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with NoResourceFoundException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -868,7 +921,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
-    @Order(22)
+    @Order(23)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with general exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -896,7 +949,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
      */
-    @Order(23)
+    @Order(24)
     @Tag(value = GET_METHOD_ALLOWED_MESSAGE)
     @DisplayName(GET_METHOD_ALLOWED_MESSAGE + " - with HttpRequestMethodNotSupportedException")
     @ParameterizedTest(name = "Test {index} => method={0} | locale={1} | expectedMessageKey={2}")
@@ -924,7 +977,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(24)
+    @Order(25)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with non-null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1}")
@@ -952,7 +1005,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(25)
+    @Order(26)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessageKey={1}")
@@ -976,5 +1029,35 @@ class ExceptionHandlerMessageHelperTest {
                         "for the locale " + languageTag + " when the exception message is null.");
     }
 
-
+    /**
+     * Mocks the specified annotation on a given method parameter.
+     *
+     * @param mockMethodParameter the method parameter to mock the annotation on
+     * @param annotationType      the type of annotation to mock (e.g., "RequestParam", "RequestHeader", "PathVariable")
+     * @param parameter           the value to return for the annotation's parameter
+     * @throws UnsupportedOperationException if the specified annotation type is not supported
+     */
+    private void mockAnnotation(Parameter mockMethodParameter, String annotationType, String parameter) {
+        switch (annotationType) {
+            case "RequestParam" -> {
+                RequestParam mockRequestParam = mock(RequestParam.class);
+                Mockito.lenient().when(mockRequestParam.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(RequestParam.class))
+                        .thenReturn(mockRequestParam);
+            }
+            case "RequestHeader" -> {
+                RequestHeader mockRequestHeader = mock(RequestHeader.class);
+                Mockito.lenient().when(mockRequestHeader.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(RequestHeader.class))
+                        .thenReturn(mockRequestHeader);
+            }
+            case "PathVariable" -> {
+                PathVariable mockPathVariable = mock(PathVariable.class);
+                Mockito.lenient().when(mockPathVariable.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(PathVariable.class))
+                        .thenReturn(mockPathVariable);
+            }
+            default -> throw new UnsupportedOperationException("Unsupported annotation type: " + annotationType);
+        }
+    }
 }
