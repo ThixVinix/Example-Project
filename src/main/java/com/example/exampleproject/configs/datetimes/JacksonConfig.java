@@ -3,6 +3,7 @@ package com.example.exampleproject.configs.datetimes;
 import com.example.exampleproject.configs.datetimes.deserializers.*;
 import com.example.exampleproject.configs.datetimes.serializers.*;
 import com.example.exampleproject.utils.ZoneUtils;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -13,15 +14,26 @@ import java.time.*;
 import java.util.Date;
 
 /**
- * Configures custom Jackson serialization and deserialization for date and time types.
- * It registers a {@link JavaTimeModule} with specific serializers and deserializers
- * and defines the date and time formats using predefined patterns and the project's time zone.
+ * Configuration class for Jackson ObjectMapper.
+ * Sets up custom serialization and deserialization for Java time types
+ * and configures various Jackson features.
  */
 @Configuration
 public class JacksonConfig {
 
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        JavaTimeModule javaTimeModule = createJavaTimeModule();
+        mapper.registerModule(javaTimeModule);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        return mapper;
+    }
+
     /**
-     * Configures an {@link ObjectMapper} to handle custom serialization and deserialization
+     * Configures a custom serialization and deserialization
      * for dates and times. This method registers a {@link JavaTimeModule} with specific
      * serializers and deserializers for the following types:
      * <ul>
@@ -33,17 +45,8 @@ public class JacksonConfig {
      * </ul>
      * The date and time formats are derived from predefined patterns and the project's time zone.
      *
-     * @return a configured {@link ObjectMapper} instance
+     * @return a configured {@link JavaTimeModule} instance
      */
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        JavaTimeModule javaTimeModule = createJavaTimeModule();
-        mapper.registerModule(javaTimeModule);
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
-    }
-
     private JavaTimeModule createJavaTimeModule() {
 
         ZoneId projectZoneId = ZoneUtils.getProjectZoneId();
