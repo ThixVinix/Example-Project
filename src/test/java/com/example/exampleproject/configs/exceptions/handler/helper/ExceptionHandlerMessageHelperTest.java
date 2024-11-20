@@ -3,6 +3,9 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nonnull;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -891,9 +895,143 @@ class ExceptionHandlerMessageHelperTest {
 
     /**
      * Method test for
-     * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(22)
+    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with ConstraintViolationException")
+    @Test
+    void getBadRequestMessage_WithConstraintViolationException() {
+
+        // Arrange
+        ConstraintViolation<?> violation1 = mock(ConstraintViolation.class);
+        ConstraintViolation<?> violation2 = mock(ConstraintViolation.class);
+        ConstraintViolation<?> violation3 = mock(ConstraintViolation.class);
+
+        Path path1 = mock(Path.class);
+        Path path2 = mock(Path.class);
+        Path path3 = mock(Path.class);
+
+        class RootBean {
+            /**
+             * This method is intentionally empty because it is used to simulate
+             * a method with parameter annotations for testing purposes.
+             *
+             * @param field1 The first field parameter annotated with @RequestParam.
+             * @param field2 The second field parameter annotated with @RequestHeader.
+             */
+            public void sampleMethod(@RequestParam("field1") String field1, @RequestHeader("field2") String field2) {
+                throw new UnsupportedOperationException("This method is not supposed to be called");
+            }
+        }
+
+        RootBean rootBean = new RootBean();
+
+        when(violation1.getMessage()).thenReturn("Error message 1");
+        when(violation1.getPropertyPath()).thenReturn(path1);
+        when(path1.toString()).thenReturn("sampleMethod.field1");
+        doReturn(rootBean).when(violation1).getRootBean();
+
+        when(violation2.getMessage()).thenReturn("Error message 2.1");
+        when(violation2.getPropertyPath()).thenReturn(path2);
+        when(path2.toString()).thenReturn("sampleMethod.field1");
+        doReturn(rootBean).when(violation2).getRootBean();
+
+        when(violation3.getMessage()).thenReturn("Error message 2.2");
+        when(violation3.getPropertyPath()).thenReturn(path3);
+        when(path3.toString()).thenReturn("sampleMethod.field2");
+        doReturn(rootBean).when(violation3).getRootBean();
+
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+        violations.add(violation1);
+        violations.add(violation2);
+        violations.add(violation3);
+
+        ConstraintViolationException constraintViolationException = new ConstraintViolationException(violations);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(constraintViolationException);
+
+        // Assert
+        String field1ErrorMessage = result.get("field1");
+        assertTrue(field1ErrorMessage.contains("Error message 1"),
+                "Checks if the field1 message contains 'Error message 1'");
+        assertTrue(field1ErrorMessage.contains("Error message 2.1"),
+                "Checks if the field1 message contains 'Error message 2.1'");
+
+        assertEquals("Error message 2.2", result.get("field2"),
+                "Checks if the correct error message is returned for field2.");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
+    @Order(23)
+    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with ConstraintViolationException when matchedMethod is null")
+    @Test
+    void getBadRequestMessage_WhenConstraintViolationLeadsToUnmatchedMethod() {
+
+        // Arrange
+        ConstraintViolation<?> violation1 = mock(ConstraintViolation.class);
+        Path path1 = mock(Path.class);
+
+        String errorMessage = "Error message for field1";
+
+        when(violation1.getPropertyPath()).thenReturn(path1);
+        when(path1.toString()).thenReturn("sampleMethod.field1");
+        when(violation1.getMessage()).thenReturn(errorMessage);
+
+        Object rootBean = new Object();
+        doReturn(rootBean).when(violation1).getRootBean();
+
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+        violations.add(violation1);
+
+        ConstraintViolationException constraintViolationException = new ConstraintViolationException(violations);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(constraintViolationException);
+
+        // Assert
+        assertNotNull(result, "Result should not be null");
+        assertEquals(1, result.size(), "Result should contain one entry");
+        assertEquals(errorMessage, result.get("field1"),
+                "Should return the correct error message for field1");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
+     */
+    @Order(24)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with HandlerMethodValidationException")
+    @ParameterizedTest(name = "Test {index} => locale={0}, expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|A requisição enviada contém erro(s) de validação. Por favor, verifique a documentação e tente novamente.",
+            "en_US|The request contains validation error(s). Please check the documentation and try again."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WhenHandlerMethodValidationException(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        HandlerMethodValidationException handlerMethodValidationException = mock(HandlerMethodValidationException.class);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(handlerMethodValidationException);
+
+        // Assert
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the correct validation failure message is returned for the locale " + languageTag);
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
+     */
+    @Order(25)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with NoResourceFoundException")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -921,7 +1059,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getNotFoundMessage(Exception)}
      */
-    @Order(23)
+    @Order(26)
     @Tag(value = GET_NOT_FOUND_MESSAGE)
     @DisplayName(GET_NOT_FOUND_MESSAGE + " - with general exception")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
@@ -949,7 +1087,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
      */
-    @Order(24)
+    @Order(27)
     @Tag(value = GET_METHOD_ALLOWED_MESSAGE)
     @DisplayName(GET_METHOD_ALLOWED_MESSAGE + " - with HttpRequestMethodNotSupportedException")
     @ParameterizedTest(name = "Test {index} => method={0} | locale={1} | expectedMessageKey={2}")
@@ -977,7 +1115,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(25)
+    @Order(28)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with non-null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | exceptionMessage={1}")
@@ -1005,7 +1143,7 @@ class ExceptionHandlerMessageHelperTest {
      * Method test for
      * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)}
      */
-    @Order(26)
+    @Order(29)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with null exception message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessageKey={1}")
