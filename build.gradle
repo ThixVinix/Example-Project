@@ -32,17 +32,22 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // Dependência JUnit 5 API
+    // JUnit 5 API dependency
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
 
-    // Dependência para o mecanismo JUnit 5
+    // Dependency for the JUnit 5 engine
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
 
-    // Dependência opcional para gerar relatórios
+    // Optional dependency for generating reports
     testImplementation 'org.junit.platform:junit-platform-launcher:1.11.2'
 
+    // Support for Java 8 DateTime API in Jackson (LocalDate, LocalDateTime)
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0'
+
+    // Additional utilities for manipulating strings, numbers, objects, etc.
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
 
 }
 
