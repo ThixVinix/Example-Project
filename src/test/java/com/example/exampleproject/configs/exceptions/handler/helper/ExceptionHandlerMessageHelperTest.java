@@ -629,7 +629,7 @@ class ExceptionHandlerMessageHelperTest {
             "java.util.Date|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|PathVariable",
             "java.time.ZonedDateTime|pt_BR|dataHoraZona|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|Deve estar no formato dd/MM/yyyy HH:mm:ss Z, valor recebido: yyyy-MM-dd.|RequestParam",
             "java.time.ZonedDateTime|en_US|zonedDateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss Z'|Must be in the format dd/MM/yyyy HH:mm:ss Z, received value: yyyy-MM-dd.|RequestParam"
-    }, delimiter = '|')
+    }, delimiter = CSV_DELIMITER)
     void getBadRequestMessage_WithMethodArgumentTypeMismatchException_ForDateTypes(String typeClassName,
                                                                                    String languageTag,
                                                                                    String parameter,
