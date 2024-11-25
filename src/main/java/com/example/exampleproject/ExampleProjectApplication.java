@@ -4,8 +4,10 @@ import com.example.exampleproject.configs.banners.ColoredBanner;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
+@EnableFeignClients
 public class ExampleProjectApplication {
 
     public static void main(String[] args) {
