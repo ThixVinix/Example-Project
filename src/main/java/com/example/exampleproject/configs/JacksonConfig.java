@@ -1,4 +1,4 @@
-package com.example.exampleproject.configs.datetimes;
+package com.example.exampleproject.configs;
 
 import com.example.exampleproject.configs.datetimes.deserializers.*;
 import com.example.exampleproject.configs.datetimes.serializers.*;

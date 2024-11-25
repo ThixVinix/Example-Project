@@ -1,4 +1,4 @@
-package com.example.exampleproject.configs.messages;
+package com.example.exampleproject.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

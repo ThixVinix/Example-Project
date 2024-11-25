@@ -1,4 +1,4 @@
-package com.example.exampleproject.configs.messages;
+package com.example.exampleproject.configs;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
