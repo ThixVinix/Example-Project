@@ -3,6 +3,7 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,10 +43,17 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String MESSAGE_KEY = "message";
 
+    private static final Pattern TYPE_PATTERN_MESSAGE_EXCEPTION =
+            Pattern.compile("Cannot deserialize value of type `(.*?)`");
+
     private static final String LOCAL_DATE_TYPE = "LocalDate";
+
     private static final String LOCAL_DATE_TIME_TYPE = "LocalDateTime";
+
     private static final String ZONED_DATE_TIME_TYPE = "ZonedDateTime";
+
     private static final String LOCAL_TIME_TYPE = "LocalTime";
+
     private static final String DATE_TYPE = "Date";
 
     /**
@@ -62,9 +76,11 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the HttpRequestMethodNotSupportedException containing the unsupported method information
      * @return a map containing the method not allowed message
      */
-    public static Map<String, String> getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException ex) {
+    public static Map<String, String> getMethodNotAllowedMessage(Exception ex) {
+        HttpRequestMethodNotSupportedException methodNotSupportedEx = (HttpRequestMethodNotSupportedException) ex;
         return Map.of(MESSAGE_KEY,
-                MessageUtils.getMessage("msg.exception.handler.http.method.not.supported", ex.getMethod()));
+                MessageUtils.getMessage("msg.exception.handler.http.method.not.supported",
+                        methodNotSupportedEx.getMethod()));
     }
 
     /**
@@ -78,6 +94,68 @@ public class ExceptionHandlerMessageHelper {
                 ex.getMessage() != null ?
                         ex.getMessage() :
                         MessageUtils.getMessage("msg.exception.handler.unknown.exception.error"));
+    }
+
+    /**
+     * Retrieves an unauthorized error message based on the provided exception.
+     *
+     * @param ex The exception that triggered the unauthorized state.
+     * @return A map containing the unauthorized error message details.
+     */
+    public static Map<String, String> getUnauthorizedMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.unauthorized.default");
+    }
+
+    /**
+     * Constructs a forbidden message by utilizing the provided exception and a default access denied message key.
+     *
+     * @param ex the exception that triggered the forbidden condition
+     * @return a map containing the forbidden message details, keyed by relevant components such as message identifiers
+     */
+    public static Map<String, String> getForbiddenMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.access.denied.default");
+    }
+
+    /**
+     * Retrieves a map containing error messages related to data integrity violations.
+     *
+     * @param ex the exception that caused the data integrity violation
+     * @return a map where the keys represent message identifiers and the values are
+     *         corresponding error messages related to the data integrity violation
+     */
+    public static Map<String, String> getConflictMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.data.integrity.violation.default");
+    }
+
+    /**
+     * Generates a timeout error message based on the given exception.
+     *
+     * @param ex the exception that triggered the timeout error message generation
+     * @return a map containing the key and message for the timeout error
+     */
+    public static Map<String, String> getTimeoutMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.timeout.default");
+    }
+
+    /**
+     * Retrieves an error message map for HTTP Media Type Not Acceptable exceptions.
+     *
+     * @param ex the exception that was thrown due to an unacceptable media type
+     * @return a map containing the error message key and its corresponding default message
+     */
+    public static Map<String, String> getHttpMediaTypeNotAcceptableException(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.media.type.not.acceptable.default");
+    }
+
+    /**
+     * Handles exceptions related to unsupported HTTP media types by extracting and returning
+     * a map of error messages.
+     *
+     * @param ex the exception that was thrown due to an unsupported HTTP media type
+     * @return a map containing the error message corresponding to the unsupported media type
+     */
+    public static Map<String, String> getHttpMediaTypeNotSupportedException(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.media.type.not.supported.default");
     }
 
     /**
@@ -120,7 +198,7 @@ public class ExceptionHandlerMessageHelper {
                 .stream()
                 .collect(Collectors.toMap(
                         error -> getFieldName(notValidEx, error.getField()),
-                        ExceptionHandlerMessageHelper::getErrorMessage,
+                        ExceptionHandlerMessageHelper::getFieldErrorMessage,
                         ExceptionHandlerMessageHelper::mergeErrorMessages
                 ));
     }
@@ -141,7 +219,7 @@ public class ExceptionHandlerMessageHelper {
         return originalFieldName;
     }
 
-    private static String getErrorMessage(FieldError error) {
+    private static String getFieldErrorMessage(FieldError error) {
         return error.getDefaultMessage() != null
                 ? error.getDefaultMessage()
                 : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
@@ -149,10 +227,36 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
         Throwable rootCause = httpEx.getRootCause();
-        if (rootCause != null && rootCause.getMessage() != null && rootCause instanceof BusinessException) {
+        if (rootCause instanceof BusinessException && rootCause.getMessage() != null) {
             return Map.of(MESSAGE_KEY, rootCause.getMessage());
+        } else if (rootCause instanceof JsonMappingException jsonMappingException) {
+            String fieldName = jsonMappingException.getPath().stream()
+                    .map(JsonMappingException.Reference::getFieldName)
+                    .collect(Collectors.joining("."));
+
+            Optional<String> targetTypeOptional = extractTargetType(jsonMappingException);
+
+            if (targetTypeOptional.isPresent()) {
+                return Map.of(fieldName,
+                        MessageUtils.getMessage("msg.exception.handler.invalid.deserialize",
+                                targetTypeOptional.get()));
+            }
+
         }
         return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.json.malformed"));
+    }
+
+    private static Optional<String> extractTargetType(JsonMappingException jsonMappingException) {
+        Matcher matcher = TYPE_PATTERN_MESSAGE_EXCEPTION.matcher(jsonMappingException.getOriginalMessage());
+        return matcher.find() ? extractSimpleName(matcher.group(1)) : Optional.empty();
+    }
+
+    private static Optional<String> extractSimpleName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
+        return Optional.of(simpleName);
     }
 
     private static Map<String, String> getMissingServletRequestParameterMessage(
@@ -275,7 +379,7 @@ public class ExceptionHandlerMessageHelper {
                 .orElse(param.getName());
     }
 
-    public static Map<String, String> getConstraintViolationMessage(ConstraintViolationException ex) {
+    private static Map<String, String> getConstraintViolationMessage(ConstraintViolationException ex) {
         Map<String, String> errors = new HashMap<>();
 
         for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
@@ -349,11 +453,17 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.unknown.bad.request.error");
+    }
+
+    private static Map<String, String> getErrorMessage(Exception ex, String defaultMessageValue) {
+        String message;
         if (ex != null && ex.getMessage() != null) {
-            return Map.of(MESSAGE_KEY, ex.getMessage());
+            message = ex.getMessage();
         } else {
-            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error"));
+            message = MessageUtils.getMessage(defaultMessageValue);
         }
+        return Map.of(MESSAGE_KEY, message);
     }
 
 }
