@@ -2,6 +2,7 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -226,7 +227,6 @@ class ExceptionHandlerMessageHelperTest {
         Throwable mockRootCause = mock(Throwable.class);
 
         when(mockException.getRootCause()).thenReturn(mockRootCause);
-        when(mockRootCause.getMessage()).thenReturn(null);
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
@@ -255,10 +255,111 @@ class ExceptionHandlerMessageHelperTest {
 
         // Arrange
         HttpMessageNotReadableException mockException = mock(HttpMessageNotReadableException.class);
-        Throwable mockRootCause = mock(Throwable.class);
+        Throwable mockRootCause = new Exception("Some error message");
 
         when(mockException.getRootCause()).thenReturn(mockRootCause);
-        when(mockRootCause.getMessage()).thenReturn("Some error message");
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
+
+        // Assert
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the malformed JSON request message is returned correctly " +
+                        "for the locale " + languageTag + " when root cause is a non-BusinessException.");
+    }
+
+    @Order(8)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with BusinessException root cause")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Mensagem de erro do BusinessException",
+            "en_US|Business exception error message"
+    }, delimiter = CSV_DELIMITER)
+    void getNotReadableMessage_WithBusinessExceptionRootCause2(String languageTag, String expectedMessage) {
+
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        HttpMessageNotReadableException mockException = mock(HttpMessageNotReadableException.class);
+        BusinessException mockRootCause = mock(BusinessException.class);
+
+        when(mockException.getRootCause()).thenReturn(mockRootCause);
+        when(mockRootCause.getMessage()).thenReturn(expectedMessage);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
+
+        // Assert
+        assertEquals(expectedMessage, result.get("message"),
+                "Checks if the BusinessException message is returned correctly " +
+                        "for the locale " + languageTag + ".");
+    }
+
+    @Order(9)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with JsonMappingException root cause")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedField={1} | targetType={2} | expectedMessage={3}")
+    @CsvSource(value = {
+            "pt_BR|field1.field2|TipoDestino|Espera-se um valor do tipo TipoDestino.",
+            "en_US|field1.field2|DestinationType|A value of type DestinationType is expected."
+    }, delimiter = CSV_DELIMITER)
+    void getNotReadableMessage_WithJsonMappingExceptionRootCause(String languageTag,
+                                                                 String expectedField,
+                                                                 String targetType,
+                                                                 String expectedMessage) {
+
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        HttpMessageNotReadableException mockException = mock(HttpMessageNotReadableException.class);
+        JsonMappingException mockRootCause = mock(JsonMappingException.class);
+        JsonMappingException.Reference ref1 = mock(JsonMappingException.Reference.class);
+        JsonMappingException.Reference ref2 = mock(JsonMappingException.Reference.class);
+
+        when(ref1.getFieldName()).thenReturn("field1");
+        when(ref2.getFieldName()).thenReturn("field2");
+        when(mockRootCause.getPath()).thenReturn(Arrays.asList(ref1, ref2));
+
+        String originalMessage = "Cannot deserialize value of type `" + targetType + "` something else";
+        when(mockRootCause.getOriginalMessage()).thenReturn(originalMessage);
+
+        when(mockException.getRootCause()).thenReturn(mockRootCause);
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
+
+        // Assert
+        assertEquals(expectedMessage, result.get(expectedField),
+                "Checks if the deserialization error message is returned correctly " +
+                        "for the locale " + languageTag + ".");
+    }
+
+    @Order(10)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with JsonMappingException resulting in malformed JSON message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Requisição JSON malformada.",
+            "en_US|Malformed JSON request."
+    }, delimiter = CSV_DELIMITER)
+    void getNotReadableMessage_WithJsonMappingExceptionAndMalformedJson(String languageTag, String expectedMessage) {
+
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        HttpMessageNotReadableException mockException = mock(HttpMessageNotReadableException.class);
+        JsonMappingException mockRootCause = mock(JsonMappingException.class);
+        JsonMappingException.Reference ref1 = mock(JsonMappingException.Reference.class);
+        JsonMappingException.Reference ref2 = mock(JsonMappingException.Reference.class);
+
+        when(ref1.getFieldName()).thenReturn("field1");
+        when(ref2.getFieldName()).thenReturn("field2");
+        when(mockRootCause.getPath()).thenReturn(Arrays.asList(ref1, ref2));
+
+        when(mockRootCause.getOriginalMessage()).thenReturn("Cannot deserialize value of type ``");
+
+        when(mockException.getRootCause()).thenReturn(mockRootCause);
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(mockException);
@@ -1085,7 +1186,7 @@ class ExceptionHandlerMessageHelperTest {
 
     /**
      * Method test for
-     * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(HttpRequestMethodNotSupportedException)}
+     * {@link ExceptionHandlerMessageHelper#getMethodNotAllowedMessage(Exception)}
      */
     @Order(27)
     @Tag(value = GET_METHOD_ALLOWED_MESSAGE)
