@@ -49,21 +49,21 @@ class GlobalExceptionHandlerTest {
 
     private static final String GET_INTERNAL_SERVER_ERROR_MESSAGE = "handleGlobalException";
 
-    public static final String HANDLE_FEIGN_CLIENT_EXCEPTION = "handleFeignClientException";
+    private static final String HANDLE_FEIGN_CLIENT_EXCEPTION = "handleFeignClientException";
 
-    public static final String HANDLE_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION =
+    private static final String HANDLE_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION =
             "handleHttpMediaTypeNotSupportedException";
 
-    public static final String HANDLE_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION =
+    private static final String HANDLE_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION =
             "handleHttpMediaTypeNotAcceptableException";
 
-    public static final String HANDLE_TIMEOUT_EXCEPTION = "handleTimeoutException";
+    private static final String HANDLE_TIMEOUT_EXCEPTION = "handleTimeoutException";
 
-    public static final String HANDLE_CONFLICT_EXCEPTION = "handleConflictException";
+    private static final String HANDLE_CONFLICT_EXCEPTION = "handleConflictException";
 
-    public static final String HANDLE_FORBIDDEN_EXCEPTION = "handleForbiddenException";
+    private static final String HANDLE_FORBIDDEN_EXCEPTION = "handleForbiddenException";
 
-    public static final String HANDLE_UNAUTHORIZED_EXCEPTION = "handleUnauthorizedException";
+    private static final String HANDLE_UNAUTHORIZED_EXCEPTION = "handleUnauthorizedException";
 
     @InjectMocks
     private GlobalExceptionHandler exceptionHandler;
