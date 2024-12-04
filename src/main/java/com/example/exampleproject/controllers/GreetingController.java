@@ -4,9 +4,12 @@ import com.example.exampleproject.dto.request.TestPostRequest;
 import com.example.exampleproject.dto.response.TestPostResponse;
 import com.example.exampleproject.utils.DateUtils;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -14,18 +17,35 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Map;
 
+@Validated
 @RestController
 public class GreetingController {
 
     @GetMapping("/search")
     public TestPostResponse searchGreeting(@RequestParam(value = "nome")
                                            String name,
-                                           @RequestParam(value = "dataInicial", required = false)
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                           @RequestHeader(value = "dataInicial")
+                                           @DateTimeFormat(pattern = "dd/MM/yyyy")
                                            LocalDate initialDate,
                                            @RequestParam(value = "dataFinal", required = false)
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd")
-                                           LocalDate finalDate) {
+                                           @DateTimeFormat(pattern = "dd/MM/yyyy")
+                                           LocalDate finalDate,
+                                           @RequestParam(value = "dataLocalDataTempo")
+                                           @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm:ss")
+                                           LocalDateTime localDateTime,
+                                           @RequestParam(value = "zonaDataTempo")
+                                           ZonedDateTime zonedDateTime,
+                                           @RequestParam(value = "tempoLocal")
+                                           @DateTimeFormat(pattern = "HH:mm:ss")
+                                           LocalTime localTime,
+                                           @Min(value = 0)
+                                           @Max(value = Byte.MAX_VALUE)
+                                           @RequestParam(value = "idade")
+                                           Long age,
+                                           @DecimalMin(value = "0.0", inclusive = false)
+                                           @Digits(integer = 1, fraction = 2)
+                                           @RequestParam(value = "preco")
+                                           BigDecimal price) {
 
         DateUtils.checkDateRange(initialDate, "dataInicial", finalDate, "dataFinal");
 
