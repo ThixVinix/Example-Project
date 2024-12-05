@@ -749,7 +749,8 @@ class ExceptionHandlerMessageHelperTest {
                                                                                    String receivedValue,
                                                                                    String expectedDatePattern,
                                                                                    String expectedMessage,
-                                                                                   String annotationType) throws ClassNotFoundException {
+                                                                                   String annotationType)
+            throws ClassNotFoundException {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
@@ -1398,7 +1399,8 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(new Exception());
+        Map<String, String> result =
+                ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(new Exception());
 
         // Assert
         assertEquals(expectedMessage, result.get("message"),
@@ -1422,7 +1424,8 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(new Exception());
+        Map<String, String> result =
+                ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(new Exception());
 
         // Assert
         assertEquals(expectedMessage, result.get("message"),
