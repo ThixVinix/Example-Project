@@ -36,8 +36,8 @@ import java.util.concurrent.TimeoutException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
-                                                                         WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
+                                                                            WebRequest request) {
         log.error("Resource not found: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -52,8 +52,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(Exception ex,
-                                                                                      WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(Exception ex,
+                                                                                         WebRequest request) {
         log.error("HTTP request method not supported: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class,
             HandlerMethodValidationException.class,
             BindException.class})
-    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
         log.error("Unauthorized: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleForbiddenException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleForbiddenException(Exception ex, WebRequest request) {
         log.error("Access denied: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -122,8 +122,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConflictException(Exception ex,
-                                                                 WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleConflictException(Exception ex,
+                                                                    WebRequest request) {
         log.error("Conflict: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TimeoutException.class)
-    public ResponseEntity<ErrorResponse> handleTimeoutException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleTimeoutException(Exception ex, WebRequest request) {
         log.error("Request timed out: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -154,7 +154,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotAcceptableException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleHttpMediaTypeNotAcceptableException(Exception ex, WebRequest request) {
         log.error("Http Media Type Not Acceptable: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -169,7 +169,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(Exception ex, WebRequest request) {
         log.error("Http Media Type Not Supported: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -184,7 +184,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({Exception.class, Throwable.class})
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
@@ -199,7 +199,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FeignException.class)
-    public ResponseEntity<ErrorResponse> handleFeignClientException(FeignException e, WebRequest request) {
+    protected ResponseEntity<ErrorResponse> handleFeignClientException(FeignException e, WebRequest request) {
         String requestUri = request.getDescription(false);
         HttpStatus status = HttpStatus.resolve(e.status());
         int statusFeign = e.status();
