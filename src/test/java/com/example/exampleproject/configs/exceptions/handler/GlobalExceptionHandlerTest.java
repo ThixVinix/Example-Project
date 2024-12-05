@@ -420,7 +420,7 @@ class GlobalExceptionHandlerTest {
     @Order(11)
     @Tag(value = HANDLE_FEIGN_CLIENT_EXCEPTION)
     @DisplayName(HANDLE_FEIGN_CLIENT_EXCEPTION + " - When FeignException is thrown then handle accordingly")
-    @ParameterizedTest
+    @ParameterizedTest(name = "Test {index} => status={0} | expectedStatus={1} | expectedMessage={2}")
     @MethodSource("feignClientExceptionProvider")
     void testHandleFeignClientException(int status,
                                         HttpStatus expectedStatus,
