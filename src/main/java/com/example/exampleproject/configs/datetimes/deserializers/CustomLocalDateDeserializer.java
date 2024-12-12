@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.datetimes.deserializers;
 
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
+import com.example.exampleproject.utils.DateUtils;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -19,7 +20,7 @@ import java.time.format.DateTimeParseException;
 @Slf4j
 public class CustomLocalDateDeserializer extends JsonDeserializer<LocalDate> {
 
-    private static final String EXPECTED_FORMAT = "yyyy-MM-dd";
+    private static final String EXPECTED_FORMAT = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT;
 
     private final DateTimeFormatter formatter;
 
