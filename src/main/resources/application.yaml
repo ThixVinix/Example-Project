@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: "Example Project"
+  messages:
+    basename: "messages"
+    encoding: "UTF-8"
+  jackson:
+    time-zone: "UTC"
+
+api:
+  title: "Example Project"
+  description: "Example description for the project"
+  version: "1.0.0"
+
+server:
+  tomcat:
+    uri-encoding: "UTF-8"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs # Path to API docs endpoint
+  swagger-ui:
+    path: /swagger-ui.html # Custom path to Swagger UI
+    disable-swagger-default-url: true # Disables Default Swagger URL
+    operationsSorter: method # Organizes operations by method
+    tagsSorter: alpha # Arrange tags alphabetically
+    display-operation-id: true
+    tryItOutEnabled: true # Enable "Try it out" button
+    supportedSubmitMethods: [ "get", "post" ] # Sets supported HTTP methods in "Try it out"
+    csrf:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
