@@ -4,10 +4,17 @@ import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.*;
+
 import java.util.Date;
 
 @Slf4j
 public class DateUtils {
+
+    public static final String LOCAL_DATE_DESERIALIZER_FORMAT = "yyyy-MM-dd";
+    public static final String DATE_DESERIALIZER_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String LOCAL_DATE_TIME_DESERIALIZER_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String LOCAL_TIME_DESERIALIZER_FORMAT = "HH:mm:ss";
+    public static final String ZONED_DATE_TIME_DESERIALIZER_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
     private DateUtils() {
         throw new IllegalStateException("Utility class cannot be instantiated");
