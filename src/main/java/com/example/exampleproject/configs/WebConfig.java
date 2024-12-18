@@ -3,6 +3,7 @@ package com.example.exampleproject.configs;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -13,9 +14,6 @@ import java.util.Locale;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
-    private static final String ACCEPT_LANGUAGE_HEADER = "Accept-Language";
-    private static final Locale DEFAULT_LOCALE = new Locale.Builder().setLanguage("pt").setRegion("BR").build();
 
     @Bean
     public LocaleResolver localeResolver() {
@@ -28,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     private Locale resolveRequestedLocale(@NonNull HttpServletRequest request) {
-        String headerLang = request.getHeader(ACCEPT_LANGUAGE_HEADER);
+        String headerLang = request.getHeader(HttpHeaders.ACCEPT_LANGUAGE);
         Locale defaultLocale = getAdjustedDefaultLocale();
         return (headerLang == null || headerLang.isEmpty())
                 ? defaultLocale
@@ -38,7 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
     private Locale getAdjustedDefaultLocale() {
         Locale defaultLocale = Locale.getDefault();
         if (!defaultLocale.equals(Locale.US) && !defaultLocale.toLanguageTag().startsWith("en")) {
-            return DEFAULT_LOCALE;
+            return new Locale.Builder().setLanguage("pt").setRegion("BR").build();
         }
         return defaultLocale;
     }
