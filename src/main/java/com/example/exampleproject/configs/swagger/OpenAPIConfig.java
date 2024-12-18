@@ -43,7 +43,7 @@ public class OpenAPIConfig {
 
     @Bean
     public OpenApiCustomizer globalHeaderCustomizer() {
-        return openApi -> openApi.getPaths().forEach((path, pathItem) ->
+        return openApi -> openApi.getPaths().forEach((_, pathItem) ->
                 pathItem.readOperations().forEach(operation -> {
 
                     final String HEADER_LOCATION = "header";
