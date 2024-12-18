@@ -80,7 +80,7 @@ public record TestPostRequest(
         @Future
         @NotNull
         @JsonProperty(value = "dataDeValidade", required = true)
-        @Schema(description = "Data futura indicando a validade.", example = "2024-12-01",
+        @Schema(description = "Future date indicating validity.", example = "2024-12-01",
                 pattern = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT)
         LocalDate expirationDate,
 
