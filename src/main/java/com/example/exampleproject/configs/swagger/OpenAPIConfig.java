@@ -19,10 +19,6 @@ import java.util.stream.Collectors;
 @Configuration
 public class OpenAPIConfig {
 
-    private static final String PORTUGUESE_BRAZIL_LANGUAGE_TAG = "pt-BR";
-
-    private static final String ENGLISH_LANGUAGE_TAG = "en";
-
     @Value("${api.title}")
     private String apiTitle;
 
@@ -47,6 +43,8 @@ public class OpenAPIConfig {
                 pathItem.readOperations().forEach(operation -> {
 
                     final String HEADER_LOCATION = "header";
+                    final String PORTUGUESE_BRAZIL_LANGUAGE_TAG = "pt-BR";
+                    final String ENGLISH_LANGUAGE_TAG = "en";
 
                     List<Locale> supportedLanguages = List.of(
                             Locale.forLanguageTag(PORTUGUESE_BRAZIL_LANGUAGE_TAG),
