@@ -40,7 +40,7 @@ public class JacksonConfig {
      * <li>{@link LocalDate}</li>
      * <li>{@link LocalDateTime}</li>
      * <li>{@link ZonedDateTime}</li>
-     * <li<{@link LocalTime}
+     * <li>{@link LocalTime}</li>
      * <li>{@link Date}</li>
      * </ul>
      * The date and time formats are derived from predefined patterns and the project's time zone.
