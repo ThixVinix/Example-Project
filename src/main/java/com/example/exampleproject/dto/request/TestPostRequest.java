@@ -19,12 +19,12 @@ public record TestPostRequest(
 
         @JsonProperty("dataInicial")
         @Schema(description = "Start date of the period.", example = "2023-12-01 10:15:30",
-                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT)
+                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime initialDate,
 
         @JsonProperty("dataFinal")
         @Schema(description = "End date of the period.", example = "2023-12-31 18:00:00",
-                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT)
+                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime finalDate,
 
         @NotBlank
@@ -57,7 +57,7 @@ public record TestPostRequest(
         @Min(value = 0)
         @Max(value = Byte.MAX_VALUE)
         @JsonProperty(value = "idade", required = true)
-        @Schema(description = "Age of the applicant.", example = "34")
+        @Schema(description = "Age of the applicant.", example = "34", implementation = String.class)
         Byte age,
 
         @NotBlank
