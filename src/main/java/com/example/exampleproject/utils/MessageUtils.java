@@ -9,6 +9,13 @@ import jakarta.annotation.PostConstruct;
 
 import java.util.Locale;
 
+/**
+ * Utility class for retrieving localized messages using Spring's {@link MessageSource}.
+ * It supports message retrieval in different locales, including Brazilian Portuguese, English,
+ * and the locale derived from the current context.
+ * This class is designed as a singleton and initializes the static {@code MessageSource}
+ * during the application lifecycle.
+ */
 @Component
 public class MessageUtils {
 
