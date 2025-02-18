@@ -31,6 +31,8 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
 
+        boolean isValid = true;
+
         try {
             Object dateAValue = value.getClass().getMethod(dateAField).invoke(value);
             Object dateBValue = value.getClass().getMethod(dateBField).invoke(value);
@@ -43,31 +45,30 @@ public class DateRangeValidator implements ConstraintValidator<ValidDateRange, O
                 addConstraintViolationDateA(context,
                         MessageUtils.getMessage(
                                 "msg.validation.request.field.date.range.empty", dateAField, dateBField));
-                return false;
-            }
-
-            if (dateBValue == null) {
+                isValid = false;
+            } else if (dateBValue == null) {
                 addConstraintViolationDateB(context,
                         MessageUtils.getMessage(
                                 "msg.validation.request.field.date.range.empty", dateAField, dateBField));
-                return false;
+                isValid = false;
+            } else {
+                Instant instantA = DateUtils.toInstant(dateAValue);
+                Instant instantB = DateUtils.toInstant(dateBValue);
+
+                if (instantA.isAfter(instantB)) {
+                    addConstraintViolationDateA(context,
+                            MessageUtils.getMessage(
+                                    "msg.validation.request.field.date.range.invalid", dateAField, dateBField));
+                    isValid = false;
+                }
             }
 
-            Instant instantA = DateUtils.toInstant(dateAValue);
-            Instant instantB = DateUtils.toInstant(dateBValue);
-
-            if (instantA.isAfter(instantB)) {
-                addConstraintViolationDateA(context,
-                        MessageUtils.getMessage(
-                                "msg.validation.request.field.date.range.invalid", dateAField, dateBField));
-                return false;
-            }
-
-            return true;
         } catch (Exception e) {
             log.warn("Error validating date range: {}", e.getMessage(), e);
-            return false;
+            isValid = false;
         }
+
+        return isValid;
     }
 
     /**
