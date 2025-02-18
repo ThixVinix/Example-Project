@@ -34,6 +34,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
@@ -506,7 +507,17 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.resolve(e.status());
         int statusFeign = e.status();
 
-        String responseBody = e.responseBody().isPresent() ? e.responseBody().get().toString() : "No response body";
+        logFeignErrorDetails(e, requestUri, status);
+
+        if (statusFeign == -1 || Objects.isNull(status)) {
+            return this.handleGlobalException(e, request);
+        }
+
+        return getResponseByStatus(status, e, request);
+    }
+
+    private void logFeignErrorDetails(FeignException e, String requestUri, HttpStatus status) {
+        String responseBody = e.responseBody().map(Object::toString).orElse("No response body");
         String requestHeaders = e.request().headers().toString();
         String responseHeaders = e.responseHeaders().toString();
 
@@ -523,11 +534,9 @@ public class GlobalExceptionHandler {
                 requestHeaders,
                 responseHeaders,
                 responseBody);
+    }
 
-        if (statusFeign == -1) {
-            return this.handleGlobalException(e, request);
-        }
-
+    private ResponseEntity<ErrorResponse> getResponseByStatus(HttpStatus status, FeignException e, WebRequest request) {
         return switch (status) {
             case BAD_REQUEST -> this.handleBadRequestException(e, request);
             case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
@@ -538,7 +547,7 @@ public class GlobalExceptionHandler {
             case REQUEST_TIMEOUT -> this.handleTimeoutException(e, request);
             case CONFLICT -> this.handleConflictException(e, request);
             case UNSUPPORTED_MEDIA_TYPE -> this.handleHttpMediaTypeNotSupportedException(e, request);
-            case null, default -> this.handleGlobalException(e, request);
+            default -> this.handleGlobalException(e, request);
         };
     }
 }
