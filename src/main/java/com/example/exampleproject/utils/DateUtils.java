@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.*;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Slf4j
 public class DateUtils {
@@ -24,34 +25,43 @@ public class DateUtils {
      * Checks if the provided date range is valid, ensuring that both dates are not null and dateA is
      * not after dateB.
      *
-     * @param dateA the start date of the range; can be of type {@link LocalDate},
-     *              {@link LocalDateTime}, {@link ZonedDateTime}, or {@link Date}
+     * @param dateA     the start date of the range; can be of type {@link LocalDate},
+     *                  {@link LocalDateTime}, {@link ZonedDateTime}, or {@link Date}
      * @param dateAName the name of the start date field for use in error messages
-     * @param dateB the end date of the range; can be of type {@link LocalDate},
-     *              {@link LocalDateTime}, {@link ZonedDateTime}, or {@link Date}
+     * @param dateB     the end date of the range; can be of type {@link LocalDate},
+     *                  {@link LocalDateTime}, {@link ZonedDateTime}, or {@link Date}
      * @param dateBName the name of the end date field for use in error messages
      * @throws BusinessException if either dateA or dateB is null, or if dateA is after dateB
      */
     public static void checkDateRange(Object dateA, String dateAName, Object dateB, String dateBName) {
+        boolean bothDatesNull = Objects.isNull(dateA) && Objects.isNull(dateB);
+        boolean eitherDateNull = Objects.isNull(dateA) || Objects.isNull(dateB);
 
-        if (dateA == null && dateB == null) {
+        if (bothDatesNull) {
             return;
         }
 
-        if (dateA == null || dateB == null) {
-            throw new BusinessException(MessageUtils.getMessage(
-                    "msg.validation.request.field.date.range.empty", dateAName, dateBName));
+        if (eitherDateNull) {
+            throw new BusinessException(
+                    MessageUtils.getMessage("msg.validation.request.field.date.range.empty", dateAName, dateBName)
+            );
         }
 
+        validateDateRange(dateA, dateAName, dateB, dateBName);
+    }
+
+    private static void validateDateRange(Object dateA, String dateAName, Object dateB, String dateBName) {
         try {
             Instant instantA = toInstant(dateA);
             Instant instantB = toInstant(dateB);
 
             if (instantA.isAfter(instantB)) {
-                throw new BusinessException(MessageUtils.getMessage(
-                        "msg.validation.request.field.date.range.invalid", dateAName, dateBName));
+                throw new BusinessException(
+                        MessageUtils.getMessage(
+                                "msg.validation.request.field.date.range.invalid", dateAName, dateBName
+                        )
+                );
             }
-
         } catch (Exception e) {
             log.warn("Error validating date range: {}", e.getMessage(), e);
             throw new BusinessException(e.getMessage());
@@ -65,7 +75,7 @@ public class DateUtils {
      * @return the Instant representation of the date/time object
      * @throws IllegalArgumentException Unsupported date type
      */
-    public static Instant toInstant(Object dateObject) {
+    public static Instant toInstant(Object dateObject) throws IllegalArgumentException {
         ZoneId projectZoneId = ZoneUtils.getProjectZoneId();
         return switch (dateObject) {
             case LocalDate localDate -> localDate.atStartOfDay(projectZoneId).toInstant();
