@@ -26,6 +26,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -93,7 +94,7 @@ public class ExceptionHandlerMessageHelper {
         return Map.of(MESSAGE_KEY,
                 ex.getMessage() != null ?
                         ex.getMessage() :
-                        MessageUtils.getMessage("msg.exception.handler.unknown.exception.error"));
+                        MessageUtils.getMessage("msg.exception.handler.unknown.error"));
     }
 
     /**
@@ -121,7 +122,7 @@ public class ExceptionHandlerMessageHelper {
      *
      * @param ex the exception that caused the data integrity violation
      * @return a map where the keys represent message identifiers and the values are
-     *         corresponding error messages related to the data integrity violation
+     * corresponding error messages related to the data integrity violation
      */
     public static Map<String, String> getConflictMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.data.integrity.violation.default");
@@ -227,9 +228,12 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
         Throwable rootCause = httpEx.getRootCause();
+
         if (rootCause instanceof BusinessException && rootCause.getMessage() != null) {
             return Map.of(MESSAGE_KEY, rootCause.getMessage());
-        } else if (rootCause instanceof JsonMappingException jsonMappingException) {
+        }
+
+        if (rootCause instanceof JsonMappingException jsonMappingException) {
             String fieldName = jsonMappingException.getPath().stream()
                     .map(JsonMappingException.Reference::getFieldName)
                     .collect(Collectors.joining("."));
@@ -241,8 +245,8 @@ public class ExceptionHandlerMessageHelper {
                         MessageUtils.getMessage("msg.exception.handler.invalid.deserialize",
                                 targetTypeOptional.get()));
             }
-
         }
+
         return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.json.malformed"));
     }
 
@@ -252,7 +256,7 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Optional<String> extractSimpleName(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) {
+        if (Objects.isNull(fullName) || fullName.trim().isEmpty()) {
             return Optional.empty();
         }
         String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
@@ -271,8 +275,7 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
-
-        Optional<Parameter> parameter = searchParameter(mismatchEx);
+        Optional<Parameter> parameterOptional = searchParameter(mismatchEx);
 
         String expectedTypeName =
                 Optional.ofNullable(mismatchEx.getRequiredType())
@@ -289,27 +292,31 @@ public class ExceptionHandlerMessageHelper {
                  ZONED_DATE_TIME_TYPE,
                  LOCAL_TIME_TYPE,
                  DATE_TYPE -> getDateTimeMismatchMessage(
-                    mismatchEx, expectedTypeName, parameter.orElse(null));
+                    mismatchEx, expectedTypeName, parameterOptional.orElse(null));
             default -> getDefaultMismatchMessage(mismatchEx, expectedTypeName);
         };
     }
 
-    private static Optional<Parameter> searchParameter(
-            MethodArgumentTypeMismatchException mismatchEx) {
+    private static Optional<Parameter> searchParameter(MethodArgumentTypeMismatchException mismatchEx) {
         try {
             Method method = mismatchEx.getParameter().getMethod();
-            if (method != null) {
-                for (Parameter param : method.getParameters()) {
-                    if (containsRequestTypeAnnotation(mismatchEx, param)) {
-                        return Optional.of(param);
-                    }
-                }
+            if (Objects.isNull(method)) {
+                return Optional.empty();
             }
+            return findMatchingParameter(mismatchEx, method);
         } catch (Exception e) {
             log.warn("Error when trying to recover request type. {}", e.getMessage());
+            return Optional.empty();
         }
-        return Optional.empty();
     }
+
+    private static Optional<Parameter> findMatchingParameter(
+            MethodArgumentTypeMismatchException mismatchEx, Method method) {
+        return Arrays.stream(method.getParameters())
+                .filter(param -> containsRequestTypeAnnotation(mismatchEx, param))
+                .findFirst();
+    }
+
 
     private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
                                                                   String expectTypeName,
@@ -396,20 +403,33 @@ public class ExceptionHandlerMessageHelper {
 
     private static String getParameterName(ConstraintViolation<?> violation) {
         try {
-            Object rootBean = violation.getRootBean();
-            String[] propertyPathSegments = violation.getPropertyPath().toString().split("\\.");
-            String rootMethodName = propertyPathSegments[0];
-            Method matchedMethod = findMethodByName(rootBean, rootMethodName);
-            if (matchedMethod != null) {
-                for (Parameter parameter : matchedMethod.getParameters()) {
-                    if (violation.getPropertyPath().toString().contains(parameter.getName())) {
-                        return getParamName(parameter);
-                    }
-                }
-            }
+            return findParameterNameInMethod(violation).orElseGet(() -> getLastSegmentFromPropertyPath(violation));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            return getLastSegmentFromPropertyPath(violation);
         }
+    }
+
+    private static Optional<String> findParameterNameInMethod(ConstraintViolation<?> violation) {
+        Object rootBean = violation.getRootBean();
+        String rootMethodName = getRootMethodName(violation);
+        Method matchedMethod = findMethodByName(rootBean, rootMethodName);
+
+        if (Objects.isNull(matchedMethod)) {
+            return Optional.empty();
+        }
+
+        return Arrays.stream(matchedMethod.getParameters())
+                .map(Parameter::getName)
+                .filter(name -> violation.getPropertyPath().toString().contains(name))
+                .findFirst();
+    }
+
+    private static String getRootMethodName(ConstraintViolation<?> violation) {
+        return violation.getPropertyPath().toString().split("\\.")[0];
+    }
+
+    private static String getLastSegmentFromPropertyPath(ConstraintViolation<?> violation) {
         String[] fieldParts = violation.getPropertyPath().toString().split("\\.");
         return fieldParts[fieldParts.length - 1];
     }
@@ -434,14 +454,21 @@ public class ExceptionHandlerMessageHelper {
 
     private static Optional<String> getAnnotationValue(Parameter param, Class<? extends Annotation> annotationClass) {
         Annotation annotation = param.getAnnotation(annotationClass);
-        if (annotation instanceof RequestParam requestParam) {
-            return Optional.of(requestParam.value().trim().isEmpty() ? param.getName() : requestParam.value().trim());
-        } else if (annotation instanceof RequestHeader requestHeader) {
-            return Optional.of(requestHeader.value().trim().isEmpty() ? param.getName() : requestHeader.value().trim());
-        } else if (annotation instanceof PathVariable requestPath) {
-            return Optional.of(requestPath.value().trim().isEmpty() ? param.getName() : requestPath.value().trim());
+
+        if (Objects.isNull(annotation)) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        return switch (annotation) {
+            case RequestParam requestParam -> Optional.of(requestParam.value().trim().isEmpty() ?
+                    param.getName() : requestParam.value().trim());
+            case RequestHeader requestHeader -> Optional.of(requestHeader.value().trim().isEmpty() ?
+                    param.getName() : requestHeader.value().trim());
+            case PathVariable requestPath -> Optional.of(requestPath.value().trim().isEmpty() ?
+                    param.getName() : requestPath.value().trim());
+            default -> Optional.empty();
+        };
+
     }
 
     private static Map<String, String> getHandlerMethodValidationMessage(HandlerMethodValidationException ex) {
@@ -458,7 +485,7 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getErrorMessage(Exception ex, String defaultMessageValue) {
         String message;
-        if (ex != null && ex.getMessage() != null) {
+        if (Objects.nonNull(ex) && Objects.nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
             message = MessageUtils.getMessage(defaultMessageValue);
