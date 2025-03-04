@@ -91,10 +91,7 @@ public class ExceptionHandlerMessageHelper {
      * @return a map containing the error message with a specific key
      */
     public static Map<String, String> getInternalServerErrorMessage(Exception ex) {
-        return Map.of(MESSAGE_KEY,
-                ex.getMessage() != null ?
-                        ex.getMessage() :
-                        MessageUtils.getMessage("msg.exception.handler.unknown.error"));
+        return getErrorMessage(ex, "msg.exception.handler.unknown.error");
     }
 
     /**
