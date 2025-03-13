@@ -29,7 +29,7 @@ springdoc:
     tagsSorter: alpha # Arrange tags alphabetically
     display-operation-id: true
     display-request-duration: true
-    tryItOutEnabled: true # Enable "Try it out" button
+    tryItOutEnabled: false # Enable "Try it out" button
     supportedSubmitMethods: [ "get", "post" ] # Sets supported HTTP methods in "Try it out"
     csrf:
       enabled: true
