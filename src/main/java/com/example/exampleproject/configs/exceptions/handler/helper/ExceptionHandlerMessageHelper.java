@@ -58,10 +58,11 @@ public class ExceptionHandlerMessageHelper {
     private static final String DATE_TYPE = "Date";
 
     /**
-     * Generates a not found message based on the provided exception.
+     * Generates an appropriate "not found" message based on the provided exception.
      *
-     * @param ex the exception that occurred
-     * @return a map containing a not found message
+     * @param ex The exception for which the "not found" message should be generated.
+     *           Typically used to determine the specific type of not found error.
+     * @return A localized message indicating the resource was not found, based on the exception type.
      */
     public static String getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException) {
@@ -72,10 +73,11 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
-     * Generates a method not allowed message based on the given exception.
+     * Retrieves a formatted message indicating that the HTTP request method is not allowed.
      *
-     * @param ex the HttpRequestMethodNotSupportedException containing the unsupported method information
-     * @return a map containing the method not allowed message
+     * @param ex The exception representing the HTTP method not supported error.
+     *           It must be an instance of {@link HttpRequestMethodNotSupportedException}.
+     * @return A localized error message describing the unsupported HTTP method.
      */
     public static String getMethodNotAllowedMessage(Exception ex) {
         HttpRequestMethodNotSupportedException methodNotSupportedEx = (HttpRequestMethodNotSupportedException) ex;
@@ -84,72 +86,72 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
-     * Generates an internal server error message based on the provided exception.
+     * Retrieves a generic internal server error message for the given exception.
      *
-     * @param ex the exception from which the error message will be generated
-     * @return a map containing the error message with a specific key
+     * @param ex The exception that triggered the error.
+     * @return A localized error message indicating an unknown internal server error.
      */
     public static String getInternalServerErrorMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unknown.error");
     }
 
     /**
-     * Retrieves an unauthorized error message based on the provided exception.
+     * Retrieves a default unauthorized error message associated with the given exception.
      *
-     * @param ex The exception that triggered the unauthorized state.
-     * @return A map containing the unauthorized error message details.
+     * @param ex The exception for which the unauthorized error message is to be retrieved.
+     * @return A string containing the default unauthorized error message.
      */
     public static String getUnauthorizedMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unauthorized.default");
     }
 
     /**
-     * Constructs a forbidden message by utilizing the provided exception and a default access denied message key.
+     * Returns a default forbidden message for a given exception by utilizing a
+     * predefined error message key.
      *
-     * @param ex the exception that triggered the forbidden condition
-     * @return a map containing the forbidden message details, keyed by relevant components such as message identifiers
+     * @param ex The exception that triggered the forbidden message.
+     * @return A string containing the default forbidden message associated with the exception.
      */
     public static String getForbiddenMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.access.denied.default");
     }
 
     /**
-     * Retrieves a map containing error messages related to data integrity violations.
+     * Generates a conflict message based on the provided exception and a default message key.
      *
-     * @param ex the exception that caused the data integrity violation
-     * @return a map where the keys represent message identifiers and the values are
-     * corresponding error messages related to the data integrity violation
+     * @param ex The exception that caused the conflict.
+     * @return A string describing the conflict message using the exception details and a default message key.
      */
     public static String getConflictMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.data.integrity.violation.default");
     }
 
     /**
-     * Generates a timeout error message based on the given exception.
+     * Generates a timeout message based on the provided exception.
      *
-     * @param ex the exception that triggered the timeout error message generation
-     * @return a map containing the key and message for the timeout error
+     * @param ex The exception instance used to generate the timeout message.
+     * @return A string containing the timeout message derived from the exception.
      */
     public static String getTimeoutMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.timeout.default");
     }
 
     /**
-     * Retrieves an error message map for HTTP Media Type Not Acceptable exceptions.
+     * Retrieves a formatted error message for the "HTTP Media Type Not Acceptable" exception.
      *
-     * @param ex the exception that was thrown due to an unacceptable media type
-     * @return a map containing the error message key and its corresponding default message
+     * @param ex The exception object triggering the error message retrieval.
+     * @return A string containing the formatted error message associated
+     * with the "HTTP Media Type Not Acceptable" error.
      */
     public static String getHttpMediaTypeNotAcceptableException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.acceptable.default");
     }
 
     /**
-     * Handles exceptions related to unsupported HTTP media types by extracting and returning
-     * a map of error messages.
+     * Generates an error message for HTTP Media Type Not Supported Exception.
      *
-     * @param ex the exception that was thrown due to an unsupported HTTP media type
-     * @return a map containing the error message corresponding to the unsupported media type
+     * @param ex The exception instance that contains details about the media type not supported error.
+     * @return A formatted error message for the given exception.
      */
     public static String getHttpMediaTypeNotSupportedException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.supported.default");
