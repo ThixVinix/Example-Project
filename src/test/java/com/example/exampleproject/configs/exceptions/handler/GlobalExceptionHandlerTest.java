@@ -1,7 +1,8 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
 
-import com.example.exampleproject.configs.exceptions.ErrorResponse;
+import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
+import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
 import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolationException;
 import com.example.exampleproject.configs.exceptions.custom.UnauthorizedException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
@@ -65,6 +66,9 @@ class GlobalExceptionHandlerTest {
 
     private static final String HANDLE_UNAUTHORIZED_EXCEPTION = "handleUnauthorizedException";
 
+    record HandlerConfig(Function<FeignException, ?> function, boolean returnsString) {
+    }
+
     @InjectMocks
     private GlobalExceptionHandler exceptionHandler;
 
@@ -84,22 +88,22 @@ class GlobalExceptionHandlerTest {
 
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom not found message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getNotFoundMessage(ex)).thenReturn(mockMessages);
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            mockedStatic
+                    .when(() -> ExceptionHandlerMessageHelper.getNotFoundMessage(ex))
+                    .thenReturn("Custom not found message");
+
+            ResponseEntity<ErrorSingleResponse> responseEntity =
                     exceptionHandler.handleResourceNotFoundException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
 
-            ErrorResponse errorResponse = responseEntity.getBody();
+            ErrorSingleResponse errorResponse = responseEntity.getBody();
             assertNotNull(errorResponse);
             assertEquals(HttpStatus.NOT_FOUND.value(), errorResponse.status());
-            assertEquals("Custom not found message", errorResponse.messages().get("error"));
+            assertEquals("Custom not found message", errorResponse.message());
             assertEquals(HttpStatus.NOT_FOUND.getReasonPhrase(), errorResponse.error());
             assertEquals("/test/path", errorResponse.path());
             assertNotNull(errorResponse.timestamp());
@@ -122,26 +126,25 @@ class GlobalExceptionHandlerTest {
 
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("message", "Custom method not allowed message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() ->
-                    ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex)).thenReturn(mockMessages);
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            mockedStatic.when(() ->
+                            ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex))
+                    .thenReturn("Custom method not allowed message");
+
+            ResponseEntity<ErrorSingleResponse> responseEntity =
                     exceptionHandler.handleHttpRequestMethodNotSupportedException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.METHOD_NOT_ALLOWED, responseEntity.getStatusCode());
 
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.value(), errorResponse.status());
-            assertEquals("Custom method not allowed message", errorResponse.messages().get("message"));
-            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.value(), errorSingleResponse.status());
+            assertEquals("Custom method not allowed message", errorSingleResponse.message());
+            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase(), errorSingleResponse.error());
+            assertEquals("/test/path", errorSingleResponse.path());
+            assertNotNull(errorSingleResponse.timestamp());
         }
     }
 
@@ -167,19 +170,19 @@ class GlobalExceptionHandlerTest {
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
             mockedStatic.when(() -> ExceptionHandlerMessageHelper.getBadRequestMessage(ex)).thenReturn(mockMessages);
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            ResponseEntity<ErrorMultipleResponse> responseEntity =
                     exceptionHandler.handleBadRequestException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
 
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.BAD_REQUEST.value(), errorResponse.status());
-            assertEquals("Custom bad request message", errorResponse.messages().get("fieldOne"));
-            assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
+            ErrorMultipleResponse errorMultipleResponse = responseEntity.getBody();
+            assertNotNull(errorMultipleResponse);
+            assertEquals(HttpStatus.BAD_REQUEST.value(), errorMultipleResponse.status());
+            assertEquals("Custom bad request message", errorMultipleResponse.messages().get("fieldOne"));
+            assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), errorMultipleResponse.error());
+            assertEquals("/test/path", errorMultipleResponse.path());
+            assertNotNull(errorMultipleResponse.timestamp());
         }
     }
 
@@ -199,26 +202,24 @@ class GlobalExceptionHandlerTest {
 
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom internal server error message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
             mockedStatic.when(() ->
-                    ExceptionHandlerMessageHelper.getInternalServerErrorMessage(ex)).thenReturn(mockMessages);
+                            ExceptionHandlerMessageHelper.getInternalServerErrorMessage(ex))
+                    .thenReturn("Custom internal server error message");
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            ResponseEntity<ErrorSingleResponse> responseEntity =
                     exceptionHandler.handleGlobalException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
 
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), errorResponse.status());
-            assertEquals("Custom internal server error message", errorResponse.messages().get("error"));
-            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), errorSingleResponse.status());
+            assertEquals("Custom internal server error message", errorSingleResponse.message());
+            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), errorSingleResponse.error());
+            assertEquals("/test/path", errorSingleResponse.path());
+            assertNotNull(errorSingleResponse.timestamp());
         }
     }
 
@@ -236,20 +237,18 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom unauthorized message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getUnauthorizedMessage(ex)).thenReturn(mockMessages);
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getUnauthorizedMessage(ex))
+                    .thenReturn("Custom unauthorized message");
 
-            ResponseEntity<ErrorResponse> responseEntity = exceptionHandler.handleUnauthorizedException(ex, request);
+            ResponseEntity<ErrorSingleResponse> responseEntity = exceptionHandler.handleUnauthorizedException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.UNAUTHORIZED.value(), errorResponse.status());
-            assertEquals("Custom unauthorized message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.UNAUTHORIZED.value(), errorSingleResponse.status());
+            assertEquals("Custom unauthorized message", errorSingleResponse.message());
         }
     }
 
@@ -267,20 +266,18 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom forbidden message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getForbiddenMessage(ex)).thenReturn(mockMessages);
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getForbiddenMessage(ex))
+                    .thenReturn("Custom forbidden message");
 
-            ResponseEntity<ErrorResponse> responseEntity = exceptionHandler.handleForbiddenException(ex, request);
+            ResponseEntity<ErrorSingleResponse> responseEntity = exceptionHandler.handleForbiddenException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.FORBIDDEN, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.FORBIDDEN.value(), errorResponse.status());
-            assertEquals("Custom forbidden message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.FORBIDDEN.value(), errorSingleResponse.status());
+            assertEquals("Custom forbidden message", errorSingleResponse.message());
         }
     }
 
@@ -298,20 +295,18 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom conflict message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getConflictMessage(ex)).thenReturn(mockMessages);
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getConflictMessage(ex))
+                    .thenReturn("Custom conflict message");
 
-            ResponseEntity<ErrorResponse> responseEntity = exceptionHandler.handleConflictException(ex, request);
+            ResponseEntity<ErrorSingleResponse> responseEntity = exceptionHandler.handleConflictException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.CONFLICT.value(), errorResponse.status());
-            assertEquals("Custom conflict message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.CONFLICT.value(), errorSingleResponse.status());
+            assertEquals("Custom conflict message", errorSingleResponse.message());
         }
     }
 
@@ -328,20 +323,18 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom timeout message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getTimeoutMessage(ex)).thenReturn(mockMessages);
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getTimeoutMessage(ex))
+                    .thenReturn("Custom timeout message");
 
-            ResponseEntity<ErrorResponse> responseEntity = exceptionHandler.handleTimeoutException(ex, request);
+            ResponseEntity<ErrorSingleResponse> responseEntity = exceptionHandler.handleTimeoutException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.REQUEST_TIMEOUT, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.REQUEST_TIMEOUT.value(), errorResponse.status());
-            assertEquals("Custom timeout message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.REQUEST_TIMEOUT.value(), errorSingleResponse.status());
+            assertEquals("Custom timeout message", errorSingleResponse.message());
         }
     }
 
@@ -360,22 +353,20 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom not acceptable message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
             mockedStatic.when(() ->
-                    ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(ex)).thenReturn(mockMessages);
+                            ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(ex))
+                    .thenReturn("Custom not acceptable message");
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            ResponseEntity<ErrorSingleResponse> responseEntity =
                     exceptionHandler.handleHttpMediaTypeNotAcceptableException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.NOT_ACCEPTABLE, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.NOT_ACCEPTABLE.value(), errorResponse.status());
-            assertEquals("Custom not acceptable message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.NOT_ACCEPTABLE.value(), errorSingleResponse.status());
+            assertEquals("Custom not acceptable message", errorSingleResponse.message());
         }
     }
 
@@ -394,22 +385,20 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", "Custom unsupported media type message");
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
             mockedStatic.when(() ->
-                    ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(ex)).thenReturn(mockMessages);
+                            ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(ex))
+                    .thenReturn("Custom unsupported media type message");
 
-            ResponseEntity<ErrorResponse> responseEntity =
+            ResponseEntity<ErrorSingleResponse> responseEntity =
                     exceptionHandler.handleHttpMediaTypeNotSupportedException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), errorResponse.status());
-            assertEquals("Custom unsupported media type message", errorResponse.messages().get("error"));
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), errorSingleResponse.status());
+            assertEquals("Custom unsupported media type message", errorSingleResponse.message());
         }
     }
 
@@ -425,7 +414,7 @@ class GlobalExceptionHandlerTest {
     void testHandleFeignClientException(int status,
                                         HttpStatus expectedStatus,
                                         String expectedMessage,
-                                        Function<FeignException, Map<String, String>> messageFunction) {
+                                        HandlerConfig handlerConfig) {
 
         FeignException ex = mock(FeignException.class);
         when(ex.status()).thenReturn(status);
@@ -438,59 +427,68 @@ class GlobalExceptionHandlerTest {
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
-        Map<String, String> mockMessages = new HashMap<>();
-        mockMessages.put("error", expectedMessage);
-
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> messageFunction.apply(ex)).thenReturn(mockMessages);
+            Function<FeignException, ?> messageFunction = handlerConfig.function();
 
-            ResponseEntity<ErrorResponse> responseEntity = exceptionHandler.handleFeignClientException(ex, request);
+            if (handlerConfig.returnsString()) {
+                mockedStatic.when(() -> messageFunction.apply(ex)).thenReturn(expectedMessage);
+            } else {
+                Map<String, String> mockMessages = new HashMap<>();
+                mockMessages.put("error", expectedMessage);
+                mockedStatic.when(() -> messageFunction.apply(ex)).thenReturn(mockMessages);
+            }
+
+            ResponseEntity<?> responseEntity = exceptionHandler.handleFeignClientException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(expectedStatus, responseEntity.getStatusCode());
-            ErrorResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(expectedStatus.value(), errorResponse.status());
-            assertEquals(expectedMessage, errorResponse.messages().get("error"));
+
+            Object responseBody = responseEntity.getBody();
+            assertNotNull(responseBody);
+
+            if (responseBody instanceof ErrorMultipleResponse errorMultipleResponse) {
+                assertEquals(expectedStatus.value(), errorMultipleResponse.status());
+                assertNotNull(errorMultipleResponse.messages());
+                assertEquals(expectedMessage, errorMultipleResponse.messages().get("error"));
+            } else if (responseBody instanceof ErrorSingleResponse errorSingleResponse) {
+                assertEquals(expectedStatus.value(), errorSingleResponse.status());
+                assertNotNull(errorSingleResponse.message());
+                assertEquals(expectedMessage, errorSingleResponse.message());
+            } else {
+                fail("Unexpected response body type");
+            }
         }
     }
+
 
     static Stream<Arguments> feignClientExceptionProvider() {
         return Stream.of(
                 Arguments.of(401, HttpStatus.UNAUTHORIZED, "Custom unauthorized message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getUnauthorizedMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getUnauthorizedMessage, true)),
                 Arguments.of(400, HttpStatus.BAD_REQUEST, "Custom bad request message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getBadRequestMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getBadRequestMessage, false)),
                 Arguments.of(404, HttpStatus.NOT_FOUND, "Custom not found message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getNotFoundMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getNotFoundMessage, true)),
                 Arguments.of(405, HttpStatus.METHOD_NOT_ALLOWED, "Custom method not allowed message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getMethodNotAllowedMessage, true)),
                 Arguments.of(403, HttpStatus.FORBIDDEN, "Custom forbidden message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getForbiddenMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getForbiddenMessage, true)),
                 Arguments.of(408, HttpStatus.REQUEST_TIMEOUT, "Custom timeout message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getTimeoutMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getTimeoutMessage, true)),
                 Arguments.of(409, HttpStatus.CONFLICT, "Custom conflict message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getConflictMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getConflictMessage, true)),
                 Arguments.of(-1, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message1",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getInternalServerErrorMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
                 Arguments.of(500, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message2",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getInternalServerErrorMessage),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
                 Arguments.of(406, HttpStatus.NOT_ACCEPTABLE, "Custom not acceptable message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException),
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException, true)),
                 Arguments.of(415, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Custom unsupported media type message",
-                        (Function<FeignException, Map<String, String>>)
-                                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException)
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true))
         );
     }
 
+
 }
+
+

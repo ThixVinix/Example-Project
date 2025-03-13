@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
-import com.example.exampleproject.configs.exceptions.ErrorResponse;
+import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
+import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolationException;
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Resource Not Found Example",
@@ -60,9 +61,7 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/resource/123",
                                                           "status": 404,
                                                           "error": "Not Found",
-                                                          "messages": {
-                                                            "message": "Resource with ID '123' was not found."
-                                                         }
+                                                          "message": "Resource with ID '123' was not found."
                                                         }
                                                     """
                                     )
@@ -71,15 +70,15 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
-    protected ResponseEntity<ErrorResponse> handleResourceNotFoundException(Exception ex,
-                                                                            WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleResourceNotFoundException(Exception ex,
+                                                                                  WebRequest request) {
         log.error("Resource not found: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getNotFoundMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getNotFoundMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
@@ -94,7 +93,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Method Not Allowed Example",
@@ -106,9 +105,7 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/resource",
                                                           "status": 405,
                                                           "error": "Method Not Allowed",
-                                                          "messages": {
-                                                            "message": "POST is not supported for this resource."
-                                                          }
+                                                          "message": "POST is not supported for this resource."
                                                         }
                                                     """
                                     )
@@ -117,19 +114,19 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    protected ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(Exception ex,
-                                                                                         WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleHttpRequestMethodNotSupportedException(Exception ex,
+                                                                                                 WebRequest request) {
         log.error("HTTP request method not supported: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .error(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.METHOD_NOT_ALLOWED);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
 
@@ -141,7 +138,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorMultipleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Bad Request Example",
@@ -172,10 +169,10 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class,
             HandlerMethodValidationException.class,
             BindException.class})
-    protected ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorMultipleResponse> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorMultipleResponse errorMultipleResponse = ErrorMultipleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
@@ -183,7 +180,7 @@ public class GlobalExceptionHandler {
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorMultipleResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ApiResponse(
@@ -194,7 +191,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Unauthorized Example",
@@ -206,9 +203,7 @@ public class GlobalExceptionHandler {
                                            "path": "/api/resource",
                                            "status": 401,
                                            "error": "Unauthorized",
-                                           "messages": {
-                                             "message": "Authentication failed due to missing or invalid credentials."
-                                           }
+                                           "message": "Authentication failed due to missing or invalid credentials."
                                          }
                                      """
                                     )
@@ -217,18 +212,18 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(UnauthorizedException.class)
-    protected ResponseEntity<ErrorResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
         log.error("Unauthorized: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error(HttpStatus.UNAUTHORIZED.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getUnauthorizedMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getUnauthorizedMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.UNAUTHORIZED);
     }
 
     @ApiResponse(
@@ -240,7 +235,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Forbidden Example",
@@ -251,10 +246,8 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/protected-resource",
                                                           "status": 403,
                                                           "error": "Forbidden",
-                                                          "messages": {
-                                                            "message": "Access denied. You do not have sufficient
-                                                             permissions to access this resource."
-                                                          }
+                                                          "message": "Access denied. You do not have sufficient
+                                                          permissions to access this resource."
                                                         }
                                                     """
                                     )
@@ -263,18 +256,18 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(AccessDeniedException.class)
-    protected ResponseEntity<ErrorResponse> handleForbiddenException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleForbiddenException(Exception ex, WebRequest request) {
         log.error("Access denied: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
                 .error(HttpStatus.FORBIDDEN.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getForbiddenMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getForbiddenMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.FORBIDDEN);
     }
 
     @ApiResponse(
@@ -286,7 +279,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Conflict Example",
@@ -297,9 +290,7 @@ public class GlobalExceptionHandler {
                                                     "path": "/api/resource",
                                                     "status": 409,
                                                     "error": "Conflict",
-                                                    "messages": {
-                                                      "message": "A resource with the identifier '123' already exists."
-                                                    }
+                                                    "message": "A resource with the identifier '123' already exists."
                                                   }
                                               """
                                     )
@@ -308,19 +299,19 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(DataIntegrityViolationException.class)
-    protected ResponseEntity<ErrorResponse> handleConflictException(Exception ex,
-                                                                    WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleConflictException(Exception ex,
+                                                                            WebRequest request) {
         log.error("Conflict: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
                 .error(HttpStatus.CONFLICT.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getConflictMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getConflictMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.CONFLICT);
     }
 
     @ApiResponse(responseCode = "408", description = "Request timed out. This occurs when the server couldn't " +
@@ -329,7 +320,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Request Timeout Example",
@@ -340,10 +331,8 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/resource",
                                                           "status": 408,
                                                           "error": "Request Timeout",
-                                                          "messages": {
-                                                            "message": "The server timed out waiting for the request
-                                                             to complete."
-                                                          }
+                                                          "message": "The server timed out waiting for the request
+                                                           to complete."
                                                         }
                                                     """
                                     )
@@ -352,18 +341,18 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(TimeoutException.class)
-    protected ResponseEntity<ErrorResponse> handleTimeoutException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
         log.error("Request timed out: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.REQUEST_TIMEOUT.value())
                 .error(HttpStatus.REQUEST_TIMEOUT.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getTimeoutMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getTimeoutMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.REQUEST_TIMEOUT);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.REQUEST_TIMEOUT);
     }
 
     @ApiResponse(responseCode = "406", description = "Not acceptable. This occurs when the 'Accept' header in the " +
@@ -372,7 +361,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Not Acceptable Example",
@@ -384,10 +373,8 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/resource",
                                                           "status": 406,
                                                           "error": "Not Acceptable",
-                                                          "messages": {
-                                                            "message": "The server cannot produce a response in the
+                                                          "message": "The server cannot produce a response in the
                                                              requested format: 'application/xml'."
-                                                          }
                                                         }
                                                     """
                                     )
@@ -396,19 +383,19 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    protected ResponseEntity<ErrorResponse> handleHttpMediaTypeNotAcceptableException(Exception ex,
-                                                                                      WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleHttpMediaTypeNotAcceptableException(Exception ex,
+                                                                                              WebRequest request) {
         log.error("Http Media Type Not Acceptable: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_ACCEPTABLE.value())
                 .error(HttpStatus.NOT_ACCEPTABLE.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(ex))
+                .message(ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_ACCEPTABLE);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.NOT_ACCEPTABLE);
     }
 
 
@@ -418,7 +405,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorMultipleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Unsupported Media Type Example",
@@ -430,10 +417,8 @@ public class GlobalExceptionHandler {
                                                           "path": "/api/resource",
                                                           "status": 415,
                                                           "error": "Unsupported Media Type",
-                                                          "messages": {
-                                                            "message": "The server does not support the media type
+                                                          "message": "The server does not support the media type
                                                              'application/xml' specified in the 'Content-Type' header."
-                                                          }
                                                         }
                                                     """
                                     )
@@ -442,18 +427,18 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    protected ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleHttpMediaTypeNotSupportedException(Exception ex, WebRequest request) {
         log.error("Http Media Type Not Supported: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value())
                 .error(HttpStatus.UNSUPPORTED_MEDIA_TYPE.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(ex))
+                .message(ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
     @ApiResponse(
@@ -464,7 +449,7 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Internal Server Error Example",
@@ -476,9 +461,7 @@ public class GlobalExceptionHandler {
                                              "path": "/api/resource",
                                              "status": 500,
                                              "error": "Internal Server Error",
-                                             "messages": {
-                                               "message": "An unexpected error occurred while processing the request."
-                                             }
+                                             "message": "An unexpected error occurred while processing the request."
                                            }
                                        """
                                     )
@@ -487,22 +470,22 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler({Exception.class, Throwable.class})
-    protected ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getInternalServerErrorMessage(ex))
+                .message(ExceptionHandlerMessageHelper.getInternalServerErrorMessage(ex))
                 .path(request.getDescription(Boolean.FALSE))
                 .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(FeignException.class)
-    protected ResponseEntity<ErrorResponse> handleFeignClientException(FeignException e, WebRequest request) {
+    protected ResponseEntity<?> handleFeignClientException(FeignException e, WebRequest request) {
         String requestUri = request.getDescription(false);
         HttpStatus status = HttpStatus.resolve(e.status());
         int statusFeign = e.status();
@@ -536,7 +519,7 @@ public class GlobalExceptionHandler {
                 responseBody);
     }
 
-    private ResponseEntity<ErrorResponse> getResponseByStatus(HttpStatus status, FeignException e, WebRequest request) {
+    private ResponseEntity<?> getResponseByStatus(HttpStatus status, FeignException e, WebRequest request) {
         return switch (status) {
             case BAD_REQUEST -> this.handleBadRequestException(e, request);
             case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
