@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.datetimes.serializers;
 
+import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -18,7 +19,7 @@ import java.util.TimeZone;
 @Slf4j
 public class CustomDateSerializer extends JsonSerializer<Date> {
 
-    private static final String EXPECTED_FORMAT = "dd/MM/yyyy";
+    private static final String EXPECTED_FORMAT = DateUtils.DATE_SERIALIZER_FORMAT;
 
     private final SimpleDateFormat formatter;
 

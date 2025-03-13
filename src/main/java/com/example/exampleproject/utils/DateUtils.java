@@ -8,11 +8,26 @@ import java.time.*;
 import java.util.Date;
 import java.util.Objects;
 
+/**
+ * Utility class providing methods and constants for handling date and time objects
+ * in various formats. This class contains methods to validate date ranges and
+ * convert between different types of date representations, as well as format specifications
+ * for serialization and deserialization purposes.
+ *
+ * <p>This class is not meant to be instantiated as all its methods are static.
+ * Attempting to instantiate this class will result in an {@link IllegalStateException}.
+ */
 @Slf4j
 public class DateUtils {
 
-    public static final String LOCAL_DATE_DESERIALIZER_FORMAT = "yyyy-MM-dd";
+    public static final String DATE_SERIALIZER_FORMAT = "dd/MM/yyyy";
+    public static final String LOCAL_DATE_SERIALIZER_FORMAT = "dd/MM/yyyy";
+    public static final String LOCAL_DATE_TIME_SERIALIZER_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    public static final String LOCAL_TIME_SERIALIZER_FORMAT = "HH:mm:ss";
+    public static final String ZONED_DATE_TIME_SERIALIZER_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
     public static final String DATE_DESERIALIZER_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String LOCAL_DATE_DESERIALIZER_FORMAT = "yyyy-MM-dd";
     public static final String LOCAL_DATE_TIME_DESERIALIZER_FORMAT = "yyyy-MM-dd HH:mm:ss";
     public static final String LOCAL_TIME_DESERIALIZER_FORMAT = "HH:mm:ss";
     public static final String ZONED_DATE_TIME_DESERIALIZER_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";

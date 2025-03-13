@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.datetimes.serializers;
 
 
+import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -18,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 public class CustomLocalDateSerializer extends JsonSerializer<LocalDate> {
 
-    private static final String EXPECTED_FORMAT = "dd/MM/yyyy";
+    private static final String EXPECTED_FORMAT = DateUtils.LOCAL_DATE_SERIALIZER_FORMAT;
 
     private final DateTimeFormatter formatter;
 

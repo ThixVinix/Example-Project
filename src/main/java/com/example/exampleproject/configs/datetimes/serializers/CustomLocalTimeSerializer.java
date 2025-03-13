@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.datetimes.serializers;
 
+import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -18,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 public class CustomLocalTimeSerializer extends JsonSerializer<LocalTime> {
 
-    private static final String EXPECTED_FORMAT = "HH:mm:ss";
+    private static final String EXPECTED_FORMAT = DateUtils.LOCAL_TIME_SERIALIZER_FORMAT;
     private final DateTimeFormatter formatter;
     private final ZoneId zoneId;
 

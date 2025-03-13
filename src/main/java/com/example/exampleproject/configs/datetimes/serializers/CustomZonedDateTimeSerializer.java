@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.datetimes.serializers;
 
+import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -19,7 +20,7 @@ import java.time.format.DateTimeFormatterBuilder;
 public class CustomZonedDateTimeSerializer extends JsonSerializer<ZonedDateTime> {
 
     private static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+            .appendPattern(DateUtils.ZONED_DATE_TIME_SERIALIZER_FORMAT)
             .appendLiteral(' ')
             .optionalStart()
             .appendZoneId()
