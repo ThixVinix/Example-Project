@@ -18,13 +18,13 @@ import java.util.List;
 public record TestPostRequest(
 
         @JsonProperty("dataInicial")
-        @Schema(description = "Start date of the period.", example = "2023-12-01 10:15:30",
-                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
+        @Schema(description = "Start date of the period.", example = "01/12/2023 10:15:30",
+                pattern = DateUtils.LOCAL_DATE_TIME_SERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime initialDate,
 
         @JsonProperty("dataFinal")
-        @Schema(description = "End date of the period.", example = "2023-12-31 18:00:00",
-                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
+        @Schema(description = "End date of the period.", example = "31/12/2023 18:00:00",
+                pattern = DateUtils.LOCAL_DATE_TIME_SERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime finalDate,
 
         @NotBlank
@@ -35,8 +35,8 @@ public record TestPostRequest(
         @NotNull
         @Past
         @JsonProperty(value = "dataNascimento", required = true)
-        @Schema(description = "Applicant's date of birth (must be in the past).", example = "1990-05-15",
-                pattern = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT)
+        @Schema(description = "Applicant's date of birth (must be in the past).", example = "15/05/1991",
+                pattern = DateUtils.LOCAL_DATE_SERIALIZER_FORMAT)
         LocalDate dateOfBirth,
 
         @NotBlank
@@ -80,8 +80,8 @@ public record TestPostRequest(
         @Future
         @NotNull
         @JsonProperty(value = "dataDeValidade", required = true)
-        @Schema(description = "Future date indicating validity.", example = "2024-12-01",
-                pattern = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT)
+        @Schema(description = "Future date indicating validity.", example = "01/12/2999",
+                pattern = DateUtils.LOCAL_DATE_SERIALIZER_FORMAT)
         LocalDate expirationDate,
 
         @DecimalMin(value = "0.0", inclusive = false)
