@@ -730,7 +730,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(19)
-    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with MethodArgumentTypeMismatchException for LocalDate, LocalDateTime, Date, and ZonedDateTime with DateTimeFormat annotation")
     @ParameterizedTest(name = "Test {index} => typeClass={0}, locale={1}, parameter={2}, receivedValue={3}, expectedDatePattern={4}, expectedMessage={5}, annotationType={6}")
     @CsvSource(value = {
@@ -1012,7 +1012,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(26)
-    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with ConstraintViolationException")
     @Test
     void getBadRequestMessage_WithConstraintViolationException() {
@@ -1082,7 +1082,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)}
      */
     @Order(27)
-    @Tag(GET_BAD_REQUEST_MESSAGE)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with ConstraintViolationException when matchedMethod is null")
     @Test
     void getBadRequestMessage_WhenConstraintViolationLeadsToUnmatchedMethod() {
@@ -1161,10 +1161,10 @@ class ExceptionHandlerMessageHelperTest {
         Exception mockException = mock(NoResourceFoundException.class);
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
+        String result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the resource not found message is returned correctly " +
                         "for the locale " + languageTag + " when the exception is NoResourceFoundException.");
     }
@@ -1189,10 +1189,10 @@ class ExceptionHandlerMessageHelperTest {
         Exception mockException = mock(Exception.class);
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
+        String result = ExceptionHandlerMessageHelper.getNotFoundMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the resource not found message is returned correctly " +
                         "for the locale " + languageTag + " when the exception is generic.");
     }
@@ -1217,10 +1217,10 @@ class ExceptionHandlerMessageHelperTest {
         HttpRequestMethodNotSupportedException mockException = new HttpRequestMethodNotSupportedException(method);
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(mockException);
+        String result = ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the method not allowed message is returned correctly " +
                         "for the HTTP method " + method + " and locale " + languageTag + ".");
     }
@@ -1245,10 +1245,10 @@ class ExceptionHandlerMessageHelperTest {
         Exception mockException = new Exception(expectedMessage);
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
+        String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the internal server error message is returned correctly " +
                         "for the locale " + languageTag + " with the exception message: " + expectedMessage + ".");
     }
@@ -1273,10 +1273,10 @@ class ExceptionHandlerMessageHelperTest {
         Exception mockException = new Exception();
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
+        String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(mockException);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default internal server error message is returned correctly " +
                         "for the locale " + languageTag + " when the exception message is null.");
     }
@@ -1286,7 +1286,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getUnauthorizedMessage(Exception)}
      */
     @Order(34)
-    @Tag(GET_UNAUTHORIZED_MESSAGE)
+    @Tag(value = GET_UNAUTHORIZED_MESSAGE)
     @DisplayName(GET_UNAUTHORIZED_MESSAGE + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1300,10 +1300,10 @@ class ExceptionHandlerMessageHelperTest {
         Exception exception = new Exception();
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getUnauthorizedMessage(exception);
+        String result = ExceptionHandlerMessageHelper.getUnauthorizedMessage(exception);
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default unauthorized message is returned correctly " +
                         "for the locale " + languageTag + " when the exception message is default.");
     }
@@ -1314,7 +1314,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getForbiddenMessage(Exception)}
      */
     @Order(35)
-    @Tag(GET_FORBIDDEN_MESSAGE)
+    @Tag(value = GET_FORBIDDEN_MESSAGE)
     @DisplayName(GET_FORBIDDEN_MESSAGE + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1325,10 +1325,10 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getForbiddenMessage(new Exception());
+        String result = ExceptionHandlerMessageHelper.getForbiddenMessage(new Exception());
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default forbidden message is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
@@ -1339,7 +1339,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getConflictMessage(Exception)}
      */
     @Order(36)
-    @Tag(GET_CONFLICT_MESSAGE)
+    @Tag(value = GET_CONFLICT_MESSAGE)
     @DisplayName(GET_CONFLICT_MESSAGE + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1350,10 +1350,10 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getConflictMessage(new Exception());
+        String result = ExceptionHandlerMessageHelper.getConflictMessage(new Exception());
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default conflict message is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
@@ -1364,7 +1364,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getTimeoutMessage(Exception)}
      */
     @Order(37)
-    @Tag(GET_TIMEOUT_MESSAGE)
+    @Tag(value = GET_TIMEOUT_MESSAGE)
     @DisplayName(GET_TIMEOUT_MESSAGE + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1375,10 +1375,10 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result = ExceptionHandlerMessageHelper.getTimeoutMessage(new Exception());
+        String result = ExceptionHandlerMessageHelper.getTimeoutMessage(new Exception());
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default timeout message is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
@@ -1388,7 +1388,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getHttpMediaTypeNotAcceptableException(Exception)}
      */
     @Order(38)
-    @Tag(GET_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION)
+    @Tag(value = GET_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION)
     @DisplayName(GET_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1399,11 +1399,10 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result =
-                ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(new Exception());
+        String result = ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(new Exception());
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default message for non-acceptable media type is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
@@ -1413,7 +1412,7 @@ class ExceptionHandlerMessageHelperTest {
      * {@link ExceptionHandlerMessageHelper#getHttpMediaTypeNotSupportedException(Exception)}
      */
     @Order(39)
-    @Tag(GET_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION)
+    @Tag(value = GET_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION)
     @DisplayName(GET_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION + " - with default message")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
@@ -1424,11 +1423,11 @@ class ExceptionHandlerMessageHelperTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Act
-        Map<String, String> result =
+        String result =
                 ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(new Exception());
 
         // Assert
-        assertEquals(expectedMessage, result.get("message"),
+        assertEquals(expectedMessage, result,
                 "Checks if the default message for unsupported media type is returned correctly " +
                         "for the locale " + languageTag + ".");
     }

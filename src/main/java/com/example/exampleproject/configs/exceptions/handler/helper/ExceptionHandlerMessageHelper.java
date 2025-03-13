@@ -63,12 +63,12 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception that occurred
      * @return a map containing a not found message
      */
-    public static Map<String, String> getNotFoundMessage(Exception ex) {
+    public static String getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException) {
-            return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.url.not.found"));
+            return MessageUtils.getMessage("msg.exception.handler.resource.url.not.found");
         }
 
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.resource.not.found"));
+        return MessageUtils.getMessage("msg.exception.handler.resource.not.found");
     }
 
     /**
@@ -77,11 +77,10 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the HttpRequestMethodNotSupportedException containing the unsupported method information
      * @return a map containing the method not allowed message
      */
-    public static Map<String, String> getMethodNotAllowedMessage(Exception ex) {
+    public static String getMethodNotAllowedMessage(Exception ex) {
         HttpRequestMethodNotSupportedException methodNotSupportedEx = (HttpRequestMethodNotSupportedException) ex;
-        return Map.of(MESSAGE_KEY,
-                MessageUtils.getMessage("msg.exception.handler.http.method.not.supported",
-                        methodNotSupportedEx.getMethod()));
+        return MessageUtils.getMessage("msg.exception.handler.http.method.not.supported",
+                methodNotSupportedEx.getMethod());
     }
 
     /**
@@ -90,7 +89,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception from which the error message will be generated
      * @return a map containing the error message with a specific key
      */
-    public static Map<String, String> getInternalServerErrorMessage(Exception ex) {
+    public static String getInternalServerErrorMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unknown.error");
     }
 
@@ -100,7 +99,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex The exception that triggered the unauthorized state.
      * @return A map containing the unauthorized error message details.
      */
-    public static Map<String, String> getUnauthorizedMessage(Exception ex) {
+    public static String getUnauthorizedMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unauthorized.default");
     }
 
@@ -110,7 +109,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception that triggered the forbidden condition
      * @return a map containing the forbidden message details, keyed by relevant components such as message identifiers
      */
-    public static Map<String, String> getForbiddenMessage(Exception ex) {
+    public static String getForbiddenMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.access.denied.default");
     }
 
@@ -121,7 +120,7 @@ public class ExceptionHandlerMessageHelper {
      * @return a map where the keys represent message identifiers and the values are
      * corresponding error messages related to the data integrity violation
      */
-    public static Map<String, String> getConflictMessage(Exception ex) {
+    public static String getConflictMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.data.integrity.violation.default");
     }
 
@@ -131,7 +130,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception that triggered the timeout error message generation
      * @return a map containing the key and message for the timeout error
      */
-    public static Map<String, String> getTimeoutMessage(Exception ex) {
+    public static String getTimeoutMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.timeout.default");
     }
 
@@ -141,7 +140,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception that was thrown due to an unacceptable media type
      * @return a map containing the error message key and its corresponding default message
      */
-    public static Map<String, String> getHttpMediaTypeNotAcceptableException(Exception ex) {
+    public static String getHttpMediaTypeNotAcceptableException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.acceptable.default");
     }
 
@@ -152,7 +151,7 @@ public class ExceptionHandlerMessageHelper {
      * @param ex the exception that was thrown due to an unsupported HTTP media type
      * @return a map containing the error message corresponding to the unsupported media type
      */
-    public static Map<String, String> getHttpMediaTypeNotSupportedException(Exception ex) {
+    public static String getHttpMediaTypeNotSupportedException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.supported.default");
     }
 
@@ -262,13 +261,13 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getMissingServletRequestParameterMessage(
             MissingServletRequestParameterException missingEx) {
-        return Map.of(MESSAGE_KEY,
-                MessageUtils.getMessage("msg.exception.handler.missing.parameter", missingEx.getParameterName()));
+        return Map.of(missingEx.getParameterName(),
+                MessageUtils.getMessage("msg.exception.handler.missing.parameter"));
     }
 
     private static Map<String, String> getMissingRequestHeaderMessage(MissingRequestHeaderException missingEx) {
-        return Map.of(MESSAGE_KEY,
-                MessageUtils.getMessage("msg.exception.handler.missing.header", missingEx.getHeaderName()));
+        return Map.of(missingEx.getHeaderName(),
+                MessageUtils.getMessage("msg.exception.handler.missing.header"));
     }
 
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
@@ -477,17 +476,23 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
-        return getErrorMessage(ex, "msg.exception.handler.unknown.bad.request.error");
+        String message;
+        if (Objects.nonNull(ex) && Objects.nonNull(ex.getMessage())) {
+            message = ex.getMessage();
+        } else {
+            message = MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error");
+        }
+        return Map.of(MESSAGE_KEY, message);
     }
 
-    private static Map<String, String> getErrorMessage(Exception ex, String defaultMessageValue) {
+    private static String getErrorMessage(Exception ex, String defaultMessageValue) {
         String message;
         if (Objects.nonNull(ex) && Objects.nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
             message = MessageUtils.getMessage(defaultMessageValue);
         }
-        return Map.of(MESSAGE_KEY, message);
+        return message;
     }
 
 }
