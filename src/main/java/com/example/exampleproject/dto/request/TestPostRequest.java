@@ -13,18 +13,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@ValidDateRange(dateAField = "dataInicial", dateBField = "dataFinal")
+@ValidDateRange(dateAField = "initialDate", dateBField = "finalDate")
 @Schema(description = "Representation of a request to create a new resource with validations and mandatory data.")
 public record TestPostRequest(
 
         @JsonProperty("dataInicial")
-        @Schema(description = "Start date of the period.", example = "01/12/2023 10:15:30",
-                pattern = DateUtils.LOCAL_DATE_TIME_SERIALIZER_FORMAT, implementation = String.class)
+        @Schema(description = "Start date of the period.", example = "2023-12-01 10:15:30",
+                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime initialDate,
 
         @JsonProperty("dataFinal")
-        @Schema(description = "End date of the period.", example = "31/12/2023 18:00:00",
-                pattern = DateUtils.LOCAL_DATE_TIME_SERIALIZER_FORMAT, implementation = String.class)
+        @Schema(description = "End date of the period.", example = "2023-12-31 18:00:00",
+                pattern = DateUtils.LOCAL_DATE_TIME_DESERIALIZER_FORMAT, implementation = String.class)
         LocalDateTime finalDate,
 
         @NotBlank
@@ -35,8 +35,8 @@ public record TestPostRequest(
         @NotNull
         @Past
         @JsonProperty(value = "dataNascimento", required = true)
-        @Schema(description = "Applicant's date of birth (must be in the past).", example = "15/05/1991",
-                pattern = DateUtils.LOCAL_DATE_SERIALIZER_FORMAT)
+        @Schema(description = "Applicant's date of birth (must be in the past).", example = "1991-09-05",
+                pattern = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT)
         LocalDate dateOfBirth,
 
         @NotBlank
@@ -50,7 +50,7 @@ public record TestPostRequest(
         @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
                 message = "{msg.validation.request.field.cpf.invalidFormat}")
         @JsonProperty(value = "cpf", required = true)
-        @Schema(description = "CPF of the applicant in a valid format.", example = "123.456.789-00")
+        @Schema(description = "CPF of the applicant in a valid format.", example = "051.456.590-08")
         String cpf,
 
         @NotNull
@@ -69,7 +69,7 @@ public record TestPostRequest(
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
                 message = "{msg.validation.request.field.phoneNumber.invalidFormat}")
         @JsonProperty(value = "telefone", required = true)
-        @Schema(description = "Phone number with valid format.", example = "11987654321")
+        @Schema(description = "Phone number with valid format.", example = "(11) 98765-4321")
         String telephone,
 
         @Size(min = 3, max = 30)
@@ -80,8 +80,8 @@ public record TestPostRequest(
         @Future
         @NotNull
         @JsonProperty(value = "dataDeValidade", required = true)
-        @Schema(description = "Future date indicating validity.", example = "01/12/2999",
-                pattern = DateUtils.LOCAL_DATE_SERIALIZER_FORMAT)
+        @Schema(description = "Future date indicating validity.", example = "2999-12-01",
+                pattern = DateUtils.LOCAL_DATE_DESERIALIZER_FORMAT)
         LocalDate expirationDate,
 
         @DecimalMin(value = "0.0", inclusive = false)
