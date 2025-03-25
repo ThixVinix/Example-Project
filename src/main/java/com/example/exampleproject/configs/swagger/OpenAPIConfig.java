@@ -51,15 +51,21 @@ public class OpenAPIConfig {
                             Locale.forLanguageTag(ENGLISH_LANGUAGE_TAG)
                     );
 
-                    String supportedLanguagesString = supportedLanguages.stream()
-                            .map(Locale::toLanguageTag)
-                            .collect(Collectors.joining(", "));
+                    String supportedLanguagesHtmlList = supportedLanguages.stream()
+                            .map(locale -> String.format("<li>%s</li>", locale.toLanguageTag()))
+                            .collect(Collectors.joining());
+
+                    String description = String.format(
+                            "<p>Idioma preferido para a resposta do serviço (opcional).</p>" +
+                                    "<p>Caso não seja informado, o idioma padrão utilizado será " +
+                                    "<strong>%s</strong>.</p>" +
+                                    "<p>Idiomas atualmente suportados:</p>" +
+                                    "<ul>%s</ul>", PORTUGUESE_BRAZIL_LANGUAGE_TAG, supportedLanguagesHtmlList);
 
                     Parameter acceptLanguageHeader = new Parameter()
                             .in(HEADER_LOCATION)
                             .name(HttpHeaders.ACCEPT_LANGUAGE)
-                            .description("Preferred language for the service response (Optional). " +
-                                    "Currently supported languages: " + supportedLanguagesString)
+                            .description(description)
                             .required(Boolean.FALSE)
                             .schema(new Schema<String>().example(PORTUGUESE_BRAZIL_LANGUAGE_TAG));
 
