@@ -56,10 +56,10 @@ public class OpenAPIConfig {
                             .collect(Collectors.joining());
 
                     String description = String.format(
-                            "<p>Idioma preferido para a resposta do serviço (opcional).</p>" +
-                                    "<p>Caso não seja informado, o idioma padrão utilizado será " +
+                            "<p>Preferred language for service response (optional).</p>" +
+                                    "<p>If not informed, the default language used will be " +
                                     "<strong>%s</strong>.</p>" +
-                                    "<p>Idiomas atualmente suportados:</p>" +
+                                    "<p>Currently supported languages:</p>" +
                                     "<ul>%s</ul>", PORTUGUESE_BRAZIL_LANGUAGE_TAG, supportedLanguagesHtmlList);
 
                     Parameter acceptLanguageHeader = new Parameter()
