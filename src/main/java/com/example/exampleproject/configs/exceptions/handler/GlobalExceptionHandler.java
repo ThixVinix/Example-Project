@@ -427,7 +427,8 @@ public class GlobalExceptionHandler {
             }
     )
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleHttpMediaTypeNotSupportedException(Exception ex, WebRequest request) {
+    protected ResponseEntity<ErrorSingleResponse> handleHttpMediaTypeNotSupportedException(Exception ex,
+                                                                                           WebRequest request) {
         log.error("Http Media Type Not Supported: {}", ex.getMessage(), ex);
 
         ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
