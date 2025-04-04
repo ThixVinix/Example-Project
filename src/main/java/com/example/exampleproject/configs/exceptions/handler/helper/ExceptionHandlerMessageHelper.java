@@ -44,8 +44,13 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String MESSAGE_KEY = "message";
 
+    private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
+
     private static final Pattern TYPE_PATTERN_MESSAGE_EXCEPTION =
             Pattern.compile("Cannot deserialize value of type `(.*?)`");
+
+    private static final Pattern MISSING_PROPERTY_PATTERN =
+            Pattern.compile("Missing required creator property '(.*?)'");
 
     private static final String LOCAL_DATE_TYPE = "LocalDate";
 
@@ -205,10 +210,10 @@ public class ExceptionHandlerMessageHelper {
     private static String getFieldName(MethodArgumentNotValidException notValidEx, String originalFieldName) {
         try {
             Object target = notValidEx.getTarget();
-            if (target != null) {
+            if (Objects.nonNull(target)) {
                 Field field = target.getClass().getDeclaredField(originalFieldName);
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-                if (jsonProperty != null && !jsonProperty.value().trim().isEmpty()) {
+                if (Objects.nonNull(jsonProperty) && !jsonProperty.value().trim().isEmpty()) {
                     return jsonProperty.value().trim();
                 }
             }
@@ -219,39 +224,63 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static String getFieldErrorMessage(FieldError error) {
-        return error.getDefaultMessage() != null
+        return Objects.nonNull(error.getDefaultMessage())
                 ? error.getDefaultMessage()
                 : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
     }
 
-    private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException httpEx) {
-        Throwable rootCause = httpEx.getRootCause();
+    private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException notReadableException) {
+        Throwable rootCause = notReadableException.getRootCause();
 
-        if (rootCause instanceof BusinessException && rootCause.getMessage() != null) {
-            return Map.of(MESSAGE_KEY, rootCause.getMessage());
+        if (rootCause instanceof BusinessException businessException) {
+            return handleBusinessException(businessException);
         }
 
         if (rootCause instanceof JsonMappingException jsonMappingException) {
-            String fieldName = jsonMappingException.getPath().stream()
-                    .map(JsonMappingException.Reference::getFieldName)
-                    .collect(Collectors.joining("."));
-
-            Optional<String> targetTypeOptional = extractTargetType(jsonMappingException);
-
-            if (targetTypeOptional.isPresent()) {
-                return Map.of(fieldName,
-                        MessageUtils.getMessage("msg.exception.handler.invalid.deserialize",
-                                targetTypeOptional.get()));
-            }
+            return handleJsonMappingException(jsonMappingException);
         }
 
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.json.malformed"));
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
     }
+
+    private static Map<String, String> handleBusinessException(BusinessException businessException) {
+        String errorMessage = businessException.getMessage();
+        if (Objects.nonNull(errorMessage)) {
+            return Map.of(MESSAGE_KEY, errorMessage);
+        }
+        return Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
+    }
+
+    private static Map<String, String> handleJsonMappingException(JsonMappingException jsonMappingException) {
+        Optional<String> missingProperty = extractMissingProperty(jsonMappingException.getOriginalMessage());
+        if (missingProperty.isPresent()) {
+            String missingField = missingProperty.get();
+            return Map.of(missingField,
+                    MessageUtils.getMessage("msg.exception.handler.missing.parameter"));
+        }
+
+        String fieldName = jsonMappingException.getPath().stream()
+                .map(JsonMappingException.Reference::getFieldName)
+                .collect(Collectors.joining("."));
+
+        return extractTargetType(jsonMappingException)
+                .map(targetType -> Map.of(fieldName,
+                        MessageUtils.getMessage("msg.exception.handler.invalid.deserialize", targetType)))
+                .orElseGet(() -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE)));
+    }
+
+
 
     private static Optional<String> extractTargetType(JsonMappingException jsonMappingException) {
         Matcher matcher = TYPE_PATTERN_MESSAGE_EXCEPTION.matcher(jsonMappingException.getOriginalMessage());
         return matcher.find() ? extractSimpleName(matcher.group(1)) : Optional.empty();
     }
+
+    private static Optional<String> extractMissingProperty(String originalMessage) {
+        Matcher matcher = MISSING_PROPERTY_PATTERN.matcher(originalMessage);
+        return matcher.find() ? Optional.ofNullable(matcher.group(1)) : Optional.empty();
+    }
+
 
     private static Optional<String> extractSimpleName(String fullName) {
         if (Objects.isNull(fullName) || fullName.trim().isEmpty()) {
