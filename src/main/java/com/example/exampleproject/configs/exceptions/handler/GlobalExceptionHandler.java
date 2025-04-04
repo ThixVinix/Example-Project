@@ -470,7 +470,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({Exception.class, Throwable.class})
+    @ExceptionHandler({RuntimeException.class, Exception.class, Throwable.class})
     protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
