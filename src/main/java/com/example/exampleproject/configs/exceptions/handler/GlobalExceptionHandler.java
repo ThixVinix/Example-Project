@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
+import com.example.exampleproject.configs.exceptions.BaseError;
 import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
 import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
@@ -486,7 +487,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FeignException.class)
-    protected ResponseEntity<?> handleFeignClientException(FeignException e, WebRequest request) {
+    protected ResponseEntity<? extends BaseError> handleFeignClientException(FeignException e, WebRequest request) {
         String requestUri = request.getDescription(false);
         HttpStatus status = HttpStatus.resolve(e.status());
         int statusFeign = e.status();
@@ -520,7 +521,9 @@ public class GlobalExceptionHandler {
                 responseBody);
     }
 
-    private ResponseEntity<?> getResponseByStatus(HttpStatus status, FeignException e, WebRequest request) {
+    private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
+                                                                    FeignException e,
+                                                                    WebRequest request) {
         return switch (status) {
             case BAD_REQUEST -> this.handleBadRequestException(e, request);
             case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
