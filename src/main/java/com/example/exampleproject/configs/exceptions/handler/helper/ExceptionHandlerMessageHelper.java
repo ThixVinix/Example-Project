@@ -270,7 +270,6 @@ public class ExceptionHandlerMessageHelper {
     }
 
 
-
     private static Optional<String> extractTargetType(JsonMappingException jsonMappingException) {
         Matcher matcher = TYPE_PATTERN_MESSAGE_EXCEPTION.matcher(jsonMappingException.getOriginalMessage());
         return matcher.find() ? extractSimpleName(matcher.group(1)) : Optional.empty();
@@ -379,7 +378,7 @@ public class ExceptionHandlerMessageHelper {
         if (param.isAnnotationPresent(DateTimeFormat.class)) {
             DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
 
-            if (!dateTimeFormat.pattern().trim().isEmpty()) {
+            if (Objects.nonNull(dateTimeFormat) && !dateTimeFormat.pattern().trim().isEmpty()) {
                 return Map.of(paramName, MessageUtils.getMessage(
                         "msg.exception.handler.argument.type.mismatch.with.format",
                         dateTimeFormat.pattern().trim(),
