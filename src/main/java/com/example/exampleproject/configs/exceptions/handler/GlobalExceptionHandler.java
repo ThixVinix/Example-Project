@@ -486,6 +486,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorSingleResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @SuppressWarnings("squid:S1452")
     @ExceptionHandler(FeignException.class)
     protected ResponseEntity<? extends BaseError> handleFeignClientException(FeignException e, WebRequest request) {
         String requestUri = request.getDescription(false);
