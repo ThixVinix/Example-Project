@@ -3,14 +3,15 @@ package com.example.exampleproject.services.impl;
 import com.example.exampleproject.clients.JsonPlaceholderClient;
 import com.example.exampleproject.clients.models.JsonPlaceholderPost;
 import com.example.exampleproject.services.JsonPlaceholderService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JsonPlaceholderServiceImpl implements JsonPlaceholderService {
 
-
     private final JsonPlaceholderClient jsonPlaceholderClient;
 
+    @Autowired
     public JsonPlaceholderServiceImpl(JsonPlaceholderClient jsonPlaceholderClient) {
         this.jsonPlaceholderClient = jsonPlaceholderClient;
     }
