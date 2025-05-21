@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.annotation.Annotation;
@@ -70,7 +71,7 @@ public class ExceptionHandlerMessageHelper {
      * @return A localized message indicating the resource was not found, based on the exception type.
      */
     public static String getNotFoundMessage(Exception ex) {
-        if (ex instanceof NoResourceFoundException) {
+        if (ex instanceof NoResourceFoundException || ex instanceof NoHandlerFoundException) {
             return MessageUtils.getMessage("msg.exception.handler.resource.url.not.found");
         }
 
@@ -80,7 +81,7 @@ public class ExceptionHandlerMessageHelper {
     /**
      * Retrieves a formatted message indicating that the HTTP request method is not allowed.
      *
-     * @param ex The exception representing the HTTP method not supported error.
+     * @param ex The exception representing the HTTP method didn't support error.
      *           It must be an instance of {@link HttpRequestMethodNotSupportedException}.
      * @return A localized error message describing the unsupported HTTP method.
      */
@@ -111,7 +112,7 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
-     * Returns a default forbidden message for a given exception by utilizing a
+     * Returns a default forbidden message for a given exception by using a
      * predefined error message key.
      *
      * @param ex The exception that triggered the forbidden message.
@@ -155,11 +156,21 @@ public class ExceptionHandlerMessageHelper {
     /**
      * Generates an error message for HTTP Media Type Not Supported Exception.
      *
-     * @param ex The exception instance that contains details about the media type not supported error.
+     * @param ex The exception instance that contains details about the media type didn't support error.
      * @return A formatted error message for the given exception.
      */
     public static String getHttpMediaTypeNotSupportedException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.supported.default");
+    }
+
+    /**
+     * Retrieves a specific error message for exceptions related to exceeding the maximum upload size.
+     *
+     * @param ex The exception instance representing the maximum upload size exceeded the error.
+     * @return A localized error message indicating that the maximum upload size has been exceeded.
+     */
+    public static String getMaxUploadSizeExceededException(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.max.upload.size.exceeded.default");
     }
 
     /**
