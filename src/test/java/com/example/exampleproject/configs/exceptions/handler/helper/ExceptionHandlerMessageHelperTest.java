@@ -71,6 +71,8 @@ class ExceptionHandlerMessageHelperTest {
 
     private static final String GET_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION = "getHttpMediaTypeNotAcceptableMessage";
 
+    private static final String GET_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION = "getMaxUploadSizeExceededException";
+
     private static final char CSV_DELIMITER = '|';
 
     private Locale defaultLocale;
@@ -797,7 +799,7 @@ class ExceptionHandlerMessageHelperTest {
 
         MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         when(exception.getBindingResult()).thenReturn(bindingResult);
-        when(exception.getTarget()).thenReturn(null);  // `target` será `null`
+        when(exception.getTarget()).thenReturn(null);
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(exception);
@@ -1403,7 +1405,7 @@ class ExceptionHandlerMessageHelperTest {
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
             "pt_BR|Privilégios insuficientes para completar a operação.",
-            "en_US|Insufficient privileges to complete the operation."
+            "en_US|Not enough privileges to complete the operation."
     }, delimiter = CSV_DELIMITER)
     void getForbiddenMessage_WithDefaultMessage(String languageTag, String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
@@ -1513,6 +1515,31 @@ class ExceptionHandlerMessageHelperTest {
         // Assert
         assertEquals(expectedMessage, result,
                 "Checks if the default message for unsupported media type is returned correctly " +
+                        "for the locale " + languageTag + ".");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getMaxUploadSizeExceededException(Exception)}
+     */
+    @Order(41)
+    @Tag(value = GET_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION)
+    @DisplayName(GET_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION + " - with default message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O tamanho do upload excede o limite permitido.",
+            "en_US|Upload size exceeds the allowed limit."
+    }, delimiter = CSV_DELIMITER)
+    void getMaxUploadSizeExceededException_WithDefaultMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Act
+        String result =
+                ExceptionHandlerMessageHelper.getMaxUploadSizeExceededException(new Exception());
+
+        // Assert
+        assertEquals(expectedMessage, result,
+                "Checks if the default message for max upload size exceeded is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
 
