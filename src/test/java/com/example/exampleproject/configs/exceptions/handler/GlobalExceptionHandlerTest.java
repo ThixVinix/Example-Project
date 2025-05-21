@@ -20,6 +20,7 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
@@ -65,6 +66,8 @@ class GlobalExceptionHandlerTest {
     private static final String HANDLE_FORBIDDEN_EXCEPTION = "handleForbiddenException";
 
     private static final String HANDLE_UNAUTHORIZED_EXCEPTION = "handleUnauthorizedException";
+
+    private static final String HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION = "handleMaxUploadSizeExceededException";
 
     record HandlerConfig(Function<FeignException, ?> function, boolean returnsString) {
     }
@@ -402,11 +405,50 @@ class GlobalExceptionHandlerTest {
         }
     }
 
+
+    /**
+     * Method test for
+     * {@link GlobalExceptionHandler#handleMaxUploadSizeExceededException(Exception, WebRequest)}
+     */
+    @Order(11)
+    @Tag(value = HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION)
+    @DisplayName(HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION + " - When MaxUploadSizeExceededException is thrown then " +
+            "return Payload Too Large status")
+    @Test
+    void testHandleMaxUploadSizeExceededException() {
+
+        MaxUploadSizeExceededException ex = new MaxUploadSizeExceededException(5000000); // limite de 5MB simulado
+        WebRequest request = mock(WebRequest.class);
+
+        when(request.getDescription(false)).thenReturn("/test/upload-path");
+
+        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
+
+            mockedStatic.when(() ->
+                            ExceptionHandlerMessageHelper.getMaxUploadSizeExceededException(ex))
+                    .thenReturn("The uploaded file size exceeds the allowed limit of 5MB.");
+
+            ResponseEntity<ErrorSingleResponse> responseEntity =
+                    exceptionHandler.handleMaxUploadSizeExceededException(ex, request);
+
+            assertNotNull(responseEntity);
+            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, responseEntity.getStatusCode());
+
+            ErrorSingleResponse errorResponse = responseEntity.getBody();
+            assertNotNull(errorResponse);
+            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE.value(), errorResponse.status());
+            assertEquals("The uploaded file size exceeds the allowed limit of 5MB.", errorResponse.message());
+            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE.getReasonPhrase(), errorResponse.error());
+            assertEquals("/test/upload-path", errorResponse.path());
+            assertNotNull(errorResponse.timestamp());
+        }
+    }
+
     /**
      * Method test for
      * {@link GlobalExceptionHandler#handleFeignClientException(FeignException, WebRequest)}
      */
-    @Order(11)
+    @Order(12)
     @Tag(value = HANDLE_FEIGN_CLIENT_EXCEPTION)
     @DisplayName(HANDLE_FEIGN_CLIENT_EXCEPTION + " - When FeignException is thrown then handle accordingly")
     @ParameterizedTest(name = "Test {index} => status={0} | expectedStatus={1} | expectedMessage={2}")
@@ -460,7 +502,6 @@ class GlobalExceptionHandlerTest {
         }
     }
 
-
     static Stream<Arguments> feignClientExceptionProvider() {
         return Stream.of(
                 Arguments.of(401, HttpStatus.UNAUTHORIZED, "Custom unauthorized message",
@@ -484,7 +525,9 @@ class GlobalExceptionHandlerTest {
                 Arguments.of(406, HttpStatus.NOT_ACCEPTABLE, "Custom not acceptable message",
                         new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException, true)),
                 Arguments.of(415, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Custom unsupported media type message",
-                        new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true))
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true)),
+                Arguments.of(413, HttpStatus.PAYLOAD_TOO_LARGE, "Custom payload too large message",
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true))
         );
     }
 
