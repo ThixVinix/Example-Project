@@ -30,8 +30,12 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
@@ -70,7 +74,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
+    @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class, NoHandlerFoundException.class})
     protected ResponseEntity<ErrorSingleResponse> handleResourceNotFoundException(Exception ex,
                                                                                   WebRequest request) {
         log.error("Resource not found: {}", ex.getMessage(), ex);
@@ -165,6 +169,7 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class,
             MissingRequestHeaderException.class,
             MissingPathVariableException.class,
+            MissingServletRequestPartException.class,
             BusinessException.class,
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class,
@@ -341,7 +346,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler(TimeoutException.class)
+    @ExceptionHandler({TimeoutException.class, AsyncRequestTimeoutException.class})
     protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
         log.error("Request timed out: {}", ex.getMessage(), ex);
 
@@ -444,6 +449,51 @@ public class GlobalExceptionHandler {
     }
 
     @ApiResponse(
+            responseCode = "413",
+            description = "Payload Too Large. This error occurs when the size of the uploaded file exceeds the limit " +
+                    "supported by the server. Check the file size and the server's upload restrictions before " +
+                    "retrying.",
+            content = {
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Payload Too Large Example",
+                                            summary = "Example of a 413 error response caused by an uploaded file " +
+                                                    "that exceeds the allowed size.",
+                                            value = """
+                                                    {
+                                                      "timestamp": "2023-01-01T19:30:00",
+                                                      "path": "/api/upload",
+                                                      "status": 413,
+                                                      "error": "Payload Too Large",
+                                                      "message": "The uploaded file size exceeds the allowed limit of
+                                                       5MB."
+                                                    }
+                                                """
+                                    )
+                            }
+                    )
+            }
+    )
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleMaxUploadSizeExceededException(
+            Exception ex, WebRequest request) {
+        log.error("Max Upload Size Exceeded: {}", ex.getMessage(), ex);
+
+        ErrorSingleResponse errorResponse = ErrorSingleResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
+                .error(HttpStatus.PAYLOAD_TOO_LARGE.getReasonPhrase())
+                .message(ExceptionHandlerMessageHelper.getMaxUploadSizeExceededException(ex))
+                .path(request.getDescription(Boolean.FALSE))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    @ApiResponse(
             responseCode = "500",
             description = "Internal Server Error. This error occurs when the server encounters an unexpected " +
                     "condition that prevents it from fulfilling the request. Contact the API support team if the " +
@@ -535,6 +585,7 @@ public class GlobalExceptionHandler {
             case REQUEST_TIMEOUT -> this.handleTimeoutException(e, request);
             case CONFLICT -> this.handleConflictException(e, request);
             case UNSUPPORTED_MEDIA_TYPE -> this.handleHttpMediaTypeNotSupportedException(e, request);
+            case PAYLOAD_TOO_LARGE -> this.handleMaxUploadSizeExceededException(e, request);
             default -> this.handleGlobalException(e, request);
         };
     }
