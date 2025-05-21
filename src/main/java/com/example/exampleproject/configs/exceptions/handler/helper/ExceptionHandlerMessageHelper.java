@@ -36,6 +36,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Provides utility methods for generating localized and descriptive error messages
+ * based on exceptions encountered in an application. The class facilitates error handling
+ * by producing specific messages tailored to various exception scenarios, ranging from
+ * HTTP-related exceptions to validation and internal server errors.
+ * <p>
+ * This class contains static methods for generating error messages without instantiating
+ * the class. The messages are typically derived either from the exception details or
+ * fallback to default messages.
+ * <p>
+ * The class is designed to handle a variety of exception types including
+ * - HTTP-related exceptions (e.g., not found, method not allowed, unsupported media types)
+ * - Validation-related exceptions (e.g., constraint violations, bad request scenarios)
+ * - Application-specific exceptions (e.g., business logic errors, upload size issues)
+ * <p>
+ * This class cannot be instantiated as it has a private constructor.
+ */
 @Slf4j
 public class ExceptionHandlerMessageHelper {
 
@@ -64,11 +81,14 @@ public class ExceptionHandlerMessageHelper {
     private static final String DATE_TYPE = "Date";
 
     /**
-     * Generates an appropriate "not found" message based on the provided exception.
+     * Generates a specific message indicating that a resource or URL was not found,
+     * based on the type of the given exception.
      *
-     * @param ex The exception for which the "not found" message should be generated.
-     *           Typically used to determine the specific type of not found error.
-     * @return A localized message indicating the resource was not found, based on the exception type.
+     * @param ex The exception that triggered the not found message.
+     *           It can be an instance of {@link NoResourceFoundException} or
+     *           {@link NoHandlerFoundException}.
+     *           Other exceptions may default to a generic not found message.
+     * @return A localized error message indicating the resource or URL was not found.
      */
     public static String getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException || ex instanceof NoHandlerFoundException) {
@@ -79,11 +99,11 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
-     * Retrieves a formatted message indicating that the HTTP request method is not allowed.
+     * Generates an error message indicating that the requested HTTP method is not supported.
      *
-     * @param ex The exception representing the HTTP method didn't support error.
-     *           It must be an instance of {@link HttpRequestMethodNotSupportedException}.
-     * @return A localized error message describing the unsupported HTTP method.
+     * @param ex The exception that triggered the method didn't allow error, expected to be an instance
+     *           of {@link HttpRequestMethodNotSupportedException}.
+     * @return A string containing the localized error message for the "HTTP Method Not Allowed" error.
      */
     public static String getMethodNotAllowedMessage(Exception ex) {
         HttpRequestMethodNotSupportedException methodNotSupportedEx = (HttpRequestMethodNotSupportedException) ex;
@@ -92,92 +112,122 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
-     * Retrieves a generic internal server error message for the given exception.
+     * Generates a default error message for internal server errors.
      *
-     * @param ex The exception that triggered the error.
-     * @return A localized error message indicating an unknown internal server error.
+     * @param ex The exception that triggered the internal server error. Typically expected to
+     *           encapsulate details about the unexpected condition encountered by the server.
+     * @return A localized error message indicating an internal server error. If the exception
+     * does not contain a message, a default message is returned.
      */
     public static String getInternalServerErrorMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unknown.error");
     }
 
     /**
-     * Retrieves a default unauthorized error message associated with the given exception.
+     * Generates a message indicating that the request is unauthorized.
+     * The message is derived from the provided exception or a default
+     * unauthorized message key.
      *
-     * @param ex The exception for which the unauthorized error message is to be retrieved.
-     * @return A string containing the default unauthorized error message.
+     * @param ex The exception that triggered the unauthorized message.
+     *           It may contain additional details about the authentication failure.
+     * @return A localized error message indicating that the request is unauthorized.
      */
     public static String getUnauthorizedMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.unauthorized.default");
     }
 
     /**
-     * Returns a default forbidden message for a given exception by using a
-     * predefined error message key.
+     * Generates an error message indicating that access to a resource or operation is forbidden.
+     * The message is provided either from the exception details or a default forbidden message key.
      *
-     * @param ex The exception that triggered the forbidden message.
-     * @return A string containing the default forbidden message associated with the exception.
+     * @param ex The exception that triggered the forbidden error message. It may
+     *           contain specific details about why access is denied.
+     * @return A localized error message indicating that the operation or resource access is forbidden.
      */
     public static String getForbiddenMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.access.denied.default");
     }
 
     /**
-     * Generates a conflict message based on the provided exception and a default message key.
+     * Generates an error message indicating a conflict error in the application.
+     * This method retrieves a localized or default error message based on the provided exception.
      *
-     * @param ex The exception that caused the conflict.
-     * @return A string describing the conflict message using the exception details and a default message key.
+     * @param ex The exception that triggered the conflict message. This exception
+     *           may provide specifics about the data integrity violation or conflict.
+     * @return A string containing the localized conflict error message or a default
+     * message if the exception does not contain sufficient information.
      */
     public static String getConflictMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.data.integrity.violation.default");
     }
 
     /**
-     * Generates a timeout message based on the provided exception.
+     * Generates an error message indicating that a request has timed out.
+     * The message is derived from the provided exception or a default timeout message key.
      *
-     * @param ex The exception instance used to generate the timeout message.
-     * @return A string containing the timeout message derived from the exception.
+     * @param ex The exception that triggered the timeout message.
+     *           This may provide additional context about the timeout condition.
+     * @return A localized error message indicating that the request has timed out.
      */
     public static String getTimeoutMessage(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.timeout.default");
     }
 
     /**
-     * Retrieves a formatted error message for the "HTTP Media Type Not Acceptable" exception.
+     * Generates an error message indicating that the requested HTTP media type
+     * is not acceptable. This typically happens when the 'Accept' header in
+     * the request specifies a response format not supported by the server.
      *
-     * @param ex The exception object triggering the error message retrieval.
-     * @return A string containing the formatted error message associated
-     * with the "HTTP Media Type Not Acceptable" error.
+     * @param ex The exception that triggered the "HTTP Media Type Not Acceptable" error.
+     *           This is expected to contain details regarding the media type conflict.
+     * @return A localized error message indicating that the requested media type
+     * is not acceptable.
      */
     public static String getHttpMediaTypeNotAcceptableException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.acceptable.default");
     }
 
     /**
-     * Generates an error message for HTTP Media Type Not Supported Exception.
+     * Generates an error message indicating that the provided HTTP media type is not supported.
+     * This error usually occurs when the 'Content-Type' header in the request specifies a media type
+     * that the server cannot process.
      *
-     * @param ex The exception instance that contains details about the media type didn't support error.
-     * @return A formatted error message for the given exception.
+     * @param ex The exception that triggered the "HTTP Media Type Not Supported" error.
+     *           This is expected to contain details about the unsupported media type issue.
+     * @return A localized error message indicating that the specified media type is not supported.
      */
     public static String getHttpMediaTypeNotSupportedException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.media.type.not.supported.default");
     }
 
     /**
-     * Retrieves a specific error message for exceptions related to exceeding the maximum upload size.
+     * Generates an error message indicating that the maximum upload size has been exceeded.
+     * The error message is localized and derived either directly from the details
+     * encapsulated in the provided exception or defaults to a predefined message key.
      *
-     * @param ex The exception instance representing the maximum upload size exceeded the error.
-     * @return A localized error message indicating that the maximum upload size has been exceeded.
+     * @param ex The exception that triggered the upload size exceeded the error.
+     *           This exception is typically related to file upload size constraints,
+     *           such as {@code MaxUploadSizeExceededException} or similar.
+     * @return A localized error message indicating that the uploaded file size exceeded
+     * the allowed limit. If the exception does not contain specifics, a default
+     * message is returned.
      */
     public static String getMaxUploadSizeExceededException(Exception ex) {
         return getErrorMessage(ex, "msg.exception.handler.max.upload.size.exceeded.default");
     }
 
     /**
-     * Constructs a detailed error message based on the type of the provided exception.
+     * Generates an appropriate error message based on the provided exception, specifically for
+     * bad request scenarios. The error message is determined by the type of the exception passed in.
      *
-     * @param ex The exception that caused the bad request.
-     * @return A map containing specific details about the bad request derived from the exception.
+     * @param ex The exception that triggered the bad request. This could include various
+     *           types of exceptions such as {@code MethodArgumentNotValidException},
+     *           {@code HttpMessageNotReadableException}, {@code MissingServletRequestParameterException},
+     *           {@code MissingRequestHeaderException}, {@code MethodArgumentTypeMismatchException},
+     *           {@code ConstraintViolationException}, or {@code HandlerMethodValidationException}.
+     *           If the exception is null or an unsupported type, a default error message is generated.
+     * @return A map containing keys and their associated error messages derived
+     * from the provided exception. Each message explains the specific issue.
      */
     public static Map<String, String> getBadRequestMessage(Exception ex) {
         switch (ex) {
