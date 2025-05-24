@@ -1,7 +1,10 @@
 package com.example.exampleproject.dto.request;
 
+import com.example.exampleproject.configs.annotations.EnumCodeValidation;
+import com.example.exampleproject.configs.annotations.EnumValueValidation;
 import com.example.exampleproject.configs.annotations.ValidDateRange;
 
+import com.example.exampleproject.enums.StatusEnum;
 import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -98,6 +101,18 @@ public record TestPostRequest(
         @AssertTrue
         @JsonProperty("termosConcordados")
         @Schema(description = "Confirmation that the terms have been accepted.", example = "true")
-        Boolean isTermsAgreed
+        Boolean isTermsAgreed,
+
+        @NotNull
+        @JsonProperty("status")
+        @EnumValueValidation(enumClass = StatusEnum.class)
+        String statusValueEnum,
+
+        @NotNull
+        @JsonProperty("codigo")
+        @EnumCodeValidation(enumClass = StatusEnum.class)
+        Integer statusCodeEnum
+
+
 ) {
 }
