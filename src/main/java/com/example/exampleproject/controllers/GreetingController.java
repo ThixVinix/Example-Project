@@ -2,6 +2,7 @@ package com.example.exampleproject.controllers;
 
 import com.example.exampleproject.dto.request.TestPostRequest;
 import com.example.exampleproject.dto.response.TestPostResponse;
+import com.example.exampleproject.enums.StatusEnum;
 import com.example.exampleproject.utils.DateUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -95,6 +96,7 @@ public class GreetingController {
                 .localDate(LocalDate.now())
                 .zonedDateTime(ZonedDateTime.now())
                 .localTime(LocalTime.now())
+                .statusEnum(StatusEnum.ACTIVE.getValue())
                 .build();
     }
 
@@ -106,10 +108,10 @@ public class GreetingController {
     @ApiResponse(
             responseCode = "200", description = "Greeting successfully created",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = String.class))
+                    schema = @Schema(implementation = TestPostResponse.class))
     )
     @PostMapping("/create/{code}")
-    public String createGreeting(
+    public TestPostResponse createGreeting(
             @Parameter(description = "Unique code for the greeting", example = "123ABC", required = true)
             @PathVariable("code")
             String code,
@@ -120,7 +122,17 @@ public class GreetingController {
             @RequestBody
             @Valid
             TestPostRequest request) {
-        return "Criação realizada com sucesso.";
+
+        StatusEnum statusEnum = StatusEnum.fromValueOrThrow(request.statusValueEnum());
+
+        return TestPostResponse.builder()
+                .date(new Date())
+                .localDateTime(LocalDateTime.now())
+                .localDate(LocalDate.now())
+                .zonedDateTime(ZonedDateTime.now())
+                .localTime(LocalTime.now())
+                .statusEnum(statusEnum.getValue())
+                .build();
     }
 
     @Operation(
