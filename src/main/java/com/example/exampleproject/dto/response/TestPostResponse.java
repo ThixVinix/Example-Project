@@ -34,6 +34,10 @@ public record TestPostResponse(
 
         @JsonProperty("horaLocal")
         @Schema(description = "The current local time in 'HH:mm:ss' format.", example = "12:45:30")
-        LocalTime localTime
+        LocalTime localTime,
+
+        @JsonProperty("status")
+        @Schema(description = "The current status.", example = "ATIVO")
+        String statusEnum
 ) {
 }
