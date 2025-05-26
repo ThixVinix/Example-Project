@@ -1,5 +1,6 @@
 package com.example.exampleproject.dto.request;
 
+import com.example.exampleproject.configs.annotations.Base64ImageValidation;
 import com.example.exampleproject.configs.annotations.EnumCodeValidation;
 import com.example.exampleproject.configs.annotations.EnumValueValidation;
 import com.example.exampleproject.configs.annotations.DateRangeValidation;
@@ -64,6 +65,7 @@ public record TestPostRequest(
         Byte age,
 
         @NotBlank
+        @Base64ImageValidation
         @JsonProperty(value = "imagemBase64", required = true)
         @Schema(description = "Base64 encoded image.", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
         String base64Image,
