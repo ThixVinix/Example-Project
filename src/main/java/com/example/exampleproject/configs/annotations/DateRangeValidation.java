@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(ValidDateRanges.class)
-public @interface ValidDateRange {
+public @interface DateRangeValidation {
 
     String message() default "Invalid or out of order dates: {dateAField} e {dateBField}";
     Class<?>[] groups() default {};

@@ -2,7 +2,7 @@ package com.example.exampleproject.dto.request;
 
 import com.example.exampleproject.configs.annotations.EnumCodeValidation;
 import com.example.exampleproject.configs.annotations.EnumValueValidation;
-import com.example.exampleproject.configs.annotations.ValidDateRange;
+import com.example.exampleproject.configs.annotations.DateRangeValidation;
 
 import com.example.exampleproject.enums.StatusEnum;
 import com.example.exampleproject.utils.DateUtils;
@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@ValidDateRange(dateAField = "initialDate", dateBField = "finalDate")
+@DateRangeValidation(dateAField = "initialDate", dateBField = "finalDate")
 @Schema(description = "Representation of a request to create a new resource with validations and mandatory data.")
 public record TestPostRequest(
 

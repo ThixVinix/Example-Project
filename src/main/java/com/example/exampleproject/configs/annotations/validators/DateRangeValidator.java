@@ -1,6 +1,6 @@
 package com.example.exampleproject.configs.annotations.validators;
 
-import com.example.exampleproject.configs.annotations.ValidDateRange;
+import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.utils.DateUtils;
 import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
@@ -10,13 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.*;
 
 @Slf4j
-public class DateRangeValidator implements ConstraintValidator<ValidDateRange, Object> {
+public class DateRangeValidator implements ConstraintValidator<DateRangeValidation, Object> {
 
     private String dateAField;
     private String dateBField;
 
     @Override
-    public void initialize(ValidDateRange constraintAnnotation) {
+    public void initialize(DateRangeValidation constraintAnnotation) {
         this.dateAField = constraintAnnotation.dateAField();
         this.dateBField = constraintAnnotation.dateBField();
     }

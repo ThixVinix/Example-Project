@@ -1,6 +1,6 @@
 package com.example.exampleproject.configs.annotations.validators;
 
-import com.example.exampleproject.configs.annotations.ValidDateRange;
+import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.utils.MessageUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,10 +65,10 @@ class DateRangeValidatorTest {
     void setUp() {
         defaultLocale = LocaleContextHolder.getLocale();
         context = mock(ConstraintValidatorContext.class);
-        ValidDateRange validDateRange = mock(ValidDateRange.class);
-        when(validDateRange.dateAField()).thenReturn("dateA");
-        when(validDateRange.dateBField()).thenReturn("dateB");
-        dateRangeValidator.initialize(validDateRange);
+        DateRangeValidation dateRangeValidation = mock(DateRangeValidation.class);
+        when(dateRangeValidation.dateAField()).thenReturn("dateA");
+        when(dateRangeValidation.dateBField()).thenReturn("dateB");
+        dateRangeValidator.initialize(dateRangeValidation);
 
     }
 
