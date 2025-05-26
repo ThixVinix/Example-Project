@@ -24,21 +24,17 @@ public class Base64ImageValidator implements ConstraintValidator<Base64ImageVali
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        // Null values are considered valid (use @NotNull if needed)
         if (value == null || value.isEmpty()) {
             return true;
         }
 
-        // Check if the string starts with a valid image MIME type prefix
         if (!BASE64_IMAGE_PATTERN.matcher(value).matches()) {
             addConstraintViolation(context, "msg.validation.request.field.base64image.invalid.format");
             return false;
         }
 
-        // Extract the base64 content (after the prefix)
         String base64Content = value.substring(value.indexOf(",") + 1);
         
-        // Check if the content is valid base64
         try {
             Base64.getDecoder().decode(base64Content);
             return true;
