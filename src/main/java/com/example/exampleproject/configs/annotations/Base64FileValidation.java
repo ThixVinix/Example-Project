@@ -33,7 +33,7 @@ public @interface Base64FileValidation {
     
     /**
      * Specifies the allowed MIME types for the base64 encoded file.
-     * Examples: "application/pdf", "image/jpeg", "image/png", etc.
+     * Examples: "application/pdf", "text/csv", etc.
      * If empty, all MIME types are allowed.
      * 
      * @return array of allowed MIME types
