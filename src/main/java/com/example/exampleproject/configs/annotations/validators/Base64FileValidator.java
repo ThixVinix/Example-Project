@@ -26,6 +26,14 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
     public void initialize(Base64FileValidation annotation) {
         this.allowedTypes = annotation.allowedTypes();
         this.maxSizeInMB = annotation.maxSizeInMB();
+
+        if (this.maxSizeInMB <= 0) {
+            final int DEFAULT_MAX_SIZE_IN_MB = 5;
+            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
+                    this.maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
+            this.maxSizeInMB = DEFAULT_MAX_SIZE_IN_MB;
+        }
+
     }
 
     @Override
