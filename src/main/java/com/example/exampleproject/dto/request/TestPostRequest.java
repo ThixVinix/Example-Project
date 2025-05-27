@@ -1,9 +1,6 @@
 package com.example.exampleproject.dto.request;
 
-import com.example.exampleproject.configs.annotations.Base64ImageValidation;
-import com.example.exampleproject.configs.annotations.EnumCodeValidation;
-import com.example.exampleproject.configs.annotations.EnumValueValidation;
-import com.example.exampleproject.configs.annotations.DateRangeValidation;
+import com.example.exampleproject.configs.annotations.*;
 
 import com.example.exampleproject.enums.StatusEnum;
 import com.example.exampleproject.utils.DateUtils;
@@ -69,6 +66,12 @@ public record TestPostRequest(
         @JsonProperty(value = "imagemBase64", required = true)
         @Schema(description = "Base64 encoded image.", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
         String base64Image,
+
+        @NotBlank
+        @Base64FileValidation
+        @JsonProperty(value = "arquivoBase64", required = true)
+        @Schema(description = "Base64 encoded file.", example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
+        String base64File,
 
         @NotBlank
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
