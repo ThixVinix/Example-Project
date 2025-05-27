@@ -5,6 +5,7 @@ import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Arrays;
@@ -104,7 +105,7 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
             return value.substring(startIndex, endIndex);
         }
 
-        return "";
+        return StringUtils.EMPTY;
     }
 
     /**
