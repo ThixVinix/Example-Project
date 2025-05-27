@@ -52,4 +52,10 @@ public @interface Base64FileValidation {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
     };
 
+    /**
+     * Maximum file size in megabytes (Default: 5 MB). Internally converted to bytes.
+     */
+    int maxSizeInMB() default 5;
+
+
 }
