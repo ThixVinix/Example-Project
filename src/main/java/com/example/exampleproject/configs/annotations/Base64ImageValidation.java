@@ -19,6 +19,13 @@ import java.lang.annotation.Target;
  * - The content after the prefix must be valid base64 encoded data
  * - Null values are considered valid unless enforced otherwise (e.g., with @NotNull)
  * - Empty strings are considered valid unless enforced otherwise (e.g., with @NotBlank)
+ * <p>
+ * By default, the following image types are allowed:
+ * - image/jpeg
+ * - image/png
+ * - image/gif
+ * - image/bmp
+ * - image/webp
  */
 @Constraint(validatedBy = Base64ImageValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
@@ -30,4 +37,12 @@ public @interface Base64ImageValidation {
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
+
+    /**
+     * Specifies the allowed image MIME types.
+     * If not specified, the default image types are used.
+     * 
+     * @return array of allowed image MIME types
+     */
+    String[] allowedTypes() default {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"};
 }
