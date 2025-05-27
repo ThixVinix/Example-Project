@@ -5,6 +5,7 @@ import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Arrays;
 import java.util.Base64;
@@ -27,7 +28,7 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
         this.allowedTypes = annotation.allowedTypes();
         this.maxSizeInMB = annotation.maxSizeInMB();
 
-        if (this.maxSizeInMB <= 0) {
+        if (this.maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
             final int DEFAULT_MAX_SIZE_IN_MB = 5;
             log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
                     this.maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
@@ -58,16 +59,18 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
             return false;
         }
 
-        String base64Content = value.substring(value.indexOf(",") + 1);
+        String base64Content = value.substring(value.indexOf(",") + NumberUtils.INTEGER_ONE);
 
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Content);
 
-            long maxFileSizeInBytes = maxSizeInMB * 1024L * 1024L;
+            final long BYTES_IN_ONE_MB = (1024L * 1024L);
+
+            long maxFileSizeInBytes = maxSizeInMB * BYTES_IN_ONE_MB;
             long actualFileSizeInBytes = decodedBytes.length;
 
-            double actualFileSizeInMB = actualFileSizeInBytes / (1024.0 * 1024.0);
-            double maxFileSizeInMB = maxFileSizeInBytes / (1024.0 * 1024.0);
+            double actualFileSizeInMB = (double) actualFileSizeInBytes / BYTES_IN_ONE_MB;
+            double maxFileSizeInMB = (double) maxFileSizeInBytes / BYTES_IN_ONE_MB;
 
             if (actualFileSizeInBytes > maxFileSizeInBytes) {
                 addConstraintViolation(context,
@@ -124,7 +127,7 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
     private void addConstraintViolation(ConstraintValidatorContext context, String messageKey, String... params) {
         context.disableDefaultConstraintViolation();
 
-        String message = (params.length > 0)
+        String message = (params.length > NumberUtils.INTEGER_ZERO)
                 ? MessageUtils.getMessage(messageKey, (Object[]) params)
                 : MessageUtils.getMessage(messageKey);
 
