@@ -42,7 +42,7 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
         if (!isMimeTypeAllowed(mimeType)) {
             String allowedMimeTypes = String.join(", ", allowedTypes);
             addConstraintViolation(context,
-                    "msg.validation.request.field.base64image.invalid.type",
+                    "msg.validation.request.field.base64file.invalid.type",
                     allowedMimeTypes
             );
             return false;

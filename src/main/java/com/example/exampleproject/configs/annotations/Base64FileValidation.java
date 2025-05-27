@@ -32,19 +32,24 @@ public @interface Base64FileValidation {
     Class<? extends Payload>[] payload() default {};
     
     /**
-     * Specifies the allowed MIME types for the base64 encoded file.
-     * Examples: "application/pdf", "text/csv", etc.
-     * If empty, all MIME types are allowed.
-     * 
-     * @return array of allowed MIME types
+     * Specifies the allowed MIME types for base64 encoded files.
+     * If not specified, defaults to a predefined set of MIME types.
+     *
+     * @return an array of allowed MIME types for validation
      */
     String[] allowedTypes() default {
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/bmp",
+            "image/webp",
+            "text/plain",
+            "text/csv",
             "application/pdf",
             "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
             "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-            "text/plain",
-            "text/csv"
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
     };
+
 }
