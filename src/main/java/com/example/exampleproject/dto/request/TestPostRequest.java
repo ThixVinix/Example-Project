@@ -62,13 +62,15 @@ public record TestPostRequest(
         Byte age,
 
         @NotBlank
-        @Base64FileValidation(allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"})
+        @Base64FileValidation(
+                allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
+                maxSizeInMB = 3)
         @JsonProperty(value = "imagemBase64", required = true)
         @Schema(description = "Base64 encoded image.", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
         String base64Image,
 
         @NotBlank
-        @Base64FileValidation(allowedTypes = {"application/pdf", "text/csv"})
+        @Base64FileValidation(allowedTypes = {"application/pdf", "text/csv"}, maxSizeInMB = 4)
         @JsonProperty(value = "arquivoBase64", required = true)
         @Schema(description = "Base64 encoded file.", example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
         String base64File,
