@@ -87,7 +87,8 @@ public class EnumValueValidator implements ConstraintValidator<EnumValueValidati
                 .sorted()
                 .collect(Collectors.joining(", "));
 
-        String message = MessageUtils.getMessage("msg.validation.request.field.enum.invalid.value", invalidValue, validValues);
+        String message = MessageUtils.getMessage(
+                "msg.validation.request.field.enum.invalid.value", invalidValue, validValues);
 
         context.buildConstraintViolationWithTemplate(message)
                 .addConstraintViolation();
