@@ -37,7 +37,7 @@ public class EnumCodeValidator implements ConstraintValidator<EnumCodeValidation
             context.disableDefaultConstraintViolation();
 
             String errorMessage = MessageUtils.getMessage(
-                    "msg.validation.enum.code.error.access.method",
+                    "msg.validation.request.field.enum.code.error.access.method",
                     enumClass.getSimpleName()
             );
 
@@ -103,7 +103,7 @@ public class EnumCodeValidator implements ConstraintValidator<EnumCodeValidation
                 .collect(Collectors.joining(", "));
 
         String message = MessageUtils.getMessage(
-                "msg.validation.enum.code.invalid",
+                "msg.validation.request.field.enum.invalid.code",
                 invalidValue,
                 validValues
         );
