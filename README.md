@@ -44,10 +44,14 @@ O projeto inclui exemplos de:
 - [Jackson](https://github.com/FasterXML/jackson-docs) - Serialização/deserialização de JSON
 - [Apache Commons Lang3](https://commons.apache.org/proper/commons-lang/) - Utilitários para manipulação de strings, números, objetos, etc.
 
+[🔼 _**Retornar ao sumário**_](#-sumário)
+
 ## 📋 Pré-requisitos
 
 - JDK 22
 - Gradle 8.x
+
+[🔼 _**Retornar ao sumário**_](#-sumário)
 
 ## 🚀 Como Executar o Projeto
 
@@ -71,6 +75,8 @@ O projeto inclui exemplos de:
    - API: http://localhost:8080
    - Documentação Swagger: http://localhost:8080/swagger-ui.html
 
+[🔼 _**Retornar ao sumário**_](#-sumário)
+
 ## 🧪 Como Executar os Testes Unitários
 
 Para executar **todos os testes unitários**:
@@ -82,6 +88,8 @@ Para executar um **teste específico**:
 ```bash
 ./gradlew test --tests "com.example.exampleproject.NomeDoTeste"
 ```
+
+[🔼 _**Retornar ao sumário**_](#-sumário)
 
 ## 🏗️ Arquitetura do Projeto
 
@@ -122,6 +130,8 @@ src
             └── example
                 └── exampleproject
 ```
+
+[🔼 _**Retornar ao sumário**_](#-sumário)
 
 ### Convenções de API REST
 
@@ -183,6 +193,8 @@ Mantenha URIs simples e use parâmetros de consulta para filtragem:
 #### 📤 Respostas
 
 Os métodos POST ou PUT devem retornar uma representação do recurso atualizado com o código de _status_ apropriado.
+
+[🔼 _**Retornar ao sumário**_](#-sumário)
 
 ## 💻 Implementações Técnicas
 
@@ -357,6 +369,8 @@ As mensagens são definidas em arquivos properties específicos para cada idioma
 - 🔄 **Parametrização**: Suporte a parâmetros nas mensagens
 - 🔄 **Consistência**: Padronização das mensagens em toda a aplicação
 
+[🔼 _**Retornar ao sumário**_](#-sumário)
+
 ## 📐 Princípios SOLID
 
 Este projeto foi desenvolvido seguindo os princípios SOLID, fundamentais para criar código limpo, manutenível e extensível:
@@ -391,7 +405,11 @@ Este projeto foi desenvolvido seguindo os princípios SOLID, fundamentais para c
 - ✅ Usar injeção de dependência e programar para interfaces, não implementações
 - 📝 **Exemplo**: Injetar `JsonPlaceholderService` em vez de `JsonPlaceholderServiceImpl`
 
+[🔼 _**Retornar ao sumário**_](#-sumário)
+
 ## 📚 Recursos Adicionais
 
 - [Guia de Boas Práticas para Design de API REST](https://medium.com/hashmapinc/rest-good-practices-for-api-design-881439796dc9)
 - [Princípios SOLID em Java](https://www.baeldung.com/solid-principles)
+
+[🔼 _**Retornar ao sumário**_](#-sumário)
