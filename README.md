@@ -1,5 +1,10 @@
 # Example Project
 
+![Java Version](https://img.shields.io/badge/Java-22-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.2-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+
 Este é um projeto de exemplo que demonstra o desenvolvimento de uma **API RESTful** usando Spring Boot. 
 O projeto inclui exemplos de:
 
@@ -8,6 +13,23 @@ O projeto inclui exemplos de:
 - 📝 Documentação de API com Swagger/OpenAPI
 - 📅 Manipulação de datas e horas
 - 🔤 Tratamento de enumerações
+
+## 📚 Sumário
+1. [🛠️ Tecnologias](#-tecnologias)
+2. [📋 Pré-requisitos](#-pré-requisitos)
+3. [🚀 Como Executar o Projeto](#-como-executar-o-projeto)
+4. [🧪 Como Executar os Testes Unitários](#-como-executar-os-testes-unitários)
+5. [🏗️ Arquitetura do Projeto](#-arquitetura-do-projeto)
+    - [Definição de Pacotes](#definição-de-pacotes)
+    - [Estrutura de Diretórios](#estrutura-de-diretórios)
+    - [Convenções de API REST](#convenções-de-api-rest)
+6. [💻 Implementações Técnicas](#-implementações-técnicas)
+    - [Padrão de Integração com FeignClient](#-padrão-de-integração-com-feignclient)
+    - [Anotações Customizadas para Validação](#-anotações-customizadas-para-validação)
+    - [MessageUtils para Internacionalização](#-messageutils-para-internacionalização)
+7. [📐 Princípios SOLID](#-princípios-solid)
+8. [📚 Recursos Adicionais](#-recursos-adicionais)
+
 
 ## 🛠️ Tecnologias
 
@@ -160,7 +182,7 @@ Mantenha URIs simples e use parâmetros de consulta para filtragem:
 
 #### 📤 Respostas
 
-Os métodos POST ou PUT devem retornar uma representação do recurso atualizado com o código de status apropriado.
+Os métodos POST ou PUT devem retornar uma representação do recurso atualizado com o código de _status_ apropriado.
 
 ## 💻 Implementações Técnicas
 
@@ -337,7 +359,7 @@ As mensagens são definidas em arquivos properties específicos para cada idioma
 
 ## 📐 Princípios SOLID
 
-Este projeto foi desenvolvido seguindo os princípios SOLID, que são fundamentais para criar código limpo, manutenível e extensível:
+Este projeto foi desenvolvido seguindo os princípios SOLID, fundamentais para criar código limpo, manutenível e extensível:
 
 ### 🔍 Single Responsibility Principle (SRP)
 > "Uma classe deve ter apenas um motivo para mudar."
