@@ -131,8 +131,6 @@ src
                 └── exampleproject
 ```
 
-[🔼 _**Retornar ao sumário**_](#-sumário)
-
 ### Convenções de API REST
 
 #### 📝 Princípios Básicos
