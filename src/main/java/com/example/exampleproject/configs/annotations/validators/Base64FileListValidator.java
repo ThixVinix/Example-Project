@@ -34,7 +34,7 @@ public class Base64FileListValidator implements ConstraintValidator<Base64FileVa
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.list")
+                                MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file")
                         )
                         .addConstraintViolation();
                 return false;
