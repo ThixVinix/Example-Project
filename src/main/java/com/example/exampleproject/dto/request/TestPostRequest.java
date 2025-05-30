@@ -75,7 +75,17 @@ public record TestPostRequest(
         @Schema(description = "Base64 encoded file.", example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
         String base64File,
 
-        @NotBlank
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4
+        )
+        @JsonProperty("listaBase64")
+        @Schema(description = "Lista de documentos codificados em base64.",
+                example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
+        List<String> base64List,
+
+                @NotBlank
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
                 message = "{msg.validation.request.field.phoneNumber.invalidFormat}")
         @JsonProperty(value = "telefone", required = true)
