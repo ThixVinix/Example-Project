@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.annotations;
 
+import com.example.exampleproject.configs.annotations.validators.Base64FileListValidator;
 import com.example.exampleproject.configs.annotations.validators.Base64FileValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -9,18 +10,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
- * Annotation to validate if a string is a valid base64 encoded file of a specified type.
- * This annotation checks if the string starts with a valid MIME type prefix
- * and contains valid base64 encoded data.
+ * Annotation to validate base64 encoded files. This can be used for fields or parameters
+ * where base64 encoded content is expected, ensuring that the content meets the specified
+ * criteria for format, MIME type, and size.
  * <p>
  * Constraints:
- * - The string must start with a valid MIME type prefix (e.g., "data:application/pdf;base64,")
- * - The content after the prefix must be valid base64 encoded data
- * - Null values are considered valid unless enforced otherwise (e.g., with @NotNull)
- * - Empty strings are considered valid unless enforced otherwise (e.g., with @NotBlank)
+ * - Ensures the content is a valid base64 encoded file.
+ * - Checks if the MIME type of the file is included in the `allowedTypes` array.
+ * - Verifies that the file size does not exceed `maxSizeInMB`.
+ * <p>
+ * This annotation is supported for single base64 strings as well as lists of base64 strings.
  */
-@Constraint(validatedBy = Base64FileValidator.class)
+@Constraint(validatedBy = {Base64FileValidator.class, Base64FileListValidator.class})
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Base64FileValidation {
