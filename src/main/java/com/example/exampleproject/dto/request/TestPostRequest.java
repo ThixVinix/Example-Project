@@ -78,7 +78,8 @@ public record TestPostRequest(
         @NotEmpty
         @Base64FileValidation(
                 allowedTypes = {"application/pdf", "text/plain"},
-                maxSizeInMB = 4
+                maxSizeInMB = 4,
+                maxFileCount = 3
         )
         @JsonProperty("listaBase64")
         @Schema(description = "Lista de documentos codificados em base64.",
