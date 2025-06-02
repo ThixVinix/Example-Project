@@ -12,9 +12,11 @@ import java.util.Set;
 public class Base64FileListValidator implements ConstraintValidator<Base64FileValidation, List<String>> {
 
     private Base64FileValidator base64FileValidator;
+    private int maxFileCount;
 
     @Override
     public void initialize(Base64FileValidation annotation) {
+        this.maxFileCount = annotation.maxFileCount();
         base64FileValidator = new Base64FileValidator();
         base64FileValidator.initialize(annotation);
     }
@@ -23,6 +25,17 @@ public class Base64FileListValidator implements ConstraintValidator<Base64FileVa
     public boolean isValid(List<String> values, ConstraintValidatorContext context) {
         if (values == null || values.isEmpty()) {
             return true;
+        }
+
+        if (values.size() > maxFileCount) {
+            context.disableDefaultConstraintViolation();
+            context
+                    .buildConstraintViolationWithTemplate(
+                            MessageUtils.getMessage(
+                                    "msg.validation.request.field.base64file.max.file.count", maxFileCount)
+                    )
+                    .addConstraintViolation();
+            return false;
         }
 
         Set<String> uniqueFiles = new HashSet<>();

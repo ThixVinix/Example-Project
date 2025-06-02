@@ -60,5 +60,11 @@ public @interface Base64FileValidation {
      */
     int maxSizeInMB() default 5;
 
+    /**
+     * Maximum file count in the list (Default: 5 files).
+     */
+    int maxFileCount() default 5;
+
+
 
 }
