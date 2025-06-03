@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.Base64FileValidation;
+import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
 import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -57,6 +58,7 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         }
 
         Set<String> uniqueBase64Files = new HashSet<>(); // Para verificar duplicatas por conteúdo Base64
+        int i = 0;
 
         for (Map.Entry<String, String> entry : values.entrySet()) {
             String fileNameWithoutExtension = entry.getKey();
@@ -102,7 +104,12 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
             // 5. Valida o conteúdo Base64 reutilizando `Base64FileValidator`
             if (!base64FileValidator.isValid(base64File, context)) {
-                // O `Base64FileValidator` já adiciona mensagens de erro específicas ao `context`.
+                context.disableDefaultConstraintViolation();
+                context
+                        .buildConstraintViolationWithTemplate(
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.base64file.invalid.list", i + 1))
+                        .addConstraintViolation();
                 return false;
             }
 
@@ -133,11 +140,11 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                         .addPropertyNode(completeFileName).addConstraintViolation();
                 return false;
             }
+            i++;
         }
 
         return true; // Todos os arquivos são válidos
     }
-
 
 
     /**
@@ -155,8 +162,6 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         return fileName.matches(VALID_FILE_NAME_REGEX);
     }
 
-
-
     /**
      * Extrai o MIME type do conteúdo Base64. Já validado no `Base64FileValidator`.
      *
@@ -171,55 +176,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         return base64File.split(";")[0].split(":")[1];
     }
 
-    /**
-     * Mapeia o tipo MIME para uma extensão de arquivo.
-     *
-     * @param mimeType Tipo MIME.
-     * @return A extensão do arquivo ou null se não suportado.
-     */
     private String getExtensionFromMimeType(String mimeType) {
-        return switch (mimeType) {
-            // Images
-            case "image/jpeg" -> "jpg";
-            case "image/png" -> "png";
-            case "image/gif" -> "gif";
-            case "image/bmp" -> "bmp";
-            case "image/webp" -> "webp";
-            case "image/tiff" -> "tiff";
-            case "image/x-icon" -> "ico";
-
-            // Texts
-            case "text/plain" -> "txt";
-            case "text/csv" -> "csv";
-            case "application/json" -> "json";
-            case "text/html" -> "html";
-            case "application/xml" -> "xml";
-            case "text/markdown" -> "md";
-
-            // Compression files
-            case "application/zip" -> "zip";
-            case "application/x-7z-compressed" -> "7z";
-            case "application/x-rar-compressed" -> "rar";
-
-            // Audios
-            case "audio/mpeg" -> "mp3";
-            case "audio/x-wav" -> "wav";
-
-            // Videos
-            case "video/mp4" -> "mp4";
-            case "video/x-msvideo" -> "avi";
-            case "video/x-ms-wmv" -> "wmv";
-            case "video/webm" -> "webm";
-
-            // Documents
-            case "application/pdf" -> "pdf";
-            case "application/msword" -> "doc";
-            case "application/vnd.ms-powerpoint" -> "ppt";
-            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> "docx";
-            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> "xlsx";
-            case "application/vnd.openxmlformats-officedocument.presentationml.presentation" -> "pptx";
-
-            default -> null;
-        };
+        return MimeTypeEnum.getExtensionFromMimeType(mimeType);
     }
+
 }
