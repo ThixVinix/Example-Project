@@ -74,9 +74,9 @@ public @interface Base64FileValidation {
     };
 
     /**
-     * Maximum file size in megabytes (Default: 5 MB). Internally converted to bytes.
+     * Maximum file size in megabytes (Default: 2 MB). Internally converted to bytes.
      */
-    int maxSizeInMB() default 5;
+    int maxSizeInMB() default 2;
 
     /**
      * Maximum file count in the list (Default: 5 files).
