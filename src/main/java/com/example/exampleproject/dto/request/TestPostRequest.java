@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @DateRangeValidation(dateAField = "initialDate", dateBField = "finalDate")
 @Schema(description = "Representation of a request to create a new resource with validations and mandatory data.")
@@ -86,7 +87,19 @@ public record TestPostRequest(
                 example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
         List<String> base64List,
 
-                @NotBlank
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4,
+                maxFileCount = 3
+        )
+        @JsonProperty("mapaBase64")
+        @Schema(description = "File Map where the key is the file name (without extension) and the value is the " +
+                "content coded in Base64.",
+                example = "{\"document1\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\"}")
+        Map<String, String> base64Map,
+
+        @NotBlank
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
                 message = "{msg.validation.request.field.phoneNumber.invalidFormat}")
         @JsonProperty(value = "telefone", required = true)
