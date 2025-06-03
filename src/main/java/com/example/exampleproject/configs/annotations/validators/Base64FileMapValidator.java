@@ -5,6 +5,7 @@ import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
 import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
      * <p><strong>Regex for file name validation:</strong></p>
      * <ul>
      *   <li><strong>1.</strong> The file name cannot start with a dot: <code>^(?!\\.)</code>.</li>
-     *   <li><strong>2.</strong> Cannot contain dots at all.</li>
+     *   <li><strong>2.</strong> Must contain exactly one dot to separate filename and extension.</li>
      *   <li><strong>3.</strong> Must contain only the following characters:
      *       <ul>
      *           <li>Letters: <code>a-z</code> or <code>A-Z</code>,</li>
@@ -31,12 +32,12 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
      * <p><strong>Examples:</strong></p>
      * <ul>
      *   <li><strong>Valid:</strong>
-     *   <code>document</code>, <code>123-file_name</code>, <code>backup</code>.</li>
+     *   <code>document.pdf</code>, <code>123-file_name.jpg</code>, <code>backup.txt</code>.</li>
      *   <li><strong>Invalid:</strong>
-     *   <code>.hidden</code>, <code>file.name</code>, <code>file.</code>, <code>invalid@name</code>.</li>
+     *   <code>.hidden</code>, <code>file</code>, <code>file.</code>, <code>invalid@name.pdf</code>, <code>file.name.pdf</code>.</li>
      * </ul>
      */
-    private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)(?!.*\\.).*[a-zA-Z0-9_-]+$";
+    private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$";
 
     private Base64FileValidator base64FileValidator;
 
@@ -58,11 +59,11 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         int i = 0;
 
         for (Map.Entry<String, String> entry : values.entrySet()) {
-            String fileNameWithoutExtension = entry.getKey();
+            String fileName = entry.getKey();
             String base64File = entry.getValue();
 
-            // 1. Verifique se `fileNameWithoutExtension` está preenchido
-            if (fileNameWithoutExtension == null || fileNameWithoutExtension.trim().isEmpty()) {
+            // 1. Verifique se `fileName` está preenchido
+            if (fileName == null || fileName.trim().isEmpty()) {
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(
@@ -81,24 +82,24 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                         .buildConstraintViolationWithTemplate(
                                 MessageUtils.getMessage(
                                         "msg.validation.request.field.missing.base64content",
-                                        fileNameWithoutExtension,
+                                        fileName,
                                         i + 1)
                         )
-                        // .addPropertyNode(fileNameWithoutExtension)
+                        // .addPropertyNode(fileName)
                         .addConstraintViolation();
                 return false;
             }
 
-            // 3. Valida se o nome do arquivo não possui caracteres ilegais (inclusive pontos)
-            if (!isFileNameValid(fileNameWithoutExtension)) {
+            // 3. Valida se o nome do arquivo possui formato válido (nome.extensão)
+            if (!isFileNameValid(fileName)) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate(
                                 MessageUtils.getMessage(
                                         "msg.validation.request.field.invalid.filename",
-                                        fileNameWithoutExtension,
+                                        fileName,
                                         i + 1)
                         )
-                        //.addPropertyNode(fileNameWithoutExtension)
+                        //.addPropertyNode(fileName)
                         .addConstraintViolation();
                 return false;
             }
@@ -124,19 +125,31 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                                         "msg.validation.request.field.unsupported.filetype",
                                         i + 1)
                         )
-                        //.addPropertyNode(fileNameWithoutExtension)
+                        //.addPropertyNode(fileName)
                         .addConstraintViolation();
                 return false;
             }
 
-            // Gera o nome completo do arquivo com extensão
-            //String completeFileName = fileNameWithoutExtension + "." + expectedExtension;
+            // 6. Extrai a extensão do nome do arquivo e verifica se corresponde ao tipo MIME
+            String fileExtension = extractExtensionFromFileName(fileName);
+            if (!fileExtension.equalsIgnoreCase(expectedExtension)) {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate(
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.extension.mismatch",
+                                        fileName,
+                                        fileExtension,
+                                        expectedExtension,
+                                        i + 1)
+                        )
+                        .addConstraintViolation();
+                return false;
+            }
 
-            // 6. Verifica duplicatas no conteúdo Base64
+            // 7. Verifica duplicatas no conteúdo Base64
             if (!uniqueBase64Files.add(base64File)) {
                 context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
+                context.buildConstraintViolationWithTemplate(
                                 MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file")
                         )
                         .addConstraintViolation();
@@ -180,6 +193,19 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private String getExtensionFromMimeType(String mimeType) {
         return MimeTypeEnum.getExtensionFromMimeType(mimeType);
+    }
+
+    /**
+     * Extracts the file extension from a filename.
+     *
+     * @param fileName the filename including extension
+     * @return the extension part of the filename
+     */
+    private String extractExtensionFromFileName(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return StringUtils.EMPTY;
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
 }
