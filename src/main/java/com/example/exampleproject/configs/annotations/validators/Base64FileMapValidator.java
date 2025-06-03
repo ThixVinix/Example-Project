@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class Base64FileMapValidator implements ConstraintValidator<Base64FileValidation, Map<String, String>> {
@@ -16,32 +17,26 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
      * <p><strong>Regex for file name validation:</strong></p>
      * <ul>
      *   <li><strong>1.</strong> The file name cannot start with a dot: <code>^(?!\\.)</code>.</li>
-     *   <li><strong>2.</strong> Cannot contain consecutive dots: <code>(?!.*\\.\\.)</code>.</li>
+     *   <li><strong>2.</strong> Cannot contain dots at all.</li>
      *   <li><strong>3.</strong> Must contain only the following characters:
      *       <ul>
      *           <li>Letters: <code>a-z</code> or <code>A-Z</code>,</li>
      *           <li>Digits: <code>0-9</code>,</li>
      *           <li>Underscores: <code>_</code>,</li>
-     *           <li>Hyphens: <code>-</code></li>
+     *           <li>Hyphens: <code>-</code>.</li>
      *       </ul>
-     *       before an optional dot: <code>[a-zA-Z0-9_-]+</code>.
      *   </li>
-     *   <li><strong>4.</strong> May contain a dot (<code>.</code>), followed by valid characters
-     *       for an extension: <code>(\\.[a-zA-Z0-9_-]+)?</code>.
-     *   </li>
-     *   <li><strong>5.</strong> Cannot end with a dot and must adhere to the full pattern: <code>$</code>.</li>
      * </ul>
      *
      * <p><strong>Examples:</strong></p>
      * <ul>
      *   <li><strong>Valid:</strong>
-     *   <code>document.txt</code>, <code>123-file_name.log</code>, <code>backup</code>.</li>
+     *   <code>document</code>, <code>123-file_name</code>, <code>backup</code>.</li>
      *   <li><strong>Invalid:</strong>
-     *   <code>.hidden</code>, <code>file..name</code>, <code>file.</code>, <code>invalid@name.txt</code>.</li>
+     *   <code>.hidden</code>, <code>file.name</code>, <code>file.</code>, <code>invalid@name</code>.</li>
      * </ul>
      */
-    private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)(?!.*\\.\\.)[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)?$";
-
+    private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)(?!.*\\.).*[a-zA-Z0-9_-]+$";
 
     private Base64FileValidator base64FileValidator;
 
@@ -50,6 +45,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         base64FileValidator = new Base64FileValidator();
         base64FileValidator.initialize(annotation);
     }
+
+
 
     @Override
     public boolean isValid(Map<String, String> values, ConstraintValidatorContext context) {
@@ -65,11 +62,13 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
             String base64File = entry.getValue();
 
             // 1. Verifique se `fileNameWithoutExtension` está preenchido
-            if (fileNameWithoutExtension == null || fileNameWithoutExtension.isBlank()) {
+            if (fileNameWithoutExtension == null || fileNameWithoutExtension.trim().isEmpty()) {
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.missing.filename")
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.missing.filename",
+                                        i + 1)
                         )
                         .addConstraintViolation();
                 return false;
@@ -80,64 +79,67 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.missing.base64content", fileNameWithoutExtension)
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.missing.base64content",
+                                        fileNameWithoutExtension,
+                                        i + 1)
                         )
-                        .addPropertyNode(fileNameWithoutExtension).addConstraintViolation();
+                        // .addPropertyNode(fileNameWithoutExtension)
+                        .addConstraintViolation();
                 return false;
             }
 
-            // 3. Remove extensões incluídas indevidamente na chave
-            if (fileNameWithoutExtension.contains(".")) {
-                fileNameWithoutExtension = fileNameWithoutExtension.substring(0, fileNameWithoutExtension.indexOf('.'));
-            }
-
-            // 4. Valida se o nome do arquivo não possui caracteres ilegais
+            // 3. Valida se o nome do arquivo não possui caracteres ilegais (inclusive pontos)
             if (!isFileNameValid(fileNameWithoutExtension)) {
                 context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.invalid.filename", fileNameWithoutExtension)
+                context.buildConstraintViolationWithTemplate(
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.invalid.filename",
+                                        fileNameWithoutExtension,
+                                        i + 1)
                         )
-                        .addPropertyNode(fileNameWithoutExtension).addConstraintViolation();
+                        //.addPropertyNode(fileNameWithoutExtension)
+                        .addConstraintViolation();
                 return false;
             }
 
-            // 5. Valida o conteúdo Base64 reutilizando `Base64FileValidator`
+            // 4. Valida o conteúdo Base64 reutilizando `Base64FileValidator`
             if (!base64FileValidator.isValid(base64File, context)) {
                 context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
+                context.buildConstraintViolationWithTemplate(
                                 MessageUtils.getMessage(
                                         "msg.validation.request.field.base64file.invalid.list", i + 1))
                         .addConstraintViolation();
                 return false;
             }
 
-            // 6. Extrai o tipo MIME do Base64 e gera a extensão correspondente
+            // 5. Extrai o tipo MIME do Base64 e gera a extensão correspondente
             String mimeType = extractMimeTypeFromBase64(base64File);
             String expectedExtension = getExtensionFromMimeType(mimeType);
 
-            if (expectedExtension == null) {
+            if (Objects.isNull(expectedExtension)) {
                 context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.unsupported.filetype", fileNameWithoutExtension)
+                context.buildConstraintViolationWithTemplate(
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.unsupported.filetype",
+                                        i + 1)
                         )
-                        .addPropertyNode(fileNameWithoutExtension).addConstraintViolation();
+                        //.addPropertyNode(fileNameWithoutExtension)
+                        .addConstraintViolation();
                 return false;
             }
 
             // Gera o nome completo do arquivo com extensão
-            String completeFileName = fileNameWithoutExtension + "." + expectedExtension;
+            //String completeFileName = fileNameWithoutExtension + "." + expectedExtension;
 
-            // 7. Verifica duplicatas no conteúdo Base64
+            // 6. Verifica duplicatas no conteúdo Base64
             if (!uniqueBase64Files.add(base64File)) {
                 context.disableDefaultConstraintViolation();
                 context
                         .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.duplicate.file", completeFileName)
+                                MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file")
                         )
-                        .addPropertyNode(completeFileName).addConstraintViolation();
+                        .addConstraintViolation();
                 return false;
             }
             i++;
