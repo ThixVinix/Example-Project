@@ -130,8 +130,22 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                 return false;
             }
 
-            // 6. Extrai a extensão do nome do arquivo e verifica se corresponde ao tipo MIME
+            // 6. Extrai a extensão do nome do arquivo e verifica se é uma extensão válida
             String fileExtension = extractExtensionFromFileName(fileName);
+            if (!MimeTypeEnum.isValidExtension(fileExtension)) {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate(
+                                MessageUtils.getMessage(
+                                        "msg.validation.request.field.invalid.extension",
+                                        fileName,
+                                        fileExtension,
+                                        i + 1)
+                        )
+                        .addConstraintViolation();
+                return false;
+            }
+
+            // 7. Verifica se a extensão corresponde ao tipo MIME do conteúdo
             if (!fileExtension.equalsIgnoreCase(expectedExtension)) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate(
