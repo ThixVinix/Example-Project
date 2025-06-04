@@ -226,16 +226,20 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
     }
 
     /**
-     * Extrai o MIME type do conteúdo Base64. Já validado no `Base64FileValidator`.
+     * Extracts the MIME type from a Base64-encoded string, provided the input string
+     * contains a valid "data" URI format with a MIME type prefix.
      *
-     * @param base64File Conteúdo Base64.
-     * @return O tipo MIME ou null se for inválido.
+     * @param base64File the Base64-encoded string, expected to start with a "data" URI
+     *                   containing a MIME type (e.g., "data:image/png;base64,...").
+     *                   If null or improperly formatted, this method returns null.
+     * @return the extracted MIME type as a string (e.g., "image/png") if the input is valid;
+     *         null if the input is null or does not contain a valid MIME type.
      */
     private String extractMimeTypeFromBase64(String base64File) {
         if (base64File == null || !base64File.contains(";base64,")) {
             return null;
         }
-        // "data:image/png;base64,..." -> "image/png"
+
         return base64File.split(";")[0].split(":")[1];
     }
 
