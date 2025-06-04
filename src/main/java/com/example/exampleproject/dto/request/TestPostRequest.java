@@ -95,7 +95,6 @@ public record TestPostRequest(
                 "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
                 example = "{\"document1.pdf\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
                         "\"document2.txt\": \"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"}")
-
         Map<String, String> base64Map,
 
         @NotBlank
@@ -142,7 +141,6 @@ public record TestPostRequest(
         @JsonProperty("codigo")
         @EnumCodeValidation(enumClass = StatusEnum.class)
         Integer statusCodeEnum
-
 
 ) {
 }
