@@ -63,41 +63,6 @@ public record TestPostRequest(
         Byte age,
 
         @NotBlank
-        @Base64FileValidation(
-                allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
-                maxSizeInMB = 3)
-        @JsonProperty(value = "imagemBase64", required = true)
-        @Schema(description = "Base64 encoded image. Expected format: data:[type]/[subtype];base64,[content]",
-                example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
-        String base64Image,
-
-        @NotEmpty
-        @Base64FileValidation(
-                allowedTypes = {"application/pdf", "text/plain"},
-                maxSizeInMB = 4,
-                maxFileCount = 3
-        )
-        @JsonProperty("listaBase64")
-        @Schema(description = "List of documents encoded in Base64." +
-                "Expected format: data:[type]/[subtype];base64,[content]",
-                example = "[\"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
-                        "\"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"]")
-        List<String> base64List,
-
-        @NotEmpty
-        @Base64FileValidation(
-                allowedTypes = {"application/pdf", "text/plain"},
-                maxSizeInMB = 4,
-                maxFileCount = 3
-        )
-        @JsonProperty("mapaBase64")
-        @Schema(description = "File Map where the key is the file name (with extension) and the value is the " +
-                "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
-                example = "{\"document1.pdf\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
-                        "\"document2.txt\": \"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"}")
-        Map<String, String> base64Map,
-
-        @NotBlank
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
                 message = "{msg.validation.request.field.phoneNumber.invalidFormat}")
         @JsonProperty(value = "telefone", required = true)
@@ -135,12 +100,50 @@ public record TestPostRequest(
         @NotNull
         @JsonProperty("status")
         @EnumValueValidation(enumClass = StatusEnum.class)
+        @Schema(description = "Status description from the enumeration.", example = "ATIVO")
         String statusValueEnum,
 
         @NotNull
         @JsonProperty("codigo")
         @EnumCodeValidation(enumClass = StatusEnum.class)
-        Integer statusCodeEnum
+        @Schema(description = "Status code from the enumeration.", example = "1")
+        Integer statusCodeEnum,
+
+        @NotBlank
+        @Base64FileValidation(
+                allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
+                maxSizeInMB = 3)
+        @JsonProperty(value = "imagemBase64", required = true)
+        @Schema(description = "Base64 encoded image. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAADMElEQVR4nOzVwQnAIBQF" +
+                        "QYXff81RUkQCOyDj1YOPnbXWPmeTRef+/3O/OyBjzh3CD95BfqICMK0CMO0TAAD//2Anhf4QtqobAAAAAElFTkSuQmCC")
+        String base64Image,
+
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4,
+                maxFileCount = 3
+        )
+        @JsonProperty("listaBase64")
+        @Schema(description = "List of documents encoded in Base64. " +
+                "Expected format: data:[type]/[subtype];base64,[content]",
+                example = "[\"data:application/pdf;base64,JVBERi0xLjMKJ1RyYWlsZXInCiUlRU9GCg==\", " +
+                        "\"data:text/plain;base64,VGVzdCBjb250ZW50\"]")
+        List<String> base64List,
+
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4,
+                maxFileCount = 3
+        )
+        @JsonProperty("mapaBase64")
+        @Schema(description = "File Map where the key is the file name (with extension) and the value is the " +
+                "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "{\"document1.pdf\": \"data:application/pdf;base64,JVBERi0xLjMKJ1RyYWlsZXInCiUlRU9GCg==\", " +
+                        "\"document2.txt\": \"data:text/plain;base64,VGVzdCBjb250ZW50\"}")
+        Map<String, String> base64Map
 
 ) {
 }
