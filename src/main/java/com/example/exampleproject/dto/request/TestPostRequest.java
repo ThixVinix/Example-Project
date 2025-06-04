@@ -67,14 +67,9 @@ public record TestPostRequest(
                 allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
                 maxSizeInMB = 3)
         @JsonProperty(value = "imagemBase64", required = true)
-        @Schema(description = "Base64 encoded image.", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
+        @Schema(description = "Base64 encoded image. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
         String base64Image,
-
-        @NotBlank
-        @Base64FileValidation(allowedTypes = {"application/pdf", "text/csv"}, maxSizeInMB = 4)
-        @JsonProperty(value = "arquivoBase64", required = true)
-        @Schema(description = "Base64 encoded file.", example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
-        String base64File,
 
         @NotEmpty
         @Base64FileValidation(
@@ -83,8 +78,10 @@ public record TestPostRequest(
                 maxFileCount = 3
         )
         @JsonProperty("listaBase64")
-        @Schema(description = "Lista de documentos codificados em base64.",
-                example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
+        @Schema(description = "List of documents encoded in Base64." +
+                "Expected format: data:[type]/[subtype];base64,[content]",
+                example = "[\"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
+                        "\"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"]")
         List<String> base64List,
 
         @NotEmpty
@@ -94,9 +91,11 @@ public record TestPostRequest(
                 maxFileCount = 3
         )
         @JsonProperty("mapaBase64")
-        @Schema(description = "File Map where the key is the file name (without extension) and the value is the " +
-                "content coded in Base64.",
-                example = "{\"document1\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\"}")
+        @Schema(description = "File Map where the key is the file name (with extension) and the value is the " +
+                "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "{\"document1\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
+                        "\"document2\": \"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"}")
+
         Map<String, String> base64Map,
 
         @NotBlank
