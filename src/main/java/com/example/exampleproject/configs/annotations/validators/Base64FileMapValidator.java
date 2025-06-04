@@ -52,127 +52,161 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
     @Override
     public boolean isValid(Map<String, String> values, ConstraintValidatorContext context) {
         if (values == null || values.isEmpty()) {
-            return true; // Mapa vazio ou nulo é considerado válido
+            return true;
         }
 
-        Set<String> uniqueBase64Files = new HashSet<>(); // Para verificar duplicatas por conteúdo Base64
+        Set<String> uniqueBase64Files = new HashSet<>();
         int i = 0;
 
         for (Map.Entry<String, String> entry : values.entrySet()) {
             String fileName = entry.getKey();
             String base64File = entry.getValue();
 
-            // 1. Verifique se `fileName` está preenchido
-            if (fileName == null || fileName.trim().isEmpty()) {
-                context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.missing.filename",
-                                        i + 1)
-                        )
-                        .addConstraintViolation();
+            if (!validateFileEntry(fileName, base64File, uniqueBase64Files, i, context)) {
                 return false;
             }
 
-            // 2. Verifique se `base64File` está preenchido
-            if (base64File == null || base64File.isBlank()) {
-                context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.missing.base64content",
-                                        fileName,
-                                        i + 1)
-                        )
-                        // .addPropertyNode(fileName)
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 3. Valida se o nome do arquivo possui formato válido (nome.extensão)
-            if (!isFileNameValid(fileName)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.invalid.filename",
-                                        fileName,
-                                        i + 1)
-                        )
-                        //.addPropertyNode(fileName)
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 4. Valida o conteúdo Base64 reutilizando `Base64FileValidator`
-            if (!base64FileValidator.isValid(base64File, context)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.base64file.invalid.list", i + 1))
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 5. Extrai o tipo MIME do Base64 e gera a extensão correspondente
-            String mimeType = extractMimeTypeFromBase64(base64File);
-            String expectedExtension = getExtensionFromMimeType(mimeType);
-
-            if (Objects.isNull(expectedExtension)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.unsupported.filetype",
-                                        i + 1)
-                        )
-                        //.addPropertyNode(fileName)
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 6. Extrai a extensão do nome do arquivo e verifica se é uma extensão válida
-            String fileExtension = extractExtensionFromFileName(fileName);
-            if (!MimeTypeEnum.isValidExtension(fileExtension)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.invalid.extension",
-                                        fileName,
-                                        fileExtension,
-                                        i + 1)
-                        )
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 7. Verifica se a extensão corresponde ao tipo MIME do conteúdo
-            if (!fileExtension.equalsIgnoreCase(expectedExtension)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage(
-                                        "msg.validation.request.field.extension.mismatch",
-                                        fileName,
-                                        fileExtension,
-                                        expectedExtension,
-                                        i + 1)
-                        )
-                        .addConstraintViolation();
-                return false;
-            }
-
-            // 7. Verifica duplicatas no conteúdo Base64
-            if (!uniqueBase64Files.add(base64File)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file")
-                        )
-                        .addConstraintViolation();
-                return false;
-            }
             i++;
         }
 
-        return true; // Todos os arquivos são válidos
+        return true;
+    }
+
+    /**
+     * Validates a single file entry in the map.
+     *
+     * @param fileName The file name (key in the map)
+     * @param base64File The base64 content (value in the map)
+     * @param uniqueBase64Files Set to track unique base64 contents
+     * @param index The index of the current entry for error messages
+     * @param context The validation context
+     * @return true if the entry is valid, false otherwise
+     */
+    private boolean validateFileEntry(String fileName, String base64File, Set<String> uniqueBase64Files, 
+                                     int index, ConstraintValidatorContext context) {
+
+        if (!validateFileNamePresence(fileName, index, context)) {
+            return false;
+        }
+
+        if (!validateBase64ContentPresence(fileName, base64File, index, context)) {
+            return false;
+        }
+
+        if (!validateFileNameFormat(fileName, index, context)) {
+            return false;
+        }
+
+        if (!validateBase64Content(base64File, index, context)) {
+            return false;
+        }
+
+        String mimeType = extractMimeTypeFromBase64(base64File);
+        String expectedExtension = getExtensionFromMimeType(mimeType);
+        if (!validateMimeTypeSupported(expectedExtension, index, context)) {
+            return false;
+        }
+
+        String fileExtension = extractExtensionFromFileName(fileName);
+        if (!validateFileExtension(fileName, fileExtension, index, context)) {
+            return false;
+        }
+
+        if (!validateExtensionMatchesMimeType(fileName, fileExtension, expectedExtension, index, context)) {
+            return false;
+        }
+
+        return validateUniqueContent(base64File, uniqueBase64Files, context);
+    }
+
+    private boolean validateFileNamePresence(String fileName, int index, ConstraintValidatorContext context) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.missing.filename", index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateBase64ContentPresence(String fileName, String base64File, int index, 
+                                                 ConstraintValidatorContext context) {
+        if (base64File == null || base64File.isBlank()) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.missing.base64content", 
+                            fileName, index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateFileNameFormat(String fileName, int index, ConstraintValidatorContext context) {
+        if (!isFileNameValid(fileName)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.invalid.filename", 
+                            fileName, index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateBase64Content(String base64File, int index, ConstraintValidatorContext context) {
+        if (!base64FileValidator.isValid(base64File, context)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.base64file.invalid.list", index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateMimeTypeSupported(String expectedExtension, int index, ConstraintValidatorContext context) {
+        if (Objects.isNull(expectedExtension)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.unsupported.filetype", index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateFileExtension(String fileName, String fileExtension, int index, 
+                                         ConstraintValidatorContext context) {
+        if (!MimeTypeEnum.isValidExtension(fileExtension)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.invalid.extension", 
+                            fileName, fileExtension, index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateExtensionMatchesMimeType(String fileName, String fileExtension, 
+                                                   String expectedExtension, int index, 
+                                                   ConstraintValidatorContext context) {
+        if (!fileExtension.equalsIgnoreCase(expectedExtension)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.extension.mismatch", 
+                            fileName, fileExtension, expectedExtension, index + 1));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateUniqueContent(String base64File, Set<String> uniqueBase64Files, 
+                                         ConstraintValidatorContext context) {
+        if (!uniqueBase64Files.add(base64File)) {
+            addConstraintViolation(context, 
+                    MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file"));
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Helper method to add a constraint violation with the given message.
+     */
+    private void addConstraintViolation(ConstraintValidatorContext context, String message) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate(message)
+               .addConstraintViolation();
     }
 
 
