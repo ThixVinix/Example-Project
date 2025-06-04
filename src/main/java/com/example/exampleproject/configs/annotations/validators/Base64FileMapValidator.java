@@ -5,13 +5,16 @@ import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
 import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+@Slf4j
 public class Base64FileMapValidator implements ConstraintValidator<Base64FileValidation, Map<String, String>> {
 
     /**
@@ -40,19 +43,39 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
      */
     private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$";
 
+    private int maxFileCount;
+
     private Base64FileValidator base64FileValidator;
 
     @Override
     public void initialize(Base64FileValidation annotation) {
+        this.maxFileCount = annotation.maxFileCount();
         base64FileValidator = new Base64FileValidator();
         base64FileValidator.initialize(annotation);
-    }
 
+        if (this.maxFileCount <= NumberUtils.INTEGER_ZERO) {
+            final int DEFAULT_MAX_FILE = 5;
+            log.warn("The value of maxFileCount provided is invalid ({}). Default value of {} will be used.",
+                    this.maxFileCount, DEFAULT_MAX_FILE);
+            this.maxFileCount = DEFAULT_MAX_FILE;
+        }
+    }
 
     @Override
     public boolean isValid(Map<String, String> values, ConstraintValidatorContext context) {
         if (values == null || values.isEmpty()) {
             return true;
+        }
+
+        if (values.size() > maxFileCount) {
+            context.disableDefaultConstraintViolation();
+            context
+                    .buildConstraintViolationWithTemplate(
+                            MessageUtils.getMessage(
+                                    "msg.validation.request.field.base64file.max.file.count", maxFileCount)
+                    )
+                    .addConstraintViolation();
+            return false;
         }
 
         Set<String> uniqueBase64Files = new HashSet<>();
@@ -208,7 +231,6 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         context.buildConstraintViolationWithTemplate(message)
                 .addConstraintViolation();
     }
-
 
     /**
      * Validates whether the given file name is valid based on a specific set of rules.

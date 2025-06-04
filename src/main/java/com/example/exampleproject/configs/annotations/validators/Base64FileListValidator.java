@@ -23,14 +23,13 @@ public class Base64FileListValidator implements ConstraintValidator<Base64FileVa
 
     @Override
     public boolean isValid(List<String> values, ConstraintValidatorContext context) {
-        if (values == null || values.isEmpty()) {
+        if (isNullOrEmpty(values)) {
             return true;
         }
 
         if (values.size() > maxFileCount) {
             context.disableDefaultConstraintViolation();
-            context
-                    .buildConstraintViolationWithTemplate(
+            context.buildConstraintViolationWithTemplate(
                             MessageUtils.getMessage(
                                     "msg.validation.request.field.base64file.max.file.count", maxFileCount)
                     )
@@ -65,6 +64,10 @@ public class Base64FileListValidator implements ConstraintValidator<Base64FileVa
             }
         }
         return true;
+    }
+
+    private boolean isNullOrEmpty(List<String> values) {
+        return values == null || values.isEmpty();
     }
 
 
