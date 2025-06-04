@@ -34,7 +34,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
      *   <li><strong>Valid:</strong>
      *   <code>document.pdf</code>, <code>123-file_name.jpg</code>, <code>backup.txt</code>.</li>
      *   <li><strong>Invalid:</strong>
-     *   <code>.hidden</code>, <code>file</code>, <code>file.</code>, <code>invalid@name.pdf</code>, <code>file.name.pdf</code>.</li>
+     *   <code>.hidden</code>, <code>file</code>, <code>file.</code>, <code>invalid@name.pdf</code>,
+     *   <code>file.name.pdf</code>.</li>
      * </ul>
      */
     private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$";
