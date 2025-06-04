@@ -112,5 +112,20 @@ public enum MimeTypeEnum {
                 .orElse(null);
     }
 
+    /**
+     * Checks if the provided extension is valid by comparing it with the predefined set of extensions.
+     *
+     * @param extension the file extension to be validated; can be null or empty.
+     * @return true if the extension is found in the predefined set of extensions, false otherwise.
+     */
+    public static boolean isValidExtension(String extension) {
+        if (extension == null || extension.isEmpty()) {
+            return false;
+        }
+
+        return Arrays.stream(MimeTypeEnum.values())
+                .map(MimeTypeEnum::getExtension)
+                .anyMatch(ext -> ext.equalsIgnoreCase(extension));
+    }
 
 }
