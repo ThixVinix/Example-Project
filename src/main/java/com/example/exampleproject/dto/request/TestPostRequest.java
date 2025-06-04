@@ -93,8 +93,8 @@ public record TestPostRequest(
         @JsonProperty("mapaBase64")
         @Schema(description = "File Map where the key is the file name (with extension) and the value is the " +
                 "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
-                example = "{\"document1\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
-                        "\"document2\": \"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"}")
+                example = "{\"document1.pdf\": \"data:application/pdf;base64,/9j/4AAQSkZJRgABA...\", " +
+                        "\"document2.txt\": \"data:text/plain;base64,VGhpcyBpcyBhIHRleHQgZmlsZS4=\"}")
 
         Map<String, String> base64Map,
 
