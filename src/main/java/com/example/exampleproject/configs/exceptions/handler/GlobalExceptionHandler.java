@@ -49,17 +49,20 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "404",
-            description = "Not Found. The requested resource could not be found on the server. This may happen if " +
-                    "the resource does not exist, was removed, or the identifier provided is incorrect. Verify the " +
-                    "request URL and parameters.",
+            description = "<p><strong>English:</strong> Not Found. The requested resource could not be found on the " +
+                    "server. This may happen if the resource does not exist, was removed, or the identifier provided " +
+                    "is incorrect. Verify the request URL and parameters.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Não Encontrado. O recurso solicitado não pôde ser " +
+                    "encontrado no servidor. Isso pode acontecer se o recurso não existe, foi removido ou o " +
+                    "identificador fornecido está incorreto. Verifique a URL e os parâmetros da solicitação.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Resource Not Found Example",
-                                            summary = "Example of a 404 error response.",
+                                            name = "English - 404 Not Found Example",
+                                            summary = "English: Example of a 404 error response.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T12:00:00",
@@ -67,6 +70,19 @@ public class GlobalExceptionHandler {
                                                           "status": 404,
                                                           "error": "Not Found",
                                                           "message": "Resource with ID '123' was not found."
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 404 Recurso Não Encontrado",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 404.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T12:00:00",
+                                                          "path": "/api/resource/123",
+                                                          "status": 404,
+                                                          "error": "Not Found",
+                                                          "message": "Recurso com ID '123' não foi encontrado."
                                                         }
                                                     """
                                     )
@@ -92,18 +108,22 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "405",
-            description = "Method Not Allowed. The HTTP method used in the request is not supported by the resource. " +
-                    "Ensure that you are using the correct method (e.g., GET, POST, PUT, DELETE) as documented for " +
-                    "this API endpoint.",
+            description = "<p><strong>English:</strong> Method Not Allowed. The HTTP method used in the request is " +
+                    "not supported by the resource. Ensure that you are using the correct method " +
+                    "(e.g., GET, POST, PUT, DELETE) as documented for this API endpoint.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Método Não Permitido. O método HTTP usado na " +
+                    "solicitação não é suportado pelo recurso. " +
+                    "Certifique-se de que está usando o método correto (por exemplo, GET, POST, PUT, DELETE) conforme" +
+                    " documentado para este endpoint da API.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Method Not Allowed Example",
-                                            summary = "Example of a 405 error response when using an unsupported " +
-                                                    "method.",
+                                            name = "English - 405 Method Not Allowed",
+                                            summary = "English: Example of a 405 error response when using an " +
+                                                    "unsupported method.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T12:00:00",
@@ -111,6 +131,20 @@ public class GlobalExceptionHandler {
                                                           "status": 405,
                                                           "error": "Method Not Allowed",
                                                           "message": "POST is not supported for this resource."
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 405 Método Não Permitido",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 405 ao " +
+                                                    "usar um método não suportado.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T12:00:00",
+                                                          "path": "/api/resource",
+                                                          "status": 405,
+                                                          "error": "Method Not Allowed",
+                                                          "message": "POST não é suportado para este recurso."
                                                         }
                                                     """
                                     )
@@ -137,17 +171,21 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "400",
-            description = "Bad Request. This error occurs when the server cannot process the request due to invalid " +
-                    "syntax, missing required information, or incorrect data formatting. Verify the request " +
-                    "parameters, body, and format before retrying.",
+            description = "<p><strong>English:</strong> Bad Request. This error occurs when the server cannot " +
+                    "process the request due to invalid syntax, missing required information, or incorrect data " +
+                    "formatting. Verify the request parameters, body, and format before retrying.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Requisição Inválida. Este erro ocorre quando o " +
+                    "servidor não pode processar a solicitação devido a sintaxe inválida, informações obrigatórias " +
+                    "ausentes ou formatação incorreta de dados. Verifique os parâmetros da solicitação, corpo e " +
+                    "formato antes de tentar novamente.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorMultipleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Bad Request Example",
-                                            summary = "Example of a 400 error response due to invalid input.",
+                                            name = "English - 400 Bad Request",
+                                            summary = "English: Example of a 400 error response due to invalid input.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T14:00:00",
@@ -156,6 +194,22 @@ public class GlobalExceptionHandler {
                                                           "error": "Bad Request",
                                                           "messages": {
                                                             "field": "Field is required."
+                                                          }
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 400 Requisição Inválida",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 400 " +
+                                                    "devido a entrada inválida.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T14:00:00",
+                                                          "path": "/api/resource",
+                                                          "status": 400,
+                                                          "error": "Bad Request",
+                                                          "messages": {
+                                                            "field": "Campo é obrigatório."
                                                           }
                                                         }
                                                     """
@@ -191,18 +245,22 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "401",
-            description = "Unauthorized. Authentication is required to access this resource, and the provided " +
-                    "credentials are missing, invalid, or expired. Ensure that a valid 'Authorization' header or " +
-                    "token is included in the request.",
+            description = "<p><strong>English:</strong> Unauthorized. Authentication is required to access this " +
+                    "resource, and the provided credentials are missing, invalid, or expired. Ensure that a valid " +
+                    "'Authorization' header or token is included in the request.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Não Autorizado. A autenticação é necessária para " +
+                    "acessar este recurso, e as credenciais fornecidas estão ausentes, inválidas ou expiradas. " +
+                    "Certifique-se de que um cabeçalho 'Authorization' válido ou token esteja incluído na solicitação" +
+                    ".</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Unauthorized Example",
-                                            summary = "Example of a 401 error response caused by missing or invalid " +
-                                                    "authentication credentials.",
+                                            name = "English - 401 Unauthorized",
+                                            summary = "English: Example of a 401 error response caused by missing or " +
+                                                    "invalid authentication credentials.",
                              value = """
                                          {
                                            "timestamp": "2023-01-01T12:00:00",
@@ -212,7 +270,21 @@ public class GlobalExceptionHandler {
                                            "message": "Authentication failed due to missing or invalid credentials."
                                          }
                                      """
-                                    )
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 401 Não Autorizado",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 401 " +
+                                                    "causada por credenciais de autenticação ausentes ou inválidas.",
+                            value = """
+                                        {
+                                          "timestamp": "2023-01-01T12:00:00",
+                                          "path": "/api/resource",
+                                          "status": 401,
+                                          "error": "Unauthorized",
+                                          "message": "Falha na autenticação devido a credenciais ausentes ou inválidas."
+                                        }
+                                    """
+                                   )
                             }
                     )
             }
@@ -234,18 +306,22 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "403",
-            description = "Forbidden. The server understood the request but is refusing to authorize it. " +
-                    "This error occurs when the client does not have the necessary permissions to access the " +
-                    "resource. Ensure that the user has the required roles or permissions to perform the requested " +
-                    "operation.",
+            description = "<p><strong>English:</strong> Forbidden. The server understood the request but is refusing " +
+                    "to authorize it. This error occurs when the client does not have the necessary permissions to " +
+                    "access the resource. Ensure that the user has the required roles or permissions to perform the " +
+                    "requested operation.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Proibido. O servidor entendeu a solicitação, mas está " +
+                    "se recusando a autorizá-la. Este erro ocorre quando o cliente não tem as permissões necessárias " +
+                    "para acessar o recurso. Certifique-se de que o usuário tenha as funções ou permissões " +
+                    "necessárias para realizar a operação solicitada.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Forbidden Example",
-                                            summary = "Example of a 403 error response when access is denied.",
+                                            name = "English - 403 Forbidden",
+                                            summary = "English: Example of a 403 error response when access is denied.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T15:00:00",
@@ -254,6 +330,21 @@ public class GlobalExceptionHandler {
                                                           "error": "Forbidden",
                                                           "message": "Access denied. You do not have sufficient
                                                           permissions to access this resource."
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 403 Proibido",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 403 " +
+                                                    "quando o acesso é negado.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T15:00:00",
+                                                          "path": "/api/protected-resource",
+                                                          "status": 403,
+                                                          "error": "Forbidden",
+                                                          "message": "Acesso negado. Você não tem permissões
+                                                          suficientes para acessar este recurso."
                                                         }
                                                     """
                                     )
@@ -278,18 +369,24 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "409",
-            description = "Conflict. This occurs when the request cannot be completed due to a conflict in the " +
-                    "current state of the resource. This could be caused by duplicate data, resource version " +
-                    "conflicts, or business rules violations. Ensure that the data being sent is correct and does " +
-                    "not conflict with the current resource state.",
+            description = "<p><strong>English:</strong> Conflict. This occurs when the request cannot be completed " +
+                    "due to a conflict in the current state of the resource. This could be caused by duplicate data, " +
+                    "resource version conflicts, or business rules violations. Ensure that the data being sent is " +
+                    "correct and does not conflict with the current resource state.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Conflito. Isso ocorre quando a solicitação não pode " +
+                    "ser concluída devido a um conflito no estado atual do recurso. Isso pode ser causado por dados " +
+                    "duplicados, conflitos de versão de recursos ou violações de regras de negócios. Certifique-se " +
+                    "de que os dados enviados estão corretos e não entram em conflito com o estado atual do " +
+                    "recurso.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Conflict Example",
-                                            summary = "Example of a 409 error response caused by a duplicate entry.",
+                                            name = "English - 409 Conflict",
+                                            summary = "English: Example of a 409 error response caused by a " +
+                                                    "duplicate entry.",
                                       value = """
                                                   {
                                                     "timestamp": "2023-01-01T16:00:00",
@@ -297,6 +394,20 @@ public class GlobalExceptionHandler {
                                                     "status": 409,
                                                     "error": "Conflict",
                                                     "message": "A resource with the identifier '123' already exists."
+                                                  }
+                                              """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 409 Conflito",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 409 " +
+                                                    "causada por uma entrada duplicada.",
+                                      value = """
+                                                  {
+                                                    "timestamp": "2023-01-01T16:00:00",
+                                                    "path": "/api/resource",
+                                                    "status": 409,
+                                                    "error": "Conflict",
+                                                    "message": "Um recurso com o identificador '123' já existe."
                                                   }
                                               """
                                     )
@@ -320,17 +431,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorSingleResponse, HttpStatus.CONFLICT);
     }
 
-    @ApiResponse(responseCode = "408", description = "Request timed out. This occurs when the server couldn't " +
-            "complete the request within the timeout window. This could be due to server overload, a long-running " +
-            "operation, or connectivity issues.",
+    @ApiResponse(
+            responseCode = "408",
+            description = "<p><strong>English:</strong> Request timed out. This occurs when the server couldn't " +
+                    "complete the request within the timeout window. This could be due to server overload, a " +
+                    "long-running operation, or connectivity issues.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Tempo limite da solicitação esgotado. Isso ocorre " +
+                    "quando o servidor não consegue completar a solicitação dentro da janela de tempo limite. Isso " +
+                    "pode ser devido à sobrecarga do servidor, uma operação de longa duração ou problemas de " +
+                    "conectividade.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Request Timeout Example",
-                                            summary = "Example of a 408 error response caused by a timeout.",
+                                            name = "English - 408 Request Timeout",
+                                            summary = "English: Example of a 408 error response caused by a timeout.",
                                     value = """
                                                 {
                                                   "timestamp": "2023-01-01T17:00:00",
@@ -340,6 +457,20 @@ public class GlobalExceptionHandler {
                                                   "message": "The server timed out waiting for the request to complete."
                                                 }
                                             """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 408 Tempo Limite da Solicitação",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 408 " +
+                                                    "causada por um tempo limite.",
+                     value = """
+                                 {
+                                   "timestamp": "2023-01-01T17:00:00",
+                                   "path": "/api/resource",
+                                   "status": 408,
+                                   "error": "Request Timeout",
+                                   "message": "O servidor atingiu o tempo limite aguardando a conclusão da solicitação."
+                                 }
+                             """
                                     )
                             }
                     )
@@ -360,18 +491,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorSingleResponse, HttpStatus.REQUEST_TIMEOUT);
     }
 
-    @ApiResponse(responseCode = "406", description = "Not acceptable. This occurs when the 'Accept' header in the " +
-            "request specifies a response format that the server cannot provide. Ensure that the 'Accept' header is " +
-            "set to a format supported by the API, such as 'application/json'.",
+    @ApiResponse(
+            responseCode = "406",
+            description = "<p><strong>English:</strong> Not acceptable. This occurs when the 'Accept' header in the " +
+                    "request specifies a response format that the server cannot provide. Ensure that the 'Accept' " +
+                    "header is set to a format supported by the API, such as 'application/json'.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Não aceitável. Isso ocorre quando o cabeçalho " +
+                    "'Accept' na solicitação especifica um formato de resposta que o servidor não pode fornecer. " +
+                    "Certifique-se de que o cabeçalho 'Accept' esteja definido para um formato suportado pela API, " +
+                    "como 'application/json'.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Not Acceptable Example",
-                                            summary = "Example of a 406 error response caused by unsupported " +
-                                                    "'Accept' header value.",
+                                            name = "English - 406 Not Acceptable",
+                                            summary = "English: Example of a 406 error response caused by " +
+                                                    "unsupported 'Accept' header value.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T18:00:00",
@@ -380,6 +517,22 @@ public class GlobalExceptionHandler {
                                                           "error": "Not Acceptable",
                                                           "message": "The server cannot produce a response in the
                                                              requested format: 'application/xml'."
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 406 Não Aceitável",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 406 " +
+                                                    "causada por um valor " +
+                                                    "de cabeçalho 'Accept' não suportado.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T18:00:00",
+                                                          "path": "/api/resource",
+                                                          "status": 406,
+                                                          "error": "Not Acceptable",
+                                                          "message": "O servidor não pode produzir uma resposta no
+                                                             formato solicitado: 'application/xml'."
                                                         }
                                                     """
                                     )
@@ -404,18 +557,24 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ApiResponse(responseCode = "415", description = "Unsupported media type. This occurs when the media type " +
-            "provided in the request is not supported by the server. Ensure the 'Content-Type' header and request " +
-            "body are formatted correctly according to the API requirements.",
+    @ApiResponse(
+            responseCode = "415",
+            description = "<p><strong>English:</strong> Unsupported media type. This occurs when the media type " +
+                    "provided in the request is not supported by the server. Ensure the 'Content-Type' header and " +
+                    "request body are formatted correctly according to the API requirements.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Tipo de mídia não suportado. Isso ocorre quando o " +
+                    "tipo de mídia fornecido na solicitação não é suportado pelo servidor. Certifique-se de que o " +
+                    "cabeçalho 'Content-Type' e o corpo da solicitação estejam formatados corretamente de acordo com " +
+                    "os requisitos da API.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorMultipleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Unsupported Media Type Example",
-                                            summary = "Example of a 415 error response caused by an unsupported " +
-                                                    "'Content-Type' header.",
+                                            name = "English - 415 Unsupported Media Type",
+                                            summary = "English: Example of a 415 error response caused by an " +
+                                                    "unsupported 'Content-Type' header.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T19:00:00",
@@ -426,6 +585,21 @@ public class GlobalExceptionHandler {
                                                              'application/xml' specified in the 'Content-Type' header."
                                                         }
                                                     """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 415 Tipo de Mídia Não Suportado",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 415 " +
+                                                    "causada por um cabeçalho 'Content-Type' não suportado.",
+                                           value = """
+                                                       {
+                                                         "timestamp": "2023-01-01T19:00:00",
+                                                         "path": "/api/resource",
+                                                         "status": 415,
+                                                         "error": "Unsupported Media Type",
+                                                         "message": "O servidor não suporta o tipo de mídia
+                                                            'application/xml' especificado no cabeçalho 'Content-Type'."
+                                                       }
+                                                   """
                                     )
                             }
                     )
@@ -449,18 +623,21 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "413",
-            description = "Payload Too Large. This error occurs when the size of the uploaded file exceeds the limit " +
-                    "supported by the server. Check the file size and the server's upload restrictions before " +
-                    "retrying.",
+            description = "<p><strong>English:</strong> Payload Too Large. This error occurs when the size of the " +
+                    "uploaded file exceeds the limit supported by the server. Check the file size and the server's " +
+                    "upload restrictions before retrying.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Carga Muito Grande. Este erro ocorre quando o tamanho " +
+                    "do arquivo carregado excede o limite suportado pelo servidor. Verifique o tamanho do arquivo e " +
+                    "as restrições de upload do servidor antes de tentar novamente.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Payload Too Large Example",
-                                            summary = "Example of a 413 error response caused by an uploaded file " +
-                                                    "that exceeds the allowed size.",
+                                            name = "English - 413 Payload Too Large",
+                                            summary = "English: Example of a 413 error response caused by an " +
+                                                    "uploaded file that exceeds the allowed size.",
                                          value = """
                                                  {
                                                    "timestamp": "2023-01-01T19:30:00",
@@ -470,6 +647,20 @@ public class GlobalExceptionHandler {
                                                    "message": "The uploaded file size exceeds the allowed limit of 5MB."
                                                  }
                                                  """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 413 Carga Muito Grande",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 413 " +
+                                                    "causada por um arquivo carregado que excede o tamanho permitido.",
+                                 value = """
+                                         {
+                                           "timestamp": "2023-01-01T19:30:00",
+                                           "path": "/api/upload",
+                                           "status": 413,
+                                           "error": "Payload Too Large",
+                                           "message": "O tamanho do arquivo carregado excede o limite permitido de 5MB."
+                                         }
+                                         """
                                     )
                             }
                     )
@@ -493,18 +684,21 @@ public class GlobalExceptionHandler {
 
     @ApiResponse(
             responseCode = "500",
-            description = "Internal Server Error. This error occurs when the server encounters an unexpected " +
-                    "condition that prevents it from fulfilling the request. Contact the API support team if the " +
-                    "issue persists.",
+            description = "<p><strong>English:</strong> Internal Server Error. This error occurs when the server " +
+                    "encounters an unexpected condition that prevents it from fulfilling the request. Contact the " +
+                    "API support team if the issue persists.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Erro Interno do Servidor. Este erro ocorre quando o " +
+                    "servidor encontra uma condição inesperada que o impede de atender à solicitação. Entre em " +
+                    "contato com a equipe de suporte da API se o problema persistir.</p>",
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorSingleResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Internal Server Error Example",
-                                            summary = "Example of a 500 error response caused by an unexpected " +
-                                                    "server-side failure.",
+                                            name = "English - 500 Internal Server Error",
+                                            summary = "English: Example of a 500 error response caused by an " +
+                                                    "unexpected server-side failure.",
                                value = """
                                            {
                                              "timestamp": "2023-01-01T20:00:00",
@@ -514,6 +708,20 @@ public class GlobalExceptionHandler {
                                              "message": "An unexpected error occurred while processing the request."
                                            }
                                        """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 500 Erro Interno do Servidor",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 500 " +
+                                                    "causada por uma falha inesperada do lado do servidor.",
+                           value = """
+                                       {
+                                         "timestamp": "2023-01-01T20:00:00",
+                                         "path": "/api/resource",
+                                         "status": 500,
+                                         "error": "Internal Server Error",
+                                         "message": "Ocorreu um erro inesperado durante o processamento da solicitação."
+                                       }
+                                   """
                                     )
                             }
                     )
@@ -588,4 +796,3 @@ public class GlobalExceptionHandler {
         };
     }
 }
-
