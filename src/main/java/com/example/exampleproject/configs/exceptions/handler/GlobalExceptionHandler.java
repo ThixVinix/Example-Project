@@ -331,16 +331,15 @@ public class GlobalExceptionHandler {
                                     @ExampleObject(
                                             name = "Request Timeout Example",
                                             summary = "Example of a 408 error response caused by a timeout.",
-                                            value = """
-                                                        {
-                                                          "timestamp": "2023-01-01T17:00:00",
-                                                          "path": "/api/resource",
-                                                          "status": 408,
-                                                          "error": "Request Timeout",
-                                                          "message": "The server timed out waiting for the request
-                                                           to complete."
-                                                        }
-                                                    """
+                                    value = """
+                                                {
+                                                  "timestamp": "2023-01-01T17:00:00",
+                                                  "path": "/api/resource",
+                                                  "status": 408,
+                                                  "error": "Request Timeout",
+                                                  "message": "The server timed out waiting for the request to complete."
+                                                }
+                                            """
                                     )
                             }
                     )
@@ -462,16 +461,15 @@ public class GlobalExceptionHandler {
                                             name = "Payload Too Large Example",
                                             summary = "Example of a 413 error response caused by an uploaded file " +
                                                     "that exceeds the allowed size.",
-                                            value = """
-                                                    {
-                                                      "timestamp": "2023-01-01T19:30:00",
-                                                      "path": "/api/upload",
-                                                      "status": 413,
-                                                      "error": "Payload Too Large",
-                                                      "message": "The uploaded file size exceeds the allowed limit of
-                                                       5MB."
-                                                    }
-                                                """
+                                         value = """
+                                                 {
+                                                   "timestamp": "2023-01-01T19:30:00",
+                                                   "path": "/api/upload",
+                                                   "status": 413,
+                                                   "error": "Payload Too Large",
+                                                   "message": "The uploaded file size exceeds the allowed limit of 5MB."
+                                                 }
+                                                 """
                                     )
                             }
                     )
