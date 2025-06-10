@@ -6,6 +6,11 @@ spring:
     encoding: "UTF-8"
   jackson:
     time-zone: "UTC"
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 40MB
+      max-request-size: 50MB
 
 api:
   title: "Example Project"
@@ -29,7 +34,7 @@ springdoc:
     tagsSorter: alpha # Arrange tags alphabetically
     display-operation-id: true
     display-request-duration: true
-    tryItOutEnabled: false # Enable "Try it out" button
+    tryItOutEnabled: false # Enable the "Try it out" button
     supportedSubmitMethods: [ "get", "post" ] # Sets supported HTTP methods in "Try it out"
     csrf:
       enabled: true
