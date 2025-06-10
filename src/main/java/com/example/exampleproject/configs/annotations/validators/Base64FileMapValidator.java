@@ -192,7 +192,7 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private boolean validateFileExtension(String fileName, String fileExtension, int index,
                                           ConstraintValidatorContext context) {
-        if (!MimeTypeEnum.isValidExtension(fileExtension)) {
+        if (MimeTypeEnum.isNotValidExtension(fileExtension)) {
             addConstraintViolation(context,
                     MessageUtils.getMessage("msg.validation.request.field.invalid.extension",
                             fileName, fileExtension, index + 1));
