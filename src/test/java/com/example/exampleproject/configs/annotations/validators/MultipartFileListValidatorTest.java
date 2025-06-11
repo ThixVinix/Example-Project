@@ -362,7 +362,221 @@ class MultipartFileListValidatorTest {
         assertTrue(isValid, "isValid should return true for a list with a file having empty filename");
     }
 
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
     @Order(10)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with mix of valid and invalid files, then should return false")
+    @Test
+    void isValid_WhenMixOfValidAndInvalidFiles_ThenShouldReturnFalse() {
+        // Arrange
+        // Create a list with one valid file and one invalid file
+        List<MultipartFile> mixedFiles = Arrays.asList(VALID_PDF_FILE, INVALID_TYPE_FILE);
+
+        // Mock the context for validation error messages
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = multipartFileListValidator.isValid(mixedFiles, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a list with a mix of valid and invalid files");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(11)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with files having same content but different filenames, then should return true")
+    @Test
+    void isValid_WhenFilesWithSameContentButDifferentFilenames_ThenShouldReturnTrue() {
+        // Arrange
+        // Create a new validator with a mocked MultipartFileValidator
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
+        MockMultipartFile file1 = new MockMultipartFile(
+                "document1.pdf", "document1.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
+        MockMultipartFile file2 = new MockMultipartFile(
+                "document2.pdf", "document2.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
+
+        List<MultipartFile> filesWithSameContent = Arrays.asList(file1, file2);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithSameContent, context);
+
+        // Assert
+        assertTrue(isValid,
+                "isValid should return true for a list with files having same content but different filenames");
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(12)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with oversized file, then should return false")
+    @Test
+    void isValid_WhenOversizedFile_ThenShouldReturnFalse() {
+        // Arrange
+        byte[] largeContent = new byte[6 * 1024 * 1024]; // 6MB (exceeds the 5MB limit)
+        MockMultipartFile largeFile = new MockMultipartFile(
+                "large.pdf", "large.pdf", VALID_PDF_MIME_TYPE, largeContent);
+
+        List<MultipartFile> filesWithLargeFile = Arrays.asList(VALID_PDF_FILE, largeFile);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = multipartFileListValidator.isValid(filesWithLargeFile, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a list with an oversized file");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(13)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with mix of files with and without filenames, then should return true")
+    @Test
+    void isValid_WhenMixOfFilesWithAndWithoutFilenames_ThenShouldReturnTrue() {
+        // Arrange
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
+        MultipartFile fileWithNullFilename = mock(MultipartFile.class);
+        when(fileWithNullFilename.getOriginalFilename()).thenReturn(null);
+
+        List<MultipartFile> mixedFiles = Arrays.asList(VALID_PDF_FILE, fileWithNullFilename);
+
+        // Act
+        boolean isValid = validator.isValid(mixedFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with a mix of files with and without filenames");
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(14)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with file having invalid MIME type, then should return false")
+    @Test
+    void isValid_WhenFileWithInvalidMimeType_ThenShouldReturnFalse() {
+        // Arrange
+        MockMultipartFile fileWithInvalidMimeType = new MockMultipartFile(
+                "document.xyz", "document.xyz", "application/xyz", "Invalid MIME type".getBytes());
+
+        List<MultipartFile> filesWithInvalidMimeType = Arrays.asList(VALID_PDF_FILE, fileWithInvalidMimeType);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = multipartFileListValidator.isValid(filesWithInvalidMimeType, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a list with a file having invalid MIME type");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(15)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with files having same filename but different content, then should return false")
+    @Test
+    void isValid_WhenFilesWithSameFilenameButDifferentContent_ThenShouldReturnFalse() {
+        // Arrange
+        MockMultipartFile file1 = new MockMultipartFile(
+                "document.pdf", "document.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
+        MockMultipartFile file2 = new MockMultipartFile(
+                "document.pdf", "document.pdf", VALID_PDF_MIME_TYPE, "Different content".getBytes());
+
+        List<MultipartFile> filesWithSameFilename = Arrays.asList(file1, file2);
+
+        // Mock the context for validation error messages
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = multipartFileListValidator.isValid(filesWithSameFilename, context);
+
+        // Assert
+        assertFalse(isValid,
+                "isValid should return false for a list with files having same filename but different content");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#initialize(MultipartFileValidation)}
+     */
+    @Order(16)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
