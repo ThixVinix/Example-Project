@@ -492,9 +492,93 @@ class Base64FileMapValidatorTest {
 
     /**
      * Method test for
-     * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
      */
     @Order(17)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with file having invalid extension, then should return false")
+    @Test
+    void isValid_WhenInvalidFileExtension_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithInvalidExtension = new HashMap<>();
+
+        filesWithInvalidExtension.put("document.xyz", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithInvalidExtension, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with a file having invalid extension");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(18)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with file having no extension, then should return false")
+    @Test
+    void isValid_WhenFileWithNoExtension_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithNoExtension = new HashMap<>();
+
+        filesWithNoExtension.put("document", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithNoExtension, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with a file having no extension");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(19)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with malformed base64 string, then should return false")
+    @Test
+    void isValid_WhenMalformedBase64String_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithMalformedBase64 = new HashMap<>();
+
+        filesWithMalformedBase64.put(VALID_PDF_NAME, "data:base64,JVBERi0xLjAKJeKAow==");
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithMalformedBase64, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with a malformed base64 string");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
+     */
+    @Order(20)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
