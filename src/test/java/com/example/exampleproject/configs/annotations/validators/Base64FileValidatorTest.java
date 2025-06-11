@@ -13,6 +13,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.i18n.LocaleContextHolder;
 
+import java.lang.reflect.Field;
 import java.util.Base64;
 import java.util.Locale;
 
@@ -48,12 +49,13 @@ class Base64FileValidatorTest {
     // Invalid base64 content (not a valid base64 string)
     private static final String INVALID_CONTENT = "data:application/pdf;base64,@#$%^&*()";
 
-    // Invalid MIME type
-    private static final String INVALID_TYPE = "data:application/invalid;base64,JVBERi0xLjAKJeKAow==";
+    // Invalid MIME type (text file content that Tika will detect as text/plain)
+    private static final String INVALID_TYPE = "data:application/invalid;base64,SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXh0IGZpbGUu";
 
     private Locale defaultLocale;
 
     private ConstraintValidatorContext context;
+
 
     @InjectMocks
     private Base64FileValidator base64FileValidator;
@@ -179,8 +181,8 @@ class Base64FileValidatorTest {
     @DisplayName(IS_VALID + " - Given an invalid MIME type, then should return false")
     @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
     @CsvSource(value = {
-            "pt_BR|Tipo de arquivo inválido. Tipos permitidos: application/pdf, image/jpeg",
-            "en_US|Invalid file type. Allowed types: application/pdf, image/jpeg"
+            "pt_BR|O tipo de arquivo detectado text/plain não é permitido. Tipos esperados: application/pdf, image/jpeg.",
+            "en_US|The file type detected text/plain is not allowed. Expected types: application/pdf, image/jpeg."
     }, delimiter = CSV_DELIMITER)
     void isValid_WhenInvalidMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
@@ -274,9 +276,48 @@ class Base64FileValidatorTest {
 
     /**
      * Method test for
-     * {@link Base64FileValidator#initialize(Base64FileValidation)}
+     * {@link Base64FileValidator#isValid(String, ConstraintValidatorContext)}
      */
     @Order(9)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given an exception during MIME type detection, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro inesperado ao validar o arquivo. Por favor, tente novamente ou utilize um arquivo diferente.",
+            "en_US|An unexpected error occurred by validating the file. Please try again or use a different file."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenExceptionDuringMimeTypeDetection_ThenShouldReturnFalse(String languageTag,
+                                                                            String expectedMessage) throws Exception {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Set Tika field to null to cause a NullPointerException
+        Field tikaField = Base64FileValidator.class.getDeclaredField("tika");
+        tikaField.setAccessible(true);
+        tikaField.set(base64FileValidator, null);
+
+        // Act
+        boolean isValid = base64FileValidator.isValid(VALID_SMALL_PDF, context);
+
+        // Assert
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false when an exception occurs during MIME type detection");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileValidator#initialize(Base64FileValidation)}
+     */
+    @Order(10)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxSizeInMB, then should use default value")
     @Test
