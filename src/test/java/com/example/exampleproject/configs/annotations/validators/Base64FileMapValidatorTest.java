@@ -150,14 +150,18 @@ class Base64FileMapValidatorTest {
         tooManyFiles.put("file3.pdf", VALID_SMALL_PDF);
         tooManyFiles.put("file4.jpg", VALID_SMALL_JPEG);
 
-        Base64FileMapValidator spyValidator = spy(base64FileMapValidator);
-        doReturn(false).when(spyValidator).isValid(eq(tooManyFiles), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(tooManyFiles, context);
+        boolean isValid = base64FileMapValidator.isValid(tooManyFiles, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false when exceeding max file count");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -295,9 +299,202 @@ class Base64FileMapValidatorTest {
 
     /**
      * Method test for
-     * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
      */
     @Order(10)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with duplicate file content, then should return false")
+    @Test
+    void isValid_WhenDuplicateFileContent_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithDuplicateContent = new HashMap<>();
+        filesWithDuplicateContent.put("document1.pdf", VALID_SMALL_PDF);
+        filesWithDuplicateContent.put("document2.pdf", VALID_SMALL_PDF); // Same content as document1.pdf
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithDuplicateContent, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with duplicate file content");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(11)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with null file name, then should return false")
+    @Test
+    void isValid_WhenNullFileName_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithNullKey = new HashMap<>();
+        filesWithNullKey.put(null, VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithNullKey, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with a null file name");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(12)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with empty file name, then should return false")
+    @Test
+    void isValid_WhenEmptyFileName_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithEmptyKey = new HashMap<>();
+        filesWithEmptyKey.put("", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithEmptyKey, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with an empty file name");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(13)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with null base64 content, then should return false")
+    @Test
+    void isValid_WhenNullBase64Content_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithNullContent = new HashMap<>();
+        filesWithNullContent.put(VALID_PDF_NAME, null);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithNullContent, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with null base64 content");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(14)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with empty base64 content, then should return false")
+    @Test
+    void isValid_WhenEmptyBase64Content_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithEmptyContent = new HashMap<>();
+        filesWithEmptyContent.put(VALID_PDF_NAME, "");
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithEmptyContent, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with empty base64 content");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(15)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with file extension not matching MIME type, then should return false")
+    @Test
+    void isValid_WhenFileExtensionNotMatchingMimeType_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithMismatchedExtension = new HashMap<>();
+
+        filesWithMismatchedExtension.put("document.jpg", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithMismatchedExtension, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with file extension not matching MIME type");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(16)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with unsupported MIME type, then should return false")
+    @Test
+    void isValid_WhenUnsupportedMimeType_ThenShouldReturnFalse() {
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        String unsupportedMimeType = "data:application/unsupported;base64,SGVsbG8gV29ybGQh";
+
+        Map<String, String> filesWithUnsupportedMimeType = new HashMap<>();
+        filesWithUnsupportedMimeType.put("document.bin", unsupportedMimeType);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithUnsupportedMimeType, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false for a map with unsupported MIME type");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
+     */
+    @Order(17)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
