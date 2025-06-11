@@ -6,10 +6,7 @@ import com.example.exampleproject.configs.annotations.validators.Base64FileValid
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Annotation used to validate whether the provided field or parameter is a valid base64 encoded file
@@ -41,6 +38,7 @@ import java.lang.annotation.Target;
  *   <li><strong>maxFileCount:</strong> Specifies the maximum number of files allowed when validating collections.</li>
  * </ul>
  */
+@Documented
 @Constraint(validatedBy = {Base64FileValidator.class, Base64FileListValidator.class, Base64FileMapValidator.class})
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
