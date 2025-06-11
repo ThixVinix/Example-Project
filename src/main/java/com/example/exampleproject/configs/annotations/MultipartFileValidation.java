@@ -1,6 +1,5 @@
 package com.example.exampleproject.configs.annotations;
 
-import com.example.exampleproject.configs.annotations.validators.MultipartFileArrayValidator;
 import com.example.exampleproject.configs.annotations.validators.MultipartFileListValidator;
 import com.example.exampleproject.configs.annotations.validators.MultipartFileValidator;
 import jakarta.validation.Constraint;
