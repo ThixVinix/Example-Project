@@ -50,7 +50,8 @@ class Base64FileValidatorTest {
     private static final String INVALID_CONTENT = "data:application/pdf;base64,@#$%^&*()";
 
     // Invalid MIME type (text file content that Tika will detect as text/plain)
-    private static final String INVALID_TYPE = "data:application/invalid;base64,SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXh0IGZpbGUu";
+    private static final String INVALID_TYPE =
+            "data:application/invalid;base64,SGVsbG8gV29ybGQhIFRoaXMgaXMgYSB0ZXh0IGZpbGUu";
 
     private Locale defaultLocale;
 
