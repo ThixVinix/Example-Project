@@ -52,12 +52,10 @@ public class MultipartFileListValidator implements ConstraintValidator<Multipart
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
             
-            // Skip null files
             if (file == null) {
                 continue;
             }
             
-            // Check for duplicate files by original filename
             String fileName = file.getOriginalFilename();
             if (fileName != null && !fileName.isEmpty() && !uniqueFileNames.add(fileName)) {
                 context.disableDefaultConstraintViolation();
@@ -69,7 +67,6 @@ public class MultipartFileListValidator implements ConstraintValidator<Multipart
                 return false;
             }
 
-            // Validate each file using the MultipartFileValidator
             if (!multipartFileValidator.isValid(file, context)) {
                 context.disableDefaultConstraintViolation();
                 context
