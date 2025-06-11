@@ -13,7 +13,20 @@ import java.util.Base64;
 import java.util.regex.Pattern;
 
 /**
- * Validator to check if a string is a valid base64 encoded file of specified types.
+ * Validator for base64-encoded files, ensuring compliance with specified constraints such as
+ * format, MIME type, and size. This class validates single String fields annotated with
+ * {@link Base64FileValidation}.
+ * <p>
+ * This validator validates base64 content by:
+ * - Checking if the content matches a valid base64 file format.
+ * - Verifying that the decoded file size does not exceed the specified maximum file size (in MB).
+ * - Ensuring that the MIME type of the file matches one of the allowed types.
+ * <p>
+ * The validator logs warnings and errors for invalid configurations or unexpected scenarios
+ * and provides custom validation error messages for invalid base64 file inputs.
+ * <p>
+ * Implements the {@link ConstraintValidator} interface for validation logic, bound to
+ * {@link Base64FileValidation}.
  */
 @Slf4j
 public class Base64FileValidator implements ConstraintValidator<Base64FileValidation, String> {
@@ -28,17 +41,26 @@ public class Base64FileValidator implements ConstraintValidator<Base64FileValida
     @Override
     public void initialize(Base64FileValidation annotation) {
         this.allowedTypes = annotation.allowedTypes();
-        this.maxSizeInMB = annotation.maxSizeInMB();
-
-        if (this.maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
-            final int DEFAULT_MAX_SIZE_IN_MB = 2;
-            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
-                    this.maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
-            this.maxSizeInMB = DEFAULT_MAX_SIZE_IN_MB;
-        }
-
-        tika = new Tika();
+        this.maxSizeInMB = validateMaxSizeInMB(annotation.maxSizeInMB());
+        this.tika = new Tika();
     }
+
+    /**
+     * Validates the value of maxSizeInMB and assigns a default if invalid.
+     *
+     * @param maxSizeInMB the provided max size.
+     * @return the validated or default max size.
+     */
+    private int validateMaxSizeInMB(int maxSizeInMB) {
+        final int DEFAULT_MAX_SIZE_IN_MB = 2;
+        if (maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
+            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
+                    maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
+            return DEFAULT_MAX_SIZE_IN_MB;
+        }
+        return maxSizeInMB;
+    }
+
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {

@@ -16,7 +16,10 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 /**
- * Validator to check if a MultipartFile is valid, according to specified types and size constraints.
+ * Validator class for validating MultipartFile objects for specific constraints such as file type
+ * consistency, allowed MIME types, and maximum file size.
+ * <p>
+ * Implements the {@link ConstraintValidator} interface for the {@link MultipartFileValidation} annotation.
  */
 @Slf4j
 public class MultipartFileValidator implements ConstraintValidator<MultipartFileValidation, MultipartFile> {
@@ -28,17 +31,26 @@ public class MultipartFileValidator implements ConstraintValidator<MultipartFile
     @Override
     public void initialize(MultipartFileValidation annotation) {
         this.allowedTypes = annotation.allowedTypes();
-        this.maxSizeInMB = annotation.maxSizeInMB();
-
-        if (this.maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
-            final int DEFAULT_MAX_SIZE_IN_MB = 2;
-            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
-                    this.maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
-            this.maxSizeInMB = DEFAULT_MAX_SIZE_IN_MB;
-        }
-
-        tika = new Tika();
+        this.maxSizeInMB = validateMaxSizeInMB(annotation.maxSizeInMB());
+        this.tika = new Tika();
     }
+
+    /**
+     * Validates the value of maxSizeInMB and assigns a default if invalid.
+     *
+     * @param maxSizeInMB the provided max size.
+     * @return the validated or default max size.
+     */
+    private int validateMaxSizeInMB(int maxSizeInMB) {
+        final int DEFAULT_MAX_SIZE_IN_MB = 2;
+        if (maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
+            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
+                    maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
+            return DEFAULT_MAX_SIZE_IN_MB;
+        }
+        return maxSizeInMB;
+    }
+
 
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
