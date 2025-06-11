@@ -145,14 +145,18 @@ class Base64FileListValidatorTest {
                 VALID_SMALL_JPEG
         );
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false).when(spyValidator).isValid(eq(tooManyFiles), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(tooManyFiles, context);
+        boolean isValid = base64FileListValidator.isValid(tooManyFiles, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false when exceeding max file count");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -167,15 +171,18 @@ class Base64FileListValidatorTest {
         // Arrange
         List<String> filesWithDuplicates = Arrays.asList(VALID_SMALL_PDF, VALID_SMALL_JPEG, VALID_SMALL_PDF);
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false)
-                .when(spyValidator).isValid(eq(filesWithDuplicates), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithDuplicates, context);
+        boolean isValid = base64FileListValidator.isValid(filesWithDuplicates, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with duplicate files");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -190,15 +197,18 @@ class Base64FileListValidatorTest {
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_FORMAT);
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false)
-                .when(spyValidator).isValid(eq(filesWithInvalid), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithInvalid, context);
+        boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with an invalid file format");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -213,15 +223,18 @@ class Base64FileListValidatorTest {
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_CONTENT);
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false)
-                .when(spyValidator).isValid(eq(filesWithInvalid), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithInvalid, context);
+        boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with an invalid file content");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -236,15 +249,18 @@ class Base64FileListValidatorTest {
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_TYPE);
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false)
-                .when(spyValidator).isValid(eq(filesWithInvalid), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithInvalid, context);
+        boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with an invalid MIME type");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -262,22 +278,63 @@ class Base64FileListValidatorTest {
 
         List<String> filesWithLarge = Arrays.asList(VALID_SMALL_PDF, largeBase64);
 
-        Base64FileListValidator spyValidator = spy(base64FileListValidator);
-        doReturn(false)
-                .when(spyValidator).isValid(eq(filesWithLarge), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithLarge, context);
+        boolean isValid = base64FileListValidator.isValid(filesWithLarge, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with a file exceeding the size limit");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(10)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with null base64 content, then should return true")
+    @Test
+    void isValid_WhenNullBase64Content_ThenShouldReturnTrue() {
+        // Arrange
+        List<String> filesWithNull = Arrays.asList(VALID_SMALL_PDF, null);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(filesWithNull, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with null base64 content");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(11)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with empty base64 content, then should return true")
+    @Test
+    void isValid_WhenEmptyBase64Content_ThenShouldReturnTrue() {
+        // Arrange
+        List<String> filesWithEmpty = Arrays.asList(VALID_SMALL_PDF, "");
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(filesWithEmpty, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with empty base64 content");
     }
 
     /**
      * Method test for
      * {@link Base64FileListValidator#initialize(Base64FileValidation)}
      */
-    @Order(10)
+    @Order(12)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
