@@ -85,13 +85,31 @@ class MultipartFileListValidatorTest {
     @Test
     void isValid_WhenValidFileList_ThenShouldReturnTrue() {
         // Arrange
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
         List<MultipartFile> validFiles = Arrays.asList(VALID_PDF_FILE, VALID_JPEG_FILE);
 
-        MultipartFileListValidator spyValidator = spy(multipartFileListValidator);
-        doReturn(true).when(spyValidator).isValid(eq(validFiles), any(ConstraintValidatorContext.class));
-
         // Act
-        boolean isValid = spyValidator.isValid(validFiles, context);
+        boolean isValid = validator.isValid(validFiles, context);
 
         // Assert
         assertTrue(isValid, "isValid should return true for a list with valid files");
@@ -142,13 +160,31 @@ class MultipartFileListValidatorTest {
     @Test
     void isValid_WhenListWithNullFile_ThenShouldSkipItAndReturnTrue() {
         // Arrange
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
         List<MultipartFile> filesWithNull = Arrays.asList(VALID_PDF_FILE, null, VALID_JPEG_FILE);
 
-        MultipartFileListValidator spyValidator = spy(multipartFileListValidator);
-        doReturn(true).when(spyValidator).isValid(eq(filesWithNull), any(ConstraintValidatorContext.class));
-
         // Act
-        boolean isValid = spyValidator.isValid(filesWithNull, context);
+        boolean isValid = validator.isValid(filesWithNull, context);
 
         // Assert
         assertTrue(isValid, "isValid should return true for a list with a null file");
@@ -163,7 +199,6 @@ class MultipartFileListValidatorTest {
     @DisplayName(IS_VALID + " - Given a list exceeding max file count, then should return false")
     @Test
     void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse() {
-
         // Arrange
         List<MultipartFile> tooManyFiles = Arrays.asList(
                 VALID_PDF_FILE, 
@@ -174,14 +209,18 @@ class MultipartFileListValidatorTest {
                         "doc4.pdf", "doc4.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT)
         );
 
-        MultipartFileListValidator spyValidator = spy(multipartFileListValidator);
-        doReturn(false).when(spyValidator).isValid(eq(tooManyFiles), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(tooManyFiles, context);
+        boolean isValid = multipartFileListValidator.isValid(tooManyFiles, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false when exceeding max file count");
+        verify(context).disableDefaultConstraintViolation();
+        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -193,7 +232,6 @@ class MultipartFileListValidatorTest {
     @DisplayName(IS_VALID + " - Given a list with duplicate files, then should return false")
     @Test
     void isValid_WhenDuplicateFiles_ThenShouldReturnFalse() {
-
         // Arrange
         MockMultipartFile duplicateFile1 = new MockMultipartFile(
                 "duplicate.pdf", "duplicate.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
@@ -202,15 +240,18 @@ class MultipartFileListValidatorTest {
 
         List<MultipartFile> filesWithDuplicates = Arrays.asList(VALID_PDF_FILE, duplicateFile1, duplicateFile2);
 
-        MultipartFileListValidator spyValidator = spy(multipartFileListValidator);
-        doReturn(false).when(spyValidator)
-                .isValid(eq(filesWithDuplicates), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithDuplicates, context);
+        boolean isValid = multipartFileListValidator.isValid(filesWithDuplicates, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with duplicate files");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -222,19 +263,21 @@ class MultipartFileListValidatorTest {
     @DisplayName(IS_VALID + " - Given a list with invalid file, then should return false")
     @Test
     void isValid_WhenInvalidFile_ThenShouldReturnFalse() {
-
         // Arrange
         List<MultipartFile> filesWithInvalid = Arrays.asList(VALID_PDF_FILE, INVALID_TYPE_FILE);
 
-        MultipartFileListValidator spyValidator = spy(multipartFileListValidator);
-        doReturn(false).when(spyValidator)
-                .isValid(eq(filesWithInvalid), any(ConstraintValidatorContext.class));
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
 
         // Act
-        boolean isValid = spyValidator.isValid(filesWithInvalid, context);
+        boolean isValid = multipartFileListValidator.isValid(filesWithInvalid, context);
 
         // Assert
         assertFalse(isValid, "isValid should return false for a list with an invalid file");
+        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -242,6 +285,84 @@ class MultipartFileListValidatorTest {
      * {@link MultipartFileListValidator#initialize(MultipartFileValidation)}
      */
     @Order(8)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with file having null filename, then should skip filename check")
+    @Test
+    void isValid_WhenFileWithNullFilename_ThenShouldSkipFilenameCheck() {
+        // Arrange
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
+        MultipartFile fileWithNullFilename = mock(MultipartFile.class);
+        when(fileWithNullFilename.getOriginalFilename()).thenReturn(null);
+
+        List<MultipartFile> filesWithNullFilename = Arrays.asList(VALID_PDF_FILE, fileWithNullFilename);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithNullFilename, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with a file having null filename");
+    }
+
+    @Order(9)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with file having empty filename, then should skip filename check")
+    @Test
+    void isValid_WhenFileWithEmptyFilename_ThenShouldSkipFilenameCheck() {
+        // Arrange
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
+        MultipartFile fileWithEmptyFilename = mock(MultipartFile.class);
+        when(fileWithEmptyFilename.getOriginalFilename()).thenReturn("");
+
+        List<MultipartFile> filesWithEmptyFilename = Arrays.asList(VALID_PDF_FILE, fileWithEmptyFilename);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithEmptyFilename, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with a file having empty filename");
+    }
+
+    @Order(10)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
