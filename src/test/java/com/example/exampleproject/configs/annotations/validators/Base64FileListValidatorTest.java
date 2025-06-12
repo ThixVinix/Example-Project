@@ -3,6 +3,9 @@ package com.example.exampleproject.configs.annotations.validators;
 import com.example.exampleproject.configs.annotations.Base64FileValidation;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class Base64FileListValidatorTest {
 
+    private static final char CSV_DELIMITER = '|';
     private static final String IS_VALID = "isValid";
     private static final String INITIALIZE = "initialize";
     private static final String VALID_PDF_MIME_TYPE = "application/pdf";
@@ -135,8 +139,14 @@ class Base64FileListValidatorTest {
     @Order(4)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list exceeding max file count, then should return false")
-    @Test
-    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Número máximo de arquivos permitidos para envio é 3.",
+            "en_US|Maximum number of allowed files is 3."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<String> tooManyFiles = Arrays.asList(
                 VALID_SMALL_PDF,
@@ -153,10 +163,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(tooManyFiles, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false when exceeding max file count");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -166,8 +179,14 @@ class Base64FileListValidatorTest {
     @Order(5)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with duplicate files, then should return false")
-    @Test
-    void isValid_WhenDuplicateFiles_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|A lista não deve conter arquivos idênticos. Envie apenas arquivos únicos.",
+            "en_US|The list must not contain identical files. Please send only unique files."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenDuplicateFiles_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<String> filesWithDuplicates = Arrays.asList(VALID_SMALL_PDF, VALID_SMALL_JPEG, VALID_SMALL_PDF);
 
@@ -179,10 +198,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(filesWithDuplicates, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with duplicate files");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -192,8 +214,14 @@ class Base64FileListValidatorTest {
     @Order(6)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with invalid file format, then should return false")
-    @Test
-    void isValid_WhenInvalidFileFormat_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileFormat_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_FORMAT);
 
@@ -205,10 +233,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with an invalid file format");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -218,8 +249,14 @@ class Base64FileListValidatorTest {
     @Order(7)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with invalid file content, then should return false")
-    @Test
-    void isValid_WhenInvalidFileContent_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileContent_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_CONTENT);
 
@@ -231,10 +268,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with an invalid file content");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -244,8 +284,14 @@ class Base64FileListValidatorTest {
     @Order(8)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with invalid MIME type, then should return false")
-    @Test
-    void isValid_WhenInvalidMimeType_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<String> filesWithInvalid = Arrays.asList(VALID_SMALL_PDF, INVALID_TYPE);
 
@@ -257,10 +303,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(filesWithInvalid, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with an invalid MIME type");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -270,8 +319,14 @@ class Base64FileListValidatorTest {
     @Order(9)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with file exceeding size limit, then should return false")
-    @Test
-    void isValid_WhenFileSizeExceedsLimit_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileSizeExceedsLimit_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         byte[] largeFile = new byte[6 * 1024 * 1024]; // 6MB
         String largeBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(largeFile);
@@ -286,10 +341,13 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = base64FileListValidator.isValid(filesWithLarge, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with a file exceeding the size limit");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
