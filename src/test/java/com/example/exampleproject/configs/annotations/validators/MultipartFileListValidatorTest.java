@@ -632,9 +632,73 @@ class MultipartFileListValidatorTest {
 
     /**
      * Method test for
-     * {@link MultipartFileListValidator#initialize(MultipartFileValidation)}
+     * {@link MultipartFileListValidator#isValid(List, ConstraintValidatorContext)}
      */
     @Order(16)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with duplicate filenames, then should return false with correct message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|A lista não deve conter arquivos idênticos. Envie apenas arquivos únicos.",
+            "en_US|The list must not contain identical files. Please send only unique files."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenDuplicateFilenames_ThenShouldReturnFalseWithCorrectMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        // Create a new validator with a mocked MultipartFileValidator
+        MultipartFileListValidator validator = new MultipartFileListValidator();
+        MultipartFileValidation annotation = mock(MultipartFileValidation.class);
+        when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(annotation.maxSizeInMB()).thenReturn(5);
+        when(annotation.maxFileCount()).thenReturn(3);
+
+        MultipartFileValidator mockFileValidator = mock(MultipartFileValidator.class);
+        when(mockFileValidator
+                .isValid(any(MultipartFile.class), any(ConstraintValidatorContext.class))).thenReturn(true);
+
+        try {
+            java.lang.reflect.Field field =
+                    MultipartFileListValidator.class.getDeclaredField("multipartFileValidator");
+            field.setAccessible(true);
+
+            validator.initialize(annotation);
+            field.set(validator, mockFileValidator);
+        } catch (Exception e) {
+            fail("Failed to set up test: " + e.getMessage());
+        }
+
+        MockMultipartFile file1 = new MockMultipartFile(
+                "document.pdf", "document.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
+        MockMultipartFile file2 = new MockMultipartFile(
+                "document.pdf", "document.pdf", VALID_PDF_MIME_TYPE, "Different content".getBytes());
+
+        List<MultipartFile> filesWithSameFilename = Arrays.asList(file1, file2);
+
+        // Mock the context for validation error messages
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithSameFilename, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid,
+                "isValid should return false for a list with files having duplicate filenames");
+    }
+
+    /**
+     * Method test for
+     * {@link MultipartFileListValidator#initialize(MultipartFileValidation)}
+     */
+    @Order(17)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
