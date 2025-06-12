@@ -403,10 +403,8 @@ class MultipartFileListValidatorTest {
     @Test
     void isValid_WhenMixOfValidAndInvalidFiles_ThenShouldReturnFalse() {
         // Arrange
-        // Create a list with one valid file and one invalid file
         List<MultipartFile> mixedFiles = Arrays.asList(VALID_PDF_FILE, INVALID_TYPE_FILE);
 
-        // Mock the context for validation error messages
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
         when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
@@ -431,7 +429,6 @@ class MultipartFileListValidatorTest {
     @Test
     void isValid_WhenFilesWithSameContentButDifferentFilenames_ThenShouldReturnTrue() {
         // Arrange
-        // Create a new validator with a mocked MultipartFileValidator
         MultipartFileListValidator validator = new MultipartFileListValidator();
         MultipartFileValidation annotation = mock(MultipartFileValidation.class);
         when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
@@ -612,7 +609,6 @@ class MultipartFileListValidatorTest {
 
         List<MultipartFile> filesWithSameFilename = Arrays.asList(file1, file2);
 
-        // Mock the context for validation error messages
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
         when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
@@ -648,7 +644,6 @@ class MultipartFileListValidatorTest {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
-        // Create a new validator with a mocked MultipartFileValidator
         MultipartFileListValidator validator = new MultipartFileListValidator();
         MultipartFileValidation annotation = mock(MultipartFileValidation.class);
         when(annotation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
@@ -677,7 +672,6 @@ class MultipartFileListValidatorTest {
 
         List<MultipartFile> filesWithSameFilename = Arrays.asList(file1, file2);
 
-        // Mock the context for validation error messages
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
         when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
