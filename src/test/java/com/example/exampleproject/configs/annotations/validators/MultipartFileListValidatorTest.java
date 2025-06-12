@@ -3,6 +3,9 @@ package com.example.exampleproject.configs.annotations.validators;
 import com.example.exampleproject.configs.annotations.MultipartFileValidation;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,6 +34,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MultipartFileListValidatorTest {
 
+    private static final char CSV_DELIMITER = '|';
     private static final String IS_VALID = "isValid";
     private static final String INITIALIZE = "initialize";
     private static final String VALID_PDF_MIME_TYPE = "application/pdf";
@@ -197,8 +201,14 @@ class MultipartFileListValidatorTest {
     @Order(5)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list exceeding max file count, then should return false")
-    @Test
-    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Número máximo de arquivos permitidos para envio é 3.",
+            "en_US|Maximum number of allowed files is 3."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<MultipartFile> tooManyFiles = Arrays.asList(
                 VALID_PDF_FILE, 
@@ -217,10 +227,13 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(tooManyFiles, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false when exceeding max file count");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -230,8 +243,14 @@ class MultipartFileListValidatorTest {
     @Order(6)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with duplicate files, then should return false")
-    @Test
-    void isValid_WhenDuplicateFiles_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenDuplicateFiles_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         MockMultipartFile duplicateFile1 = new MockMultipartFile(
                 "duplicate.pdf", "duplicate.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
@@ -248,10 +267,13 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(filesWithDuplicates, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with duplicate files");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -261,8 +283,14 @@ class MultipartFileListValidatorTest {
     @Order(7)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with invalid file, then should return false")
-    @Test
-    void isValid_WhenInvalidFile_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFile_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         List<MultipartFile> filesWithInvalid = Arrays.asList(VALID_PDF_FILE, INVALID_TYPE_FILE);
 
@@ -274,10 +302,13 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(filesWithInvalid, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with an invalid file");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -444,8 +475,14 @@ class MultipartFileListValidatorTest {
     @Order(12)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with oversized file, then should return false")
-    @Test
-    void isValid_WhenOversizedFile_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenOversizedFile_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         byte[] largeContent = new byte[6 * 1024 * 1024]; // 6MB (exceeds the 5MB limit)
         MockMultipartFile largeFile = new MockMultipartFile(
@@ -461,10 +498,13 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(filesWithLargeFile, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with an oversized file");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -517,8 +557,14 @@ class MultipartFileListValidatorTest {
     @Order(14)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with file having invalid MIME type, then should return false")
-    @Test
-    void isValid_WhenFileWithInvalidMimeType_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileWithInvalidMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         MockMultipartFile fileWithInvalidMimeType = new MockMultipartFile(
                 "document.xyz", "document.xyz", "application/xyz", "Invalid MIME type".getBytes());
@@ -533,10 +579,13 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(filesWithInvalidMimeType, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a list with a file having invalid MIME type");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -546,8 +595,14 @@ class MultipartFileListValidatorTest {
     @Order(15)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a list with files having same filename but different content, then should return false")
-    @Test
-    void isValid_WhenFilesWithSameFilenameButDifferentContent_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFilesWithSameFilenameButDifferentContent_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         MockMultipartFile file1 = new MockMultipartFile(
                 "document.pdf", "document.pdf", VALID_PDF_MIME_TYPE, VALID_PDF_CONTENT);
@@ -565,11 +620,14 @@ class MultipartFileListValidatorTest {
         // Act
         boolean isValid = multipartFileListValidator.isValid(filesWithSameFilename, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid,
                 "isValid should return false for a list with files having same filename but different content");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
