@@ -600,7 +600,8 @@ class MultipartFileListValidatorTest {
             "pt_BR|O 1º item da lista está inválido.",
             "en_US|The item #1 in the list is invalid."
     }, delimiter = CSV_DELIMITER)
-    void isValid_WhenFilesWithSameFilenameButDifferentContent_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+    void isValid_WhenFilesWithSameFilenameButDifferentContent_ThenShouldReturnFalse(String languageTag,
+                                                                                    String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
@@ -642,7 +643,8 @@ class MultipartFileListValidatorTest {
             "pt_BR|A lista não deve conter arquivos idênticos. Envie apenas arquivos únicos.",
             "en_US|The list must not contain identical files. Please send only unique files."
     }, delimiter = CSV_DELIMITER)
-    void isValid_WhenDuplicateFilenames_ThenShouldReturnFalseWithCorrectMessage(String languageTag, String expectedMessage) {
+    void isValid_WhenDuplicateFilenames_ThenShouldReturnFalseWithCorrectMessage(String languageTag,
+                                                                                String expectedMessage) {
         LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
 
         // Arrange
