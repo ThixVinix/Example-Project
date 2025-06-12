@@ -7,7 +7,6 @@ import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.br.CPF;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,12 +47,11 @@ public record TestPostRequest(
         String email,
 
         @NotBlank
-        @CPF
-        @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
-                message = "{msg.validation.request.field.cpf.invalidFormat}")
-        @JsonProperty(value = "cpf", required = true)
-        @Schema(description = "CPF of the applicant in a valid format.", example = "051.456.590-08")
-        String cpf,
+        @CpfCnpjValidation
+        @JsonProperty("cpfCnpj")
+        @Schema(description = "CPF or CNPJ of the applicant. Examples: CPF '81865839043' or CNPJ '09795208000119'.",
+                example = "09795208000119")
+        String cpfCnpj,
 
         @NotNull
         @Min(value = 0)
