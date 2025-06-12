@@ -665,8 +665,14 @@ class Base64FileMapValidatorTest {
     @Order(18)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with file having no extension, then should return false")
-    @Test
-    void isValid_WhenFileWithNoExtension_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo document, do 1º item da lista, é inválido. O nome do arquivo deve incluir uma extensão (ex: arquivo.pdf) e conter apenas caracteres válidos: letras (a-z, A-Z), números (0-9), underscores (_), hífens (-) e exatamente um ponto (.) para separar o nome e a extensão.",
+            "en_US|The file name document, from the item #1 in the list, is invalid. The filename must include an extension (e.g., file.pdf) and contain only valid characters: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), and exactly one dot (.) to separate the name and extension."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileWithNoExtension_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -680,10 +686,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithNoExtension, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with a file having no extension");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -693,8 +702,14 @@ class Base64FileMapValidatorTest {
     @Order(19)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with malformed base64 string, then should return false")
-    @Test
-    void isValid_WhenMalformedBase64String_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenMalformedBase64String_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -708,17 +723,57 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithMalformedBase64, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with a malformed base64 string");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(20)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a null expected extension, then should return false with unsupported filetype message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O tipo de arquivo enviado, do 1º item da lista, não é suportado pelo sistema.",
+            "en_US|The file type sent, from the item #1 in the list, is not supported by the system."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenNullExpectedExtension_ThenShouldReturnFalse(String languageTag, String expectedMessage) throws Exception {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        java.lang.reflect.Method validateMimeTypeSupported = Base64FileMapValidator.class.getDeclaredMethod(
+                "validateMimeTypeSupported", String.class, int.class, ConstraintValidatorContext.class);
+        validateMimeTypeSupported.setAccessible(true);
+
+        boolean result = (boolean) validateMimeTypeSupported.invoke(base64FileMapValidator, null, 0, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(result, "validateMimeTypeSupported should return false when expectedExtension is null");
     }
 
     /**
      * Method test for
      * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
      */
-    @Order(20)
+
+    @Order(21)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
