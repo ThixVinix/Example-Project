@@ -770,10 +770,48 @@ class Base64FileMapValidatorTest {
 
     /**
      * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * This test specifically targets the condition in validateMimeTypeSupported where expectedExtension is null
+     */
+    @Order(21)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with unknown MIME type, then should return false with unsupported filetype message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O tipo de arquivo enviado, do 1º item da lista, não é suportado pelo sistema.",
+            "en_US|The file type sent, from the item #1 in the list, is not supported by the system."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenUnknownMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        String customMimeType = "data:application/pdf-custom;base64,JVBERi0xLjAKJeKAow==";
+
+        Map<String, String> filesWithCustomMimeType = new HashMap<>();
+        filesWithCustomMimeType.put("document.custom", customMimeType);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithCustomMimeType, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a map with a custom MIME type not in MimeTypeEnum");
+    }
+
+    /**
+     * Method test for
      * {@link Base64FileMapValidator#initialize(Base64FileValidation)}
      */
-
-    @Order(21)
+    @Order(22)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
     @Test
