@@ -3,6 +3,9 @@ package com.example.exampleproject.configs.annotations.validators;
 import com.example.exampleproject.configs.annotations.Base64FileValidation;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,6 +32,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class Base64FileMapValidatorTest {
 
+    private static final char CSV_DELIMITER = '|';
     private static final String IS_VALID = "isValid";
     private static final String INITIALIZE = "initialize";
     private static final String VALID_PDF_MIME_TYPE = "application/pdf";
@@ -141,8 +145,14 @@ class Base64FileMapValidatorTest {
     @Order(4)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map exceeding max file count, then should return false")
-    @Test
-    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Número máximo de arquivos permitidos para envio é 3.",
+            "en_US|Maximum number of allowed files is 3."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenExceedingMaxFileCount_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         Map<String, String> tooManyFiles = new HashMap<>();
         tooManyFiles.put("file1.pdf", VALID_SMALL_PDF);
@@ -158,10 +168,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(tooManyFiles, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false when exceeding max file count");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -171,8 +184,14 @@ class Base64FileMapValidatorTest {
     @Order(5)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with invalid file name, then should return false")
-    @Test
-    void isValid_WhenInvalidFileName_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo invalid@file.pdf, do 2º item da lista, é inválido. O nome do arquivo deve incluir uma extensão (ex: arquivo.pdf) e conter apenas caracteres válidos: letras (a-z, A-Z), números (0-9), underscores (_), hífens (-) e exatamente um ponto (.) para separar o nome e a extensão.",
+            "en_US|The file name invalid@file.pdf, from the item #2 in the list, is invalid. The filename must include an extension (e.g., file.pdf) and contain only valid characters: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), and exactly one dot (.) to separate the name and extension."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileName_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -186,7 +205,12 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithInvalidName, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with an invalid file name");
     }
 
@@ -197,8 +221,14 @@ class Base64FileMapValidatorTest {
     @Order(6)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with invalid file format, then should return false")
-    @Test
-    void isValid_WhenInvalidFileFormat_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileFormat_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -212,7 +242,12 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithInvalidFormat, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with an invalid file format");
     }
 
@@ -223,8 +258,14 @@ class Base64FileMapValidatorTest {
     @Order(7)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with invalid file content, then should return false")
-    @Test
-    void isValid_WhenInvalidFileContent_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileContent_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -238,7 +279,12 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithInvalidContent, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with an invalid file content");
     }
 
@@ -249,8 +295,14 @@ class Base64FileMapValidatorTest {
     @Order(8)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with invalid MIME type, then should return false")
-    @Test
-    void isValid_WhenInvalidMimeType_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -264,7 +316,12 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithInvalidType, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with an invalid MIME type");
     }
 
@@ -275,8 +332,14 @@ class Base64FileMapValidatorTest {
     @Order(9)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with file exceeding size limit, then should return false")
-    @Test
-    void isValid_WhenFileSizeExceedsLimit_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileSizeExceedsLimit_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -293,7 +356,12 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithLarge, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with a file exceeding the size limit");
     }
 
@@ -304,8 +372,14 @@ class Base64FileMapValidatorTest {
     @Order(10)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with duplicate file content, then should return false")
-    @Test
-    void isValid_WhenDuplicateFileContent_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|A lista não deve conter arquivos idênticos. Envie apenas arquivos únicos.",
+            "en_US|The list must not contain identical files. Please send only unique files."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenDuplicateFileContent_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -319,10 +393,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithDuplicateContent, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with duplicate file content");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -332,8 +409,14 @@ class Base64FileMapValidatorTest {
     @Order(11)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with null file name, then should return false")
-    @Test
-    void isValid_WhenNullFileName_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo, do 1º item da lista, não foi fornecido.",
+            "en_US|The file name, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenNullFileName_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -346,10 +429,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithNullKey, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with a null file name");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -359,8 +445,14 @@ class Base64FileMapValidatorTest {
     @Order(12)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with empty file name, then should return false")
-    @Test
-    void isValid_WhenEmptyFileName_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo, do 1º item da lista, não foi fornecido.",
+            "en_US|The file name, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenEmptyFileName_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -373,10 +465,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithEmptyKey, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with an empty file name");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -386,8 +481,14 @@ class Base64FileMapValidatorTest {
     @Order(13)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with null base64 content, then should return false")
-    @Test
-    void isValid_WhenNullBase64Content_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O conteúdo Base64 do arquivo document.pdf, do 1º item da lista, não foi fornecido.",
+            "en_US|The Base64 content of the file document.pdf, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenNullBase64Content_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -400,10 +501,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithNullContent, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with null base64 content");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -413,8 +517,14 @@ class Base64FileMapValidatorTest {
     @Order(14)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with empty base64 content, then should return false")
-    @Test
-    void isValid_WhenEmptyBase64Content_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O conteúdo Base64 do arquivo document.pdf, do 1º item da lista, não foi fornecido.",
+            "en_US|The Base64 content of the file document.pdf, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenEmptyBase64Content_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -427,10 +537,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithEmptyContent, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with empty base64 content");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -440,8 +553,14 @@ class Base64FileMapValidatorTest {
     @Order(15)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with file extension not matching MIME type, then should return false")
-    @Test
-    void isValid_WhenFileExtensionNotMatchingMimeType_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O arquivo document.jpg, do 1º item da lista, possui extensão jpg que não corresponde à extensão esperada pdf com base no conteúdo do arquivo.",
+            "en_US|The file document.jpg, from the item #1 in the list, has extension jpg which does not match the expected extension pdf based on the file content."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileExtensionNotMatchingMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -455,10 +574,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithMismatchedExtension, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with file extension not matching MIME type");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -468,8 +590,14 @@ class Base64FileMapValidatorTest {
     @Order(16)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with unsupported MIME type, then should return false")
-    @Test
-    void isValid_WhenUnsupportedMimeType_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 1º item da lista está inválido.",
+            "en_US|The item #1 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenUnsupportedMimeType_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -484,10 +612,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithUnsupportedMimeType, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with unsupported MIME type");
-        verify(context, atLeastOnce()).disableDefaultConstraintViolation();
-        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
@@ -497,8 +628,14 @@ class Base64FileMapValidatorTest {
     @Order(17)
     @Tag(value = IS_VALID)
     @DisplayName(IS_VALID + " - Given a map with file having invalid extension, then should return false")
-    @Test
-    void isValid_WhenInvalidFileExtension_ThenShouldReturnFalse() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O arquivo document.xyz, do 1º item da lista, possui uma extensão inválida xyz. A extensão deve ser uma das extensões de arquivo suportadas pelo sistema.",
+            "en_US|The file document.xyz, from the item #1 in the list, has an invalid extension xyz. The extension must be one of the supported file types."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenInvalidFileExtension_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         doNothing().when(context).disableDefaultConstraintViolation();
@@ -512,10 +649,13 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = base64FileMapValidator.isValid(filesWithInvalidExtension, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false for a map with a file having invalid extension");
-        verify(context).disableDefaultConstraintViolation();
-        verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
     /**
