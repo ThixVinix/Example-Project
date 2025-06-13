@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * Validator class for validating MultipartFile objects for specific constraints such as file type
@@ -20,7 +21,8 @@ import java.io.InputStream;
  * Implements the {@link ConstraintValidator} interface for the {@link MultipartFileValidation} annotation.
  */
 @Slf4j
-public class MultipartFileValidator extends AbstractFileValidator implements ConstraintValidator<MultipartFileValidation, MultipartFile> {
+public class MultipartFileValidator
+        extends AbstractFileValidator implements ConstraintValidator<MultipartFileValidation, MultipartFile> {
 
     private Tika tika;
 
@@ -112,7 +114,6 @@ public class MultipartFileValidator extends AbstractFileValidator implements Con
      */
     @Override
     protected boolean isMimeTypeAllowed(String contentType) {
-        // Retorna true diretamente caso a lista de tipos permitidos esteja vazia/nula
         return ArrayUtils.isEmpty(allowedTypes) || super.isMimeTypeAllowed(contentType);
     }
 
@@ -125,8 +126,7 @@ public class MultipartFileValidator extends AbstractFileValidator implements Con
      */
     @Override
     protected boolean isMimeTypeNotAllowed(String contentType) {
-        // Reutiliza o comportamento acima
-        return !isMimeTypeAllowed(contentType);
+        return !ArrayUtils.isEmpty(allowedTypes) && !Arrays.asList(allowedTypes).contains(contentType);
     }
 
 }

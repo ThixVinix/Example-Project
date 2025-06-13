@@ -77,7 +77,7 @@ public abstract class AbstractFileValidator extends AbstractValidator {
      * @return true if the MIME type is not allowed, false otherwise
      */
     protected boolean isMimeTypeNotAllowed(String mimeType) {
-        return !isMimeTypeAllowed(mimeType);
+        return !Arrays.asList(allowedTypes).contains(mimeType);
     }
 
 }
