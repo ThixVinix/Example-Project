@@ -2,7 +2,7 @@ package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.Base64FileValidation;
 import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
-import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.configs.annotations.validators.base.AbstractValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
-public class Base64FileMapValidator implements ConstraintValidator<Base64FileValidation, Map<String, String>> {
+public class Base64FileMapValidator
+        extends AbstractValidator implements ConstraintValidator<Base64FileValidation, Map<String, String>> {
 
     /**
      * <p><strong>Regex for file name validation:</strong></p>
@@ -68,13 +69,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         }
 
         if (values.size() > maxFileCount) {
-            context.disableDefaultConstraintViolation();
-            context
-                    .buildConstraintViolationWithTemplate(
-                            MessageUtils.getMessage(
-                                    "msg.validation.request.field.base64file.max.file.count", maxFileCount)
-                    )
-                    .addConstraintViolation();
+            addConstraintViolation(context, "msg.validation.request.field.base64file.max.file.count", 
+                    String.valueOf(maxFileCount));
             return false;
         }
 
@@ -144,8 +140,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private boolean validateFileNamePresence(String fileName, int index, ConstraintValidatorContext context) {
         if (fileName == null || fileName.trim().isEmpty()) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.missing.filename", index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.missing.filename", 
+                    String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -154,9 +150,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
     private boolean validateBase64ContentPresence(String fileName, String base64File, int index,
                                                   ConstraintValidatorContext context) {
         if (base64File == null || base64File.isBlank()) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.missing.base64content",
-                            fileName, index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.missing.base64content",
+                    fileName, String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -164,9 +159,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private boolean validateFileNameFormat(String fileName, int index, ConstraintValidatorContext context) {
         if (!isFileNameValid(fileName)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.invalid.filename",
-                            fileName, index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.invalid.filename",
+                    fileName, String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -174,8 +168,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private boolean validateBase64Content(String base64File, int index, ConstraintValidatorContext context) {
         if (!base64FileValidator.isValid(base64File, context)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.base64file.invalid.list", index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.base64file.invalid.list", 
+                    String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -183,8 +177,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
 
     private boolean validateMimeTypeSupported(String expectedExtension, int index, ConstraintValidatorContext context) {
         if (Objects.isNull(expectedExtension)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.unsupported.filetype", index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.unsupported.filetype", 
+                    String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -193,9 +187,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
     private boolean validateFileExtension(String fileName, String fileExtension, int index,
                                           ConstraintValidatorContext context) {
         if (MimeTypeEnum.isNotValidExtension(fileExtension)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.invalid.extension",
-                            fileName, fileExtension, index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.invalid.extension",
+                    fileName, fileExtension, String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -205,9 +198,8 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
                                                      String expectedExtension, int index,
                                                      ConstraintValidatorContext context) {
         if (!fileExtension.equalsIgnoreCase(expectedExtension)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.extension.mismatch",
-                            fileName, fileExtension, expectedExtension, index + 1));
+            addConstraintViolation(context, "msg.validation.request.field.extension.mismatch",
+                    fileName, fileExtension, expectedExtension, String.valueOf(index + 1));
             return false;
         }
         return true;
@@ -216,20 +208,10 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
     private boolean validateUniqueContent(String base64File, Set<String> uniqueBase64Files,
                                           ConstraintValidatorContext context) {
         if (!uniqueBase64Files.add(base64File)) {
-            addConstraintViolation(context,
-                    MessageUtils.getMessage("msg.validation.request.field.base64file.duplicate.file"));
+            addConstraintViolation(context, "msg.validation.request.field.base64file.duplicate.file");
             return false;
         }
         return true;
-    }
-
-    /**
-     * Helper method to add a constraint violation with the given message.
-     */
-    private void addConstraintViolation(ConstraintValidatorContext context, String message) {
-        context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(message)
-                .addConstraintViolation();
     }
 
     /**
@@ -281,5 +263,4 @@ public class Base64FileMapValidator implements ConstraintValidator<Base64FileVal
         }
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
-
 }

@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.DateRangeValidation;
+import com.example.exampleproject.configs.annotations.validators.base.AbstractValidator;
 import com.example.exampleproject.utils.DateUtils;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +14,7 @@ import java.time.*;
 import java.util.Objects;
 
 @Slf4j
-public class DateRangeValidator implements ConstraintValidator<DateRangeValidation, Object> {
+public class DateRangeValidator extends AbstractValidator implements ConstraintValidator<DateRangeValidation, Object> {
 
     private String dateAField;
     private String dateBField;
@@ -38,7 +39,6 @@ public class DateRangeValidator implements ConstraintValidator<DateRangeValidati
      */
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
-
         boolean isValid = true;
 
         try {
@@ -55,26 +55,23 @@ public class DateRangeValidator implements ConstraintValidator<DateRangeValidati
             }
 
             if (dateAValue == null) {
-                addConstraintViolationDateA(context,
-                        MessageUtils.getMessage(
-                                "msg.validation.request.field.date.range.empty",
-                                dateAJsonProperty, dateBJsonProperty));
+                addConstraintViolationWithPropertyNode(context, dateAField,
+                        "msg.validation.request.field.date.range.empty",
+                        dateAJsonProperty, dateBJsonProperty);
                 isValid = false;
             } else if (dateBValue == null) {
-                addConstraintViolationDateB(context,
-                        MessageUtils.getMessage(
-                                "msg.validation.request.field.date.range.empty",
-                                dateAJsonProperty, dateBJsonProperty));
+                addConstraintViolationWithPropertyNode(context, dateBField,
+                        "msg.validation.request.field.date.range.empty",
+                        dateAJsonProperty, dateBJsonProperty);
                 isValid = false;
             } else {
                 Instant instantA = DateUtils.toInstant(dateAValue);
                 Instant instantB = DateUtils.toInstant(dateBValue);
 
                 if (instantA.isAfter(instantB)) {
-                    addConstraintViolationDateA(context,
-                            MessageUtils.getMessage(
-                                    "msg.validation.request.field.date.range.invalid",
-                                    dateAJsonProperty, dateBJsonProperty));
+                    addConstraintViolationWithPropertyNode(context, dateAField,
+                            "msg.validation.request.field.date.range.invalid",
+                            dateAJsonProperty, dateBJsonProperty);
                     isValid = false;
                 }
             }
@@ -85,25 +82,6 @@ public class DateRangeValidator implements ConstraintValidator<DateRangeValidati
         }
 
         return isValid;
-    }
-
-    /**
-     * Adds a constraint violation message to the validation context.
-     *
-     * @param context the {@link ConstraintValidatorContext} into which the violation should be added
-     */
-    private void addConstraintViolationDateA(ConstraintValidatorContext context, String message) {
-        context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(message)
-                .addPropertyNode(dateAField)
-                .addConstraintViolation();
-    }
-
-    private void addConstraintViolationDateB(ConstraintValidatorContext context, String message) {
-        context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(message)
-                .addPropertyNode(dateBField)
-                .addConstraintViolation();
     }
 
     /**
@@ -128,5 +106,4 @@ public class DateRangeValidator implements ConstraintValidator<DateRangeValidati
         }
         return fieldName;
     }
-
 }

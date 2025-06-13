@@ -1,7 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.MultipartFileValidation;
-import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.configs.annotations.validators.base.AbstractListValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,8 @@ import java.util.Set;
  * 3. That each file is valid, according to the MultipartFileValidator.
  */
 @Slf4j
-public class MultipartFileListValidator implements ConstraintValidator<MultipartFileValidation, List<MultipartFile>> {
+public class MultipartFileListValidator
+        extends AbstractListValidator implements ConstraintValidator<MultipartFileValidation, List<MultipartFile>> {
 
     private MultipartFileValidator multipartFileValidator;
     private int maxFileCount;
@@ -37,51 +38,42 @@ public class MultipartFileListValidator implements ConstraintValidator<Multipart
             return true;
         }
 
-        if (files.size() > maxFileCount) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(
-                            MessageUtils.getMessage(
-                                    "msg.validation.request.field.multipartfile.max.file.count", maxFileCount)
-                    )
-                    .addConstraintViolation();
+        if (!validateMaxSize(files, maxFileCount, context, 
+                "msg.validation.request.field.multipartfile.max.file.count")) {
             return false;
         }
 
-        Set<String> uniqueFileNames = new HashSet<>();
-
-        for (int i = 0; i < files.size(); i++) {
-            MultipartFile file = files.get(i);
-            
-            if (file == null) {
-                continue;
-            }
-            
-            String fileName = file.getOriginalFilename();
-            if (fileName != null && !fileName.isEmpty() && !uniqueFileNames.add(fileName)) {
-                context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.multipartfile.duplicate.file")
-                        )
-                        .addConstraintViolation();
-                return false;
-            }
-
-            if (!multipartFileValidator.isValid(file, context)) {
-                context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(
-                                MessageUtils.getMessage("msg.validation.request.field.multipartfile.invalid.list",
-                                        i + 1)
-                        )
-                        .addConstraintViolation();
-                return false;
-            }
+        if (!validateEachItem(files, this::validateMultipartFile, context, 
+                "msg.validation.request.field.multipartfile.invalid.list")) {
+            return false;
         }
+
+        if (!validateUniqueFileNames(files, context)) {
+            return false;
+        }
+
         return true;
     }
 
-    private boolean isNullOrEmpty(List<MultipartFile> files) {
-        return files == null || files.isEmpty();
+    private boolean validateMultipartFile(MultipartFile file, ConstraintValidatorContext context) {
+        return file == null || multipartFileValidator.isValid(file, context);
+    }
+
+    private boolean validateUniqueFileNames(List<MultipartFile> files, ConstraintValidatorContext context) {
+        Set<String> uniqueFileNames = new HashSet<>();
+
+        for (MultipartFile file : files) {
+            if (file == null) {
+                continue;
+            }
+
+            String fileName = file.getOriginalFilename();
+            if (fileName != null && !fileName.isEmpty() && !uniqueFileNames.add(fileName)) {
+                addConstraintViolation(context, "msg.validation.request.field.multipartfile.duplicate.file");
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -242,16 +242,21 @@ class MultipartFileValidatorTest {
         MockMultipartFile largeMultipartFile = new MockMultipartFile(
                 "large.pdf", "large.pdf", VALID_PDF_MIME_TYPE, largeFile);
 
-        java.lang.reflect.Method isFileSizeValidMethod = MultipartFileValidator.class.getDeclaredMethod(
-                "isFileSizeValid", MultipartFile.class, ConstraintValidatorContext.class);
-        isFileSizeValidMethod.setAccessible(true);
+        java.lang.reflect.Method validateFileSizeMethod =
+                MultipartFileValidator.class.getSuperclass().getDeclaredMethod(
+                "validateFileSize", long.class, ConstraintValidatorContext.class, String.class);
+        validateFileSizeMethod.setAccessible(true);
 
         // Act
-        boolean isValid = (boolean) isFileSizeValidMethod.invoke(multipartFileValidator, largeMultipartFile, context);
+        boolean isValid = (boolean) validateFileSizeMethod.invoke(
+                multipartFileValidator, 
+                largeMultipartFile.getSize(), 
+                context, 
+                "msg.validation.request.field.multipartfile.invalid.size");
 
         // Assert
         verify(context).buildConstraintViolationWithTemplate(anyString());
-        assertFalse(isValid, "isFileSizeValid should return false for a file exceeding the size limit");
+        assertFalse(isValid, "validateFileSize should return false for a file exceeding the size limit");
     }
 
     /**
