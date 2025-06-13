@@ -1,6 +1,5 @@
 package com.example.exampleproject.configs.annotations.validators.base;
 
-import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,17 +39,16 @@ public abstract class AbstractListValidator extends AbstractValidator {
     /**
      * Validates that the list does not contain duplicate items.
      *
-     * @param list the list to validate
+     * @param list    the list to validate
      * @param context the validation context
-     * @param messageKey the message key for the error message
      * @return true if the list does not contain duplicates, false otherwise
      */
-    protected <T> boolean validateNoDuplicates(List<T> list, ConstraintValidatorContext context, String messageKey) {
+    protected <T> boolean validateNoDuplicates(List<T> list, ConstraintValidatorContext context) {
         Set<T> uniqueItems = new HashSet<>();
         
         for (T item : list) {
             if (item != null && !uniqueItems.add(item)) {
-                addConstraintViolation(context, messageKey);
+                addConstraintViolation(context, "msg.validation.request.field.base64file.duplicate.file");
                 return false;
             }
         }
