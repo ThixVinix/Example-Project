@@ -31,8 +31,7 @@ public class Base64FileListValidator extends AbstractListValidator
             return false;
         }
 
-        if (!validateNoDuplicates(values, context, 
-                "msg.validation.request.field.base64file.duplicate.file")) {
+        if (!validateNoDuplicates(values, context)) {
             return false;
         }
 
