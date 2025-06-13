@@ -32,7 +32,7 @@ class EnumCodeValidatorTest {
     /**
      * Test enum with getCode method for testing EnumCodeValidator
      */
-    private enum TestCodeEnum {
+    public enum TestCodeEnum {
         CODE_ONE(1),
         CODE_TWO(2),
         CODE_THREE(3);
@@ -43,11 +43,11 @@ class EnumCodeValidatorTest {
             this.code = code;
         }
 
-        @SuppressWarnings("unused")
         public Integer getCode() {
             return code;
         }
     }
+
 
     /**
      * Test enum without getCode method for testing error handling

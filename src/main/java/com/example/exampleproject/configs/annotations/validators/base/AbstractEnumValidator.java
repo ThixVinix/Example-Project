@@ -114,20 +114,19 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
     protected boolean enumValueMatches(Enum<?> enumConstant, Object value) {
         if (accessorMethod != null) {
             try {
-                // Make the method accessible to handle inner enum classes in tests
-                accessorMethod.setAccessible(true);
                 Object enumValue = accessorMethod.invoke(enumConstant);
                 return enumValue.equals(value);
             } catch (Exception e) {
                 log.warn("Failed to access the '{}' method of Enum {}: {}", 
                         methodName, enumClass.getSimpleName(), e.getMessage());
-                // Fall back to comparing with enum name if method access fails
+
+                // Fall back to comparing with the enum name if method access fails
                 return enumConstant.name().equals(value) || 
-                       (value instanceof String && enumConstant.name().equalsIgnoreCase((String) value));
+                       (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
             }
         } else {
             return enumConstant.name().equals(value) || 
-                   (value instanceof String && enumConstant.name().equalsIgnoreCase((String) value));
+                   (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
         }
     }
 }
