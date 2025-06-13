@@ -43,6 +43,7 @@ class EnumCodeValidatorTest {
             this.code = code;
         }
 
+        @SuppressWarnings("unused")
         public Integer getCode() {
             return code;
         }
