@@ -26,7 +26,7 @@ public class Base64FileListValidator extends AbstractListValidator
             return true;
         }
 
-        if (!validateMaxSize(values, maxFileCount, context, 
+        if (validateMaxSize(values, maxFileCount, context, 
                 "msg.validation.request.field.base64file.max.file.count")) {
             return false;
         }

@@ -23,7 +23,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
      * @param maxSize the maximum allowed size
      * @param context the validation context
      * @param messageKey the message key for the error message
-     * @return true if the list size is valid, false otherwise
+     * @return true if validation fails (list size exceeds max size), false otherwise
      */
     protected boolean validateMaxSize(List<?> list,
                                       int maxSize,
@@ -31,9 +31,9 @@ public abstract class AbstractListValidator extends AbstractValidator {
                                       String messageKey) {
         if (list.size() > maxSize) {
             addConstraintViolation(context, messageKey, String.valueOf(maxSize));
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -45,14 +45,14 @@ public abstract class AbstractListValidator extends AbstractValidator {
      */
     protected <T> boolean validateNoDuplicates(List<T> list, ConstraintValidatorContext context) {
         Set<T> uniqueItems = new HashSet<>();
-        
+
         for (T item : list) {
             if (item != null && !uniqueItems.add(item)) {
                 addConstraintViolation(context, "msg.validation.request.field.base64file.duplicate.file");
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -70,13 +70,13 @@ public abstract class AbstractListValidator extends AbstractValidator {
                                           String invalidItemMessageKey) {
         for (int i = 0; i < list.size(); i++) {
             T item = list.get(i);
-            
+
             if (!itemValidator.isValid(item, context)) {
                 addConstraintViolation(context, invalidItemMessageKey, String.valueOf(i + 1));
                 return false;
             }
         }
-        
+
         return true;
     }
 
