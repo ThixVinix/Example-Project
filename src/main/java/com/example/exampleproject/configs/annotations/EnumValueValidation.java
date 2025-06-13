@@ -4,10 +4,7 @@ import com.example.exampleproject.configs.annotations.validators.EnumValueValida
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 
 /**
@@ -33,6 +30,7 @@ import java.lang.annotation.Target;
  * <p>
  * Example usage should be avoided in this documentation as per the constraints.
  */
+@Documented
 @Constraint(validatedBy = EnumValueValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

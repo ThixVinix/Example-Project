@@ -132,6 +132,11 @@ public class GreetingController {
                 .zonedDateTime(ZonedDateTime.now())
                 .localTime(LocalTime.now())
                 .statusEnum(statusEnum.getValue())
+                .bigDecimalValue(new BigDecimal("123456789.45"))
+                .doubleValue(Double.MAX_VALUE)
+                .floatValue(Float.MAX_VALUE)
+                .integerValue(Integer.MAX_VALUE)
+                .longValue(Long.MAX_VALUE)
                 .build();
     }
 

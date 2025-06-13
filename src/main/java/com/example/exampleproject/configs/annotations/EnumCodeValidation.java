@@ -4,10 +4,7 @@ import com.example.exampleproject.configs.annotations.validators.EnumCodeValidat
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Annotation to validate if a numerical value corresponds to the "code" of a constant in a specified Enum class.
@@ -18,6 +15,7 @@ import java.lang.annotation.Target;
  * - The provided value must match a valid code from the specified Enum class.
  * - Null values are considered valid unless enforced otherwise (e.g., with @NotNull).
  */
+@Documented
 @Constraint(validatedBy = EnumCodeValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
