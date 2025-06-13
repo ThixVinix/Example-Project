@@ -48,11 +48,7 @@ public class MultipartFileListValidator
             return false;
         }
 
-        if (!validateUniqueFileNames(files, context)) {
-            return false;
-        }
-
-        return true;
+        return validateUniqueFileNames(files, context);
     }
 
     private boolean validateMultipartFile(MultipartFile file, ConstraintValidatorContext context) {
