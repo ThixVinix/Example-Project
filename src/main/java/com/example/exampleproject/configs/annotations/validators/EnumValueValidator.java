@@ -28,20 +28,16 @@ public class EnumValueValidator
             return true;
         }
 
-        // First check for exact match or case-insensitive match with enum name
         for (Enum<?> enumConstant : enumClass.getEnumConstants()) {
             if (enumConstant.name().equals(value) || 
                 enumConstant.name().equalsIgnoreCase(value)) {
                 return true;
             }
 
-            // Also check for case-insensitive match with getValue() result
             if (accessorMethod != null) {
                 try {
-                    accessorMethod.setAccessible(true);
                     Object enumValue = accessorMethod.invoke(enumConstant);
-                    if (enumValue instanceof String && 
-                        ((String) enumValue).equalsIgnoreCase(value)) {
+                    if (enumValue instanceof String string && string.equalsIgnoreCase(value)) {
                         return true;
                     }
                 } catch (Exception e) {
@@ -51,7 +47,6 @@ public class EnumValueValidator
             }
         }
 
-        // Then check using the standard accessor method match
         boolean isValid = Arrays.stream(enumClass.getEnumConstants())
                 .anyMatch(enumConstant -> enumValueMatches(enumConstant, value));
 
