@@ -6,14 +6,14 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
-
+@Documented
 @Constraint(validatedBy = DateRangeValidator.class)
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(ValidDateRanges.class)
 public @interface DateRangeValidation {
 
-    String message() default "Invalid or out of order dates: {dateAField} e {dateBField}";
+    String message() default "Invalid or out of order dates: {dateAField} and {dateBField}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 

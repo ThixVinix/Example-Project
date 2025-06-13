@@ -7,12 +7,12 @@ import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.br.CPF;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @DateRangeValidation(dateAField = "initialDate", dateBField = "finalDate")
 @Schema(description = "Representation of a request to create a new resource with validations and mandatory data.")
@@ -47,12 +47,11 @@ public record TestPostRequest(
         String email,
 
         @NotBlank
-        @CPF
-        @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
-                message = "{msg.validation.request.field.cpf.invalidFormat}")
-        @JsonProperty(value = "cpf", required = true)
-        @Schema(description = "CPF of the applicant in a valid format.", example = "051.456.590-08")
-        String cpf,
+        @CpfCnpjValidation
+        @JsonProperty("cpfCnpj")
+        @Schema(description = "CPF or CNPJ of the applicant. Examples: CPF '81865839043' or CNPJ '09795208000119'.",
+                example = "09795208000119")
+        String cpfCnpj,
 
         @NotNull
         @Min(value = 0)
@@ -60,20 +59,6 @@ public record TestPostRequest(
         @JsonProperty(value = "idade", required = true)
         @Schema(description = "Age of the applicant.", example = "34", implementation = String.class)
         Byte age,
-
-        @NotBlank
-        @Base64FileValidation(
-                allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
-                maxSizeInMB = 3)
-        @JsonProperty(value = "imagemBase64", required = true)
-        @Schema(description = "Base64 encoded image.", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...")
-        String base64Image,
-
-        @NotBlank
-        @Base64FileValidation(allowedTypes = {"application/pdf", "text/csv"}, maxSizeInMB = 4)
-        @JsonProperty(value = "arquivoBase64", required = true)
-        @Schema(description = "Base64 encoded file.", example = "data:application/pdf;base64,/9j/4AAQSkZJRgABA...")
-        String base64File,
 
         @NotBlank
         @Pattern(regexp = "\\(\\d{2}\\) \\d{4,5}-\\d{4}",
@@ -113,13 +98,50 @@ public record TestPostRequest(
         @NotNull
         @JsonProperty("status")
         @EnumValueValidation(enumClass = StatusEnum.class)
+        @Schema(description = "Status description from the enumeration.", example = "ATIVO")
         String statusValueEnum,
 
         @NotNull
         @JsonProperty("codigo")
         @EnumCodeValidation(enumClass = StatusEnum.class)
-        Integer statusCodeEnum
+        @Schema(description = "Status code from the enumeration.", example = "1")
+        Integer statusCodeEnum,
 
+        @NotBlank
+        @Base64FileValidation(
+                allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
+                maxSizeInMB = 3)
+        @JsonProperty(value = "imagemBase64", required = true)
+        @Schema(description = "Base64 encoded image. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAADMElEQVR4nOzVwQnAIBQF" +
+                        "QYXff81RUkQCOyDj1YOPnbXWPmeTRef+/3O/OyBjzh3CD95BfqICMK0CMO0TAAD//2Anhf4QtqobAAAAAElFTkSuQmCC")
+        String base64Image,
+
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4,
+                maxFileCount = 3
+        )
+        @JsonProperty("listaBase64")
+        @Schema(description = "List of documents encoded in Base64. " +
+                "Expected format: data:[type]/[subtype];base64,[content]",
+                example = "[\"data:application/pdf;base64,JVBERi0xLjMKJ1RyYWlsZXInCiUlRU9GCg==\", " +
+                        "\"data:text/plain;base64,VGVzdCBjb250ZW50\"]")
+        List<String> base64List,
+
+        @NotEmpty
+        @Base64FileValidation(
+                allowedTypes = {"application/pdf", "text/plain"},
+                maxSizeInMB = 4,
+                maxFileCount = 3
+        )
+        @JsonProperty("mapaBase64")
+        @Schema(description = "File Map where the key is the file name (with extension) and the value is the " +
+                "content coded in Base64. Expected format: data:[type]/[subtype];base64,[content]",
+                example = "{\"document1.pdf\": \"data:application/pdf;base64,JVBERi0xLjMKJ1RyYWlsZXInCiUlRU9GCg==\", " +
+                        "\"document2.txt\": \"data:text/plain;base64,VGVzdCBjb250ZW50\"}")
+        Map<String, String> base64Map
 
 ) {
 }
