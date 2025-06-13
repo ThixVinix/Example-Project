@@ -2,6 +2,7 @@ package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.utils.MessageUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,6 +49,11 @@ class DateRangeValidatorTest {
     }
 
     private record ExampleMergedDateObject(LocalDate dateA, LocalDateTime dateB) {
+    }
+
+    private record ExampleJsonPropertyDateObject(
+            @JsonProperty("dataInicial") LocalDate dateA, 
+            @JsonProperty("dataFinal") LocalDateTime dateB) {
     }
 
     private static final char CSV_DELIMITER = '|';
@@ -357,5 +363,44 @@ class DateRangeValidatorTest {
 
         // Assert
         assertFalse(isValid, "isValid should return false when an exception is thrown");
+    }
+
+    /**
+     * Method test for
+     * {@link DateRangeValidator#isValid(Object, ConstraintValidatorContext)}
+     */
+    @Order(11)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given fields have JsonProperty annotations, then should use JsonProperty names in error messages")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|dataInicial deve ser anterior a dataFinal.",
+            "en_US|dataInicial must be before dataFinal."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFieldsHaveJsonPropertyAnnotations_ThenShouldUseJsonPropertyNamesInErrorMessages(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        var nodeBuilder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext.class);
+
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addPropertyNode(anyString())).thenReturn(nodeBuilder);
+        when(nodeBuilder.addConstraintViolation()).thenReturn(context);
+
+        final LocalDate dateA = LocalDate.now().plusDays(1);
+        final LocalDateTime dateB = LocalDateTime.now();
+        ExampleJsonPropertyDateObject exampleObject = new ExampleJsonPropertyDateObject(dateA, dateB);
+
+        // Act
+        boolean isValid = dateRangeValidator.isValid(exampleObject, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false");
     }
 }
