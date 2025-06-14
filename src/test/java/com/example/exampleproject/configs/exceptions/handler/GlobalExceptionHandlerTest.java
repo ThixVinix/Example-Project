@@ -62,6 +62,8 @@ class GlobalExceptionHandlerTest {
 
     private static final String HANDLE_TIMEOUT_EXCEPTION = "handleTimeoutException";
 
+    private static final String HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION = "handleAsyncRequestTimeoutException";
+
     private static final String HANDLE_CONFLICT_EXCEPTION = "handleConflictException";
 
     private static final String HANDLE_FORBIDDEN_EXCEPTION = "handleForbiddenException";
@@ -390,6 +392,36 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
+     * {@link GlobalExceptionHandler#handleAsyncRequestTimeoutException(Exception, WebRequest)}
+     */
+    @Order(9)
+    @Tag(value = HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION)
+    @DisplayName(HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION + " - When AsyncRequestTimeoutException is thrown then return service unavailable status")
+    @Test
+    void testHandleAsyncRequestTimeoutException() {
+        org.springframework.web.context.request.async.AsyncRequestTimeoutException ex = 
+                new org.springframework.web.context.request.async.AsyncRequestTimeoutException();
+        WebRequest request = mock(WebRequest.class);
+        when(request.getDescription(false)).thenReturn("/test/path");
+
+        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getServiceUnavailableMessage(ex))
+                    .thenReturn("Custom service unavailable message");
+
+            ResponseEntity<ErrorSingleResponse> responseEntity =
+                    exceptionHandler.handleAsyncRequestTimeoutException(ex, request);
+
+            assertNotNull(responseEntity);
+            assertEquals(HttpStatus.SERVICE_UNAVAILABLE, responseEntity.getStatusCode());
+            ErrorSingleResponse errorSingleResponse = responseEntity.getBody();
+            assertNotNull(errorSingleResponse);
+            assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), errorSingleResponse.status());
+            assertEquals("Custom service unavailable message", errorSingleResponse.message());
+        }
+    }
+
+    /**
+     * Method test for
      * {@link GlobalExceptionHandler#handleHttpMediaTypeNotAcceptableException(Exception, WebRequest)}
      */
     @Order(9)
@@ -574,7 +606,9 @@ class GlobalExceptionHandlerTest {
                 Arguments.of(415, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Custom unsupported media type message",
                         new HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true)),
                 Arguments.of(413, HttpStatus.PAYLOAD_TOO_LARGE, "Custom payload too large message",
-                        new HandlerConfig(ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true))
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true)),
+                Arguments.of(503, HttpStatus.SERVICE_UNAVAILABLE, "Custom service unavailable message",
+                        new HandlerConfig(ExceptionHandlerMessageHelper::getServiceUnavailableMessage, true))
         );
     }
 

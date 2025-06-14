@@ -16,10 +16,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.beans.ConversionNotSupportedException;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -261,7 +265,11 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class,
             HandlerMethodValidationException.class,
-            BindException.class})
+            BindException.class,
+            ServletRequestBindingException.class,
+            ConversionNotSupportedException.class,
+            TypeMismatchException.class
+    })
     @SuppressWarnings("squid:S1452")
     protected ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
@@ -530,7 +538,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({TimeoutException.class, AsyncRequestTimeoutException.class})
+    @ExceptionHandler(TimeoutException.class)
     protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
         log.error("Request timed out: {}", ex.getMessage(), ex);
 
@@ -543,6 +551,67 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorSingleResponse, HttpStatus.REQUEST_TIMEOUT);
+    }
+
+    @ApiResponse(
+            responseCode = "503",
+            description = "<p><strong>English:</strong> Service Unavailable. This occurs when the server is " +
+                    "temporarily unable to handle the request due to maintenance or overload. This is often " +
+                    "caused by asynchronous request timeouts or server-side resource constraints.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Serviço Indisponível. Isso ocorre quando o servidor " +
+                    "está temporariamente incapaz de processar a solicitação devido à manutenção ou sobrecarga. " +
+                    "Isso geralmente é causado por tempos limite de solicitação assíncrona ou restrições de recursos " +
+                    "do lado do servidor.</p>",
+            content = {
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "English - 503 Service Unavailable",
+                                            summary = "English: Example of a 503 error response caused by a service " +
+                                                    "unavailability.",
+                                value = """
+                                            {
+                                              "timestamp": "2023-01-01T18:00:00",
+                                              "path": "/api/resource",
+                                              "status": 503,
+                                              "error": "Service Unavailable",
+                                              "message": "The service is currently unavailable. Please try again later."
+                                            }
+                                        """
+                                ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 503 Serviço Indisponível",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 503 " +
+                                                    "causada por indisponibilidade do serviço.",
+          value = """
+                      {
+                        "timestamp": "2023-01-01T18:00:00",
+                        "path": "/api/resource",
+                        "status": 503,
+                        "error": "Service Unavailable",
+                        "message": "O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde."
+                      }
+                  """
+                                    )
+                            }
+                    )
+            }
+    )
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleAsyncRequestTimeoutException(Exception ex, WebRequest request) {
+        log.error("Service unavailable due to async request timeout: {}", ex.getMessage(), ex);
+
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .error(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase())
+                .message(ExceptionHandlerMessageHelper.getServiceUnavailableMessage(ex))
+                .path(request.getDescription(Boolean.FALSE))
+                .build();
+
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ApiResponse(
@@ -781,7 +850,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({RuntimeException.class, Exception.class, Throwable.class})
+    @ExceptionHandler({RuntimeException.class, Exception.class, Throwable.class, HttpMessageNotWritableException.class})
     protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
@@ -846,6 +915,7 @@ public class GlobalExceptionHandler {
             case CONFLICT -> this.handleConflictException(e, request);
             case UNSUPPORTED_MEDIA_TYPE -> this.handleHttpMediaTypeNotSupportedException(e, request);
             case PAYLOAD_TOO_LARGE -> this.handleMaxUploadSizeExceededException(e, request);
+            case SERVICE_UNAVAILABLE -> this.handleAsyncRequestTimeoutException(e, request);
             default -> this.handleGlobalException(e, request);
         };
     }
