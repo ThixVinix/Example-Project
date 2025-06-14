@@ -37,21 +37,41 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Provides utility methods for generating localized and descriptive error messages
- * based on exceptions encountered in an application. The class facilitates error handling
- * by producing specific messages tailored to various exception scenarios, ranging from
- * HTTP-related exceptions to validation and internal server errors.
+ * <h1>{@link ExceptionHandlerMessageHelper}</h1>
+ *
+ * <p>The <strong>{@link ExceptionHandlerMessageHelper}</strong> class provides utility methods to generate
+ * localized and specific error messages for various exception scenarios commonly encountered
+ * in a web application. It acts as a centralized helper to construct meaningful error responses
+ * based on the type and details of the exception.</p>
+ *
+ * <h2>Supported Scenarios</h2>
+ * <ul>
+ *   <li>Resource or URL didn't find errors.</li>
+ *   <li>HTTP method didn't allow errors.</li>
+ *   <li>Internal server errors.</li>
+ *   <li>Unauthorized access errors.</li>
+ *   <li>Forbidden operation errors.</li>
+ *   <li>Conflict errors within the application.</li>
+ *   <li>Timeout errors.</li>
+ *   <li>HTTP media type errors (not acceptable or not supported).</li>
+ *   <li>File upload size exceeded errors.</li>
+ *   <li>Bad request errors caused by invalid parameters, missing properties, or data violations.</li>
+ * </ul>
+ *
+ * <h2>Features</h2>
+ * <p>This class uses exception-specific details to construct precise and context-aware messages,
+ * while providing default message options when necessary. Most of the methods are intended for
+ * internal use and are designed to generate detailed error responses, assisting in debugging and
+ * enhancing the user experience.</p>
+ *
+ * <h2>Implementation</h2>
  * <p>
- * This class contains static methods for generating error messages without instantiating
- * the class. The messages are typically derived either from the exception details or
- * fallback to default messages.
- * <p>
- * The class is designed to handle a variety of exception types including
- * - HTTP-related exceptions (e.g., not found, method not allowed, unsupported media types)
- * - Validation-related exceptions (e.g., constraint violations, bad request scenarios)
- * - Application-specific exceptions (e.g., business logic errors, upload size issues)
- * <p>
- * This class cannot be instantiated as it has a private constructor.
+ * This class is designed as a <strong>utility class</strong>, which means:
+ * </p>
+ * <ul>
+ *   <li>All methods are <code>static</code>.</li>
+ *   <li>It includes a private constructor to prevent instantiation.</li>
+ * </ul>
  */
 @Slf4j
 public class ExceptionHandlerMessageHelper {
@@ -60,7 +80,7 @@ public class ExceptionHandlerMessageHelper {
         throw new IllegalStateException("Utility class cannot be instantiated");
     }
 
-    private static final String MESSAGE_KEY = "message";
+    private static final String DEFAULT_MESSAGE_KEY = "message";
 
     private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
 
@@ -301,15 +321,15 @@ public class ExceptionHandlerMessageHelper {
             return handleJsonMappingException(jsonMappingException);
         }
 
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
+        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
     }
 
     private static Map<String, String> handleBusinessException(BusinessException businessException) {
         String errorMessage = businessException.getMessage();
         if (Objects.nonNull(errorMessage)) {
-            return Map.of(MESSAGE_KEY, errorMessage);
+            return Map.of(DEFAULT_MESSAGE_KEY, errorMessage);
         }
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
+        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
     }
 
     private static Map<String, String> handleJsonMappingException(JsonMappingException jsonMappingException) {
@@ -327,7 +347,7 @@ public class ExceptionHandlerMessageHelper {
         return extractTargetType(jsonMappingException)
                 .map(targetType -> Map.of(fieldName,
                         MessageUtils.getMessage("msg.exception.handler.invalid.deserialize", targetType)))
-                .orElseGet(() -> Map.of(MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE)));
+                .orElseGet(() -> Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE)));
     }
 
 
@@ -563,7 +583,7 @@ public class ExceptionHandlerMessageHelper {
 
         log.warn("Please check if the controller class is using the \"@Validated\" annotation to improve the mapping " +
                 "of errors with custom messages.");
-        return Map.of(MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.validation.failure"));
+        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.validation.failure"));
     }
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
@@ -573,7 +593,7 @@ public class ExceptionHandlerMessageHelper {
         } else {
             message = MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error");
         }
-        return Map.of(MESSAGE_KEY, message);
+        return Map.of(DEFAULT_MESSAGE_KEY, message);
     }
 
     private static String getErrorMessage(Exception ex, String defaultMessageValue) {
