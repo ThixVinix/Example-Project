@@ -194,6 +194,18 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
+     * Generates an error message indicating that the service is currently unavailable.
+     * The message is derived from the provided exception or a default service unavailable message key.
+     *
+     * @param ex The exception that triggered the service-unavailable message.
+     *           This may provide additional context about the unavailability condition.
+     * @return A localized error message indicating that the service is currently unavailable.
+     */
+    public static String getServiceUnavailableMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.service.unavailable.default");
+    }
+
+    /**
      * Generates an error message indicating that the requested HTTP media type
      * is not acceptable. This typically happens when the 'Accept' header in
      * the request specifies a response format not supported by the server.
