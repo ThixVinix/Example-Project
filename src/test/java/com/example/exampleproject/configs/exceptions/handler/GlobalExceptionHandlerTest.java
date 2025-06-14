@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
 
+import com.example.exampleproject.configs.exceptions.BaseError;
 import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
 import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
 import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolationException;
@@ -173,19 +174,65 @@ class GlobalExceptionHandlerTest {
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
             mockedStatic.when(() -> ExceptionHandlerMessageHelper.getBadRequestMessage(ex)).thenReturn(mockMessages);
 
-            ResponseEntity<ErrorMultipleResponse> responseEntity =
+            ResponseEntity<? extends BaseError> responseEntity =
                     exceptionHandler.handleBadRequestException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
 
-            ErrorMultipleResponse errorMultipleResponse = responseEntity.getBody();
-            assertNotNull(errorMultipleResponse);
+            BaseError responseBody = responseEntity.getBody();
+            assertNotNull(responseBody);
+            assertInstanceOf(ErrorMultipleResponse.class, responseBody,
+                    "Expected ErrorMultipleResponse but got " + responseBody.getClass().getSimpleName());
+
+            ErrorMultipleResponse errorMultipleResponse = (ErrorMultipleResponse) responseBody;
             assertEquals(HttpStatus.BAD_REQUEST.value(), errorMultipleResponse.status());
             assertEquals("Custom bad request message", errorMultipleResponse.messages().get("fieldOne"));
             assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), errorMultipleResponse.error());
             assertEquals("/test/path", errorMultipleResponse.path());
             assertNotNull(errorMultipleResponse.timestamp());
+        }
+    }
+
+    /**
+     * Method test for
+     * {@link GlobalExceptionHandler#handleBadRequestException(Exception, WebRequest)}
+     * when the message map contains only the "message" key
+     */
+    @Order(4)
+    @Tag(value = HANDLE_BAD_REQUEST_EXCEPTION)
+    @DisplayName(HANDLE_BAD_REQUEST_EXCEPTION +
+            " - When BadRequest Exception is thrown with only 'message' key then return single error response")
+    @Test
+    void testHandleBadRequestExceptionWithSingleMessage() {
+        Exception ex = new Exception("Bad request with single message");
+        WebRequest request = mock(WebRequest.class);
+
+        when(request.getDescription(false)).thenReturn("/test/path");
+
+        Map<String, String> mockMessages = new HashMap<>();
+        mockMessages.put("message", "Custom single error message");
+
+        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getBadRequestMessage(ex)).thenReturn(mockMessages);
+
+            ResponseEntity<? extends BaseError> responseEntity =
+                    exceptionHandler.handleBadRequestException(ex, request);
+
+            assertNotNull(responseEntity);
+            assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+
+            BaseError responseBody = responseEntity.getBody();
+            assertNotNull(responseBody);
+            assertInstanceOf(ErrorSingleResponse.class, responseBody,
+                    "Expected ErrorSingleResponse but got " + responseBody.getClass().getSimpleName());
+
+            ErrorSingleResponse errorSingleResponse = (ErrorSingleResponse) responseBody;
+            assertEquals(HttpStatus.BAD_REQUEST.value(), errorSingleResponse.status());
+            assertEquals("Custom single error message", errorSingleResponse.message());
+            assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), errorSingleResponse.error());
+            assertEquals("/test/path", errorSingleResponse.path());
+            assertNotNull(errorSingleResponse.timestamp());
         }
     }
 
@@ -533,5 +580,3 @@ class GlobalExceptionHandlerTest {
 
 
 }
-
-
