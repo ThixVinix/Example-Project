@@ -34,7 +34,7 @@ class EnumValueValidatorTest {
     /**
      * Test enum with getValue method for testing EnumValueValidator
      */
-    private enum TestValueEnum {
+    public enum TestValueEnum {
         VALUE_ONE("one"),
         VALUE_TWO("two"),
         VALUE_THREE("three");

@@ -2,12 +2,11 @@ package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.MultipartFileValidation;
 import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
-import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.configs.annotations.validators.base.AbstractFileValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,10 +21,9 @@ import java.util.Arrays;
  * Implements the {@link ConstraintValidator} interface for the {@link MultipartFileValidation} annotation.
  */
 @Slf4j
-public class MultipartFileValidator implements ConstraintValidator<MultipartFileValidation, MultipartFile> {
+public class MultipartFileValidator
+        extends AbstractFileValidator implements ConstraintValidator<MultipartFileValidation, MultipartFile> {
 
-    private String[] allowedTypes;
-    private int maxSizeInMB;
     private Tika tika;
 
     @Override
@@ -35,26 +33,8 @@ public class MultipartFileValidator implements ConstraintValidator<MultipartFile
         this.tika = new Tika();
     }
 
-    /**
-     * Validates the value of maxSizeInMB and assigns a default if invalid.
-     *
-     * @param maxSizeInMB the provided max size.
-     * @return the validated or default max size.
-     */
-    private int validateMaxSizeInMB(int maxSizeInMB) {
-        final int DEFAULT_MAX_SIZE_IN_MB = 2;
-        if (maxSizeInMB <= NumberUtils.INTEGER_ZERO) {
-            log.warn("The value of maxSizeInMB provided is invalid ({}). Default value of {} MB will be used.",
-                    maxSizeInMB, DEFAULT_MAX_SIZE_IN_MB);
-            return DEFAULT_MAX_SIZE_IN_MB;
-        }
-        return maxSizeInMB;
-    }
-
-
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
-
         if (file == null || file.isEmpty()) {
             return true;
         }
@@ -69,33 +49,15 @@ public class MultipartFileValidator implements ConstraintValidator<MultipartFile
             return false;
         }
 
-        if (!isMimeTypeAllowed(detectedType)) {
+        if (isMimeTypeNotAllowed(detectedType)) {
             String allowedMimeTypes = String.join(", ", allowedTypes);
             addConstraintViolation(context,
                     "msg.validation.request.field.multipartfile.invalid.type", allowedMimeTypes);
             return false;
         }
 
-        return isFileSizeValid(file, context);
-    }
-
-    private boolean isFileSizeValid(MultipartFile file, ConstraintValidatorContext context) {
-        final long BYTES_IN_ONE_MB = (1024L * 1024L);
-        long maxFileSizeInBytes = maxSizeInMB * BYTES_IN_ONE_MB;
-        long actualFileSizeInBytes = file.getSize();
-
-        double actualFileSizeInMB = (double) actualFileSizeInBytes / BYTES_IN_ONE_MB;
-        double maxFileSizeInMB = (double) maxFileSizeInBytes / BYTES_IN_ONE_MB;
-
-        if (actualFileSizeInBytes > maxFileSizeInBytes) {
-            addConstraintViolation(context,
-                    "msg.validation.request.field.multipartfile.invalid.size",
-                    String.format("%.4f", actualFileSizeInMB),
-                    String.format("%.0f", maxFileSizeInMB));
-            return false;
-        }
-
-        return true;
+        return validateFileSize(file.getSize(), context, 
+                "msg.validation.request.field.multipartfile.invalid.size");
     }
 
     /**
@@ -131,7 +93,6 @@ public class MultipartFileValidator implements ConstraintValidator<MultipartFile
         return extension.equalsIgnoreCase(expectedExtension);
     }
 
-
     /**
      * Retrieves the file extension from its name.
      *
@@ -151,26 +112,21 @@ public class MultipartFileValidator implements ConstraintValidator<MultipartFile
      * @param contentType the MIME type to check.
      * @return true if the MIME type is allowed, false otherwise.
      */
-    private boolean isMimeTypeAllowed(String contentType) {
-        return ArrayUtils.isEmpty(allowedTypes) || Arrays.asList(allowedTypes).contains(contentType);
+    @Override
+    protected boolean isMimeTypeAllowed(String contentType) {
+        return ArrayUtils.isEmpty(allowedTypes) || super.isMimeTypeAllowed(contentType);
     }
+
 
     /**
-     * Adds a custom validation message with parameters.
+     * Checks if the MIME type is not in the list of allowed types.
      *
-     * @param context validation context.
-     * @param messageKey the message key to use.
-     * @param params the parameters to include in the message.
+     * @param contentType the MIME type to check.
+     * @return true if the MIME type is not allowed, false otherwise.
      */
-    private void addConstraintViolation(ConstraintValidatorContext context, String messageKey, String... params) {
-        context.disableDefaultConstraintViolation();
-
-        String message = (params.length > NumberUtils.INTEGER_ZERO)
-                ? MessageUtils.getMessage(messageKey, (Object[]) params)
-                : MessageUtils.getMessage(messageKey);
-
-        context.buildConstraintViolationWithTemplate(message)
-                .addConstraintViolation();
+    @Override
+    protected boolean isMimeTypeNotAllowed(String contentType) {
+        return !ArrayUtils.isEmpty(allowedTypes) && !Arrays.asList(allowedTypes).contains(contentType);
     }
-}
 
+}
