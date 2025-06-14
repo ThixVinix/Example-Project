@@ -15,10 +15,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.beans.ConversionNotSupportedException;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -40,6 +45,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -181,11 +187,12 @@ public class GlobalExceptionHandler {
             content = {
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorMultipleResponse.class),
+                            schema = @Schema(oneOf = {ErrorMultipleResponse.class, ErrorSingleResponse.class}),
                             examples = {
                                     @ExampleObject(
-                                            name = "English - 400 Bad Request",
-                                            summary = "English: Example of a 400 error response due to invalid input.",
+                                            name = "English - 400 Bad Request (Multiple Errors)",
+                                            summary = "English: Example of a 400 error response with multiple " +
+                                                    "validation errors.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T14:00:00",
@@ -193,15 +200,30 @@ public class GlobalExceptionHandler {
                                                           "status": 400,
                                                           "error": "Bad Request",
                                                           "messages": {
-                                                            "field": "Field is required."
+                                                            "field1": "Field is required.",
+                                                            "field2": "It should not be empty."
                                                           }
                                                         }
                                                     """
                                     ),
                                     @ExampleObject(
-                                            name = "Brazilian Portuguese - 400 Requisição Inválida",
+                                            name = "English - 400 Bad Request (Single Error)",
+                                            summary = "English: Example of a 400 error response with a single error " +
+                                                    "message.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T14:00:00",
+                                                          "path": "/api/resource",
+                                                          "status": 400,
+                                                          "error": "Bad Request",
+                                                          "message": "Invalid request format."
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 400 Requisição Inválida (Múltiplos Erros)",
                                             summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 400 " +
-                                                    "devido a entrada inválida.",
+                                                    "com múltiplos erros de validação.",
                                             value = """
                                                         {
                                                           "timestamp": "2023-01-01T14:00:00",
@@ -209,8 +231,23 @@ public class GlobalExceptionHandler {
                                                           "status": 400,
                                                           "error": "Bad Request",
                                                           "messages": {
-                                                            "field": "Campo é obrigatório."
+                                                            "campo1": "Campo é obrigatório.",
+                                                            "campo2": "Não deve estar vazio."
                                                           }
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 400 Requisição Inválida (Erro Único)",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 400 " +
+                                                    "com uma única mensagem de erro.",
+                                            value = """
+                                                        {
+                                                          "timestamp": "2023-01-01T14:00:00",
+                                                          "path": "/api/resource",
+                                                          "status": 400,
+                                                          "error": "Bad Request",
+                                                          "message": "Formato de requisição inválido."
                                                         }
                                                     """
                                     )
@@ -228,19 +265,44 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class,
             HandlerMethodValidationException.class,
-            BindException.class})
-    protected ResponseEntity<ErrorMultipleResponse> handleBadRequestException(Exception ex, WebRequest request) {
+            BindException.class,
+            ServletRequestBindingException.class,
+            ConversionNotSupportedException.class,
+            TypeMismatchException.class
+    })
+    @SuppressWarnings("squid:S1452")
+    protected ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
         log.error("Bad request: {}", ex.getMessage(), ex);
 
-        ErrorMultipleResponse errorMultipleResponse = ErrorMultipleResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .messages(ExceptionHandlerMessageHelper.getBadRequestMessage(ex))
-                .path(request.getDescription(Boolean.FALSE))
-                .build();
+        Map<String, String> messages = ExceptionHandlerMessageHelper.getBadRequestMessage(ex);
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        String path = request.getDescription(Boolean.FALSE);
+        LocalDateTime timestamp = LocalDateTime.now();
+        String error = status.getReasonPhrase();
+        final String DEFAULT_MESSAGE_KEY = "message";
 
-        return new ResponseEntity<>(errorMultipleResponse, HttpStatus.BAD_REQUEST);
+        BaseError body;
+
+        if (messages.size() == NumberUtils.INTEGER_ONE && messages.containsKey(DEFAULT_MESSAGE_KEY)) {
+            body = ErrorSingleResponse.builder()
+                    .timestamp(timestamp)
+                    .status(status.value())
+                    .error(error)
+                    .message(messages.get(DEFAULT_MESSAGE_KEY))
+                    .path(path)
+                    .build();
+        } else {
+            body = ErrorMultipleResponse.builder()
+                    .timestamp(timestamp)
+                    .status(status.value())
+                    .error(error)
+                    .messages(messages)
+                    .path(path)
+                    .build();
+        }
+
+        return new ResponseEntity<>(body, status);
+
     }
 
     @ApiResponse(
@@ -476,7 +538,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({TimeoutException.class, AsyncRequestTimeoutException.class})
+    @ExceptionHandler(TimeoutException.class)
     protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
         log.error("Request timed out: {}", ex.getMessage(), ex);
 
@@ -489,6 +551,67 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorSingleResponse, HttpStatus.REQUEST_TIMEOUT);
+    }
+
+    @ApiResponse(
+            responseCode = "503",
+            description = "<p><strong>English:</strong> Service Unavailable. This occurs when the server is " +
+                    "temporarily unable to handle the request due to maintenance or overload. This is often " +
+                    "caused by asynchronous request timeouts or server-side resource constraints.</p>" +
+                    "<p><strong>Brazilian Portuguese:</strong> Serviço Indisponível. Isso ocorre quando o servidor " +
+                    "está temporariamente incapaz de processar a solicitação devido à manutenção ou sobrecarga. " +
+                    "Isso geralmente é causado por tempos limite de solicitação assíncrona ou restrições de recursos " +
+                    "do lado do servidor.</p>",
+            content = {
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorSingleResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "English - 503 Service Unavailable",
+                                            summary = "English: Example of a 503 error response caused by a service " +
+                                                    "unavailability.",
+                                value = """
+                                            {
+                                              "timestamp": "2023-01-01T18:00:00",
+                                              "path": "/api/resource",
+                                              "status": 503,
+                                              "error": "Service Unavailable",
+                                              "message": "The service is currently unavailable. Please try again later."
+                                            }
+                                        """
+                                ),
+                                    @ExampleObject(
+                                            name = "Brazilian Portuguese - 503 Serviço Indisponível",
+                                            summary = "Brazilian Portuguese: Exemplo de uma resposta de erro 503 " +
+                                                    "causada por indisponibilidade do serviço.",
+          value = """
+                      {
+                        "timestamp": "2023-01-01T18:00:00",
+                        "path": "/api/resource",
+                        "status": 503,
+                        "error": "Service Unavailable",
+                        "message": "O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde."
+                      }
+                  """
+                                    )
+                            }
+                    )
+            }
+    )
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleAsyncRequestTimeoutException(Exception ex, WebRequest request) {
+        log.error("Service unavailable due to async request timeout: {}", ex.getMessage(), ex);
+
+        ErrorSingleResponse errorSingleResponse = ErrorSingleResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .error(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase())
+                .message(ExceptionHandlerMessageHelper.getServiceUnavailableMessage(ex))
+                .path(request.getDescription(Boolean.FALSE))
+                .build();
+
+        return new ResponseEntity<>(errorSingleResponse, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ApiResponse(
@@ -727,7 +850,7 @@ public class GlobalExceptionHandler {
                     )
             }
     )
-    @ExceptionHandler({RuntimeException.class, Exception.class, Throwable.class})
+    @ExceptionHandler({RuntimeException.class, Exception.class, Throwable.class, HttpMessageNotWritableException.class})
     protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
@@ -792,6 +915,7 @@ public class GlobalExceptionHandler {
             case CONFLICT -> this.handleConflictException(e, request);
             case UNSUPPORTED_MEDIA_TYPE -> this.handleHttpMediaTypeNotSupportedException(e, request);
             case PAYLOAD_TOO_LARGE -> this.handleMaxUploadSizeExceededException(e, request);
+            case SERVICE_UNAVAILABLE -> this.handleAsyncRequestTimeoutException(e, request);
             default -> this.handleGlobalException(e, request);
         };
     }

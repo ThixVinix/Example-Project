@@ -1,7 +1,7 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.CpfCnpjValidation;
-import com.example.exampleproject.utils.MessageUtils;
+import com.example.exampleproject.configs.annotations.validators.base.AbstractValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,7 @@ import org.apache.commons.lang3.StringUtils;
  * This validator implements custom validation logic for CPF and CNPJ.
  */
 @Slf4j
-public class CpfCnpjValidator implements ConstraintValidator<CpfCnpjValidation, String> {
-
+public class CpfCnpjValidator extends AbstractValidator implements ConstraintValidator<CpfCnpjValidation, String> {
 
     private static final byte CPF_LENGTH = 11;
     private static final byte CNPJ_LENGTH = 14;
@@ -57,7 +56,6 @@ public class CpfCnpjValidator implements ConstraintValidator<CpfCnpjValidation, 
 
         addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalidLength");
         return false;
-
     }
 
     /**
@@ -122,15 +120,4 @@ public class CpfCnpjValidator implements ConstraintValidator<CpfCnpjValidation, 
         int remainder = sum % 11;
         return remainder < 2 ? 0 : 11 - remainder;
     }
-
-    private void addConstraintViolation(ConstraintValidatorContext context, String messageKey) {
-        try {
-            context.disableDefaultConstraintViolation();
-            String message = MessageUtils.getMessage(messageKey);
-            context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
-        } catch (Exception e) {
-            log.error("Error adding constraint violation for: {}", messageKey, e);
-        }
-    }
-
 }

@@ -73,6 +73,8 @@ class ExceptionHandlerMessageHelperTest {
 
     private static final String GET_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION = "getMaxUploadSizeExceededException";
 
+    private static final String GET_SERVICE_UNAVAILABLE_MESSAGE = "getServiceUnavailableMessage";
+
     private static final char CSV_DELIMITER = '|';
 
     private Locale defaultLocale;
@@ -1540,6 +1542,30 @@ class ExceptionHandlerMessageHelperTest {
         // Assert
         assertEquals(expectedMessage, result,
                 "Checks if the default message for max upload size exceeded is returned correctly " +
+                        "for the locale " + languageTag + ".");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getServiceUnavailableMessage(Exception)}
+     */
+    @Order(42)
+    @Tag(value = GET_SERVICE_UNAVAILABLE_MESSAGE)
+    @DisplayName(GET_SERVICE_UNAVAILABLE_MESSAGE + " - with default message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde.",
+            "en_US|The service is currently unavailable. Please try again later."
+    }, delimiter = CSV_DELIMITER)
+    void getServiceUnavailableMessage_WithDefaultMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Act
+        String result = ExceptionHandlerMessageHelper.getServiceUnavailableMessage(new Exception());
+
+        // Assert
+        assertEquals(expectedMessage, result,
+                "Checks if the default service unavailable message is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
 
