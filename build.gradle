@@ -6,6 +6,12 @@ plugins {
 
 ext {
     springCloudVersion = "2023.0.3"
+    jacksonDatatypeVersion = "2.18.0"
+    commonsLang3Version = "3.17.0"
+    tikaCoreVersion = "3.2.0"
+    springdocOpenApiVersion = "2.6.0"
+    junitJupiterVersion = "5.10.5"
+    junitPlatformLauncherVersion = "1.11.2"
 }
 
 group = 'com.example'
@@ -37,21 +43,21 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // JUnit 5 API dependency
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
 
     // Dependency for the JUnit 5 engine
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.5'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
 
     // Optional dependency for generating reports
-    testImplementation 'org.junit.platform:junit-platform-launcher:1.11.2'
+    testImplementation "org.junit.platform:junit-platform-launcher:$junitPlatformLauncherVersion"
 
     // Support for Java 8 DateTime API in Jackson (LocalDate, LocalDateTime)
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0'
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonDatatypeVersion"
 
     // Additional utilities for manipulating strings, numbers, objects, etc.
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
-    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    implementation "org.apache.commons:commons-lang3:$commonsLang3Version"
 
     // Open Feign: HTTP client that allows you to simplify calls to RESTful services.
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
@@ -59,11 +65,10 @@ dependencies {
 
     // Swagger OpenAPI v3
     // Swagger UI for visualization and testing
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion"
 
     // Apache Tika: used to detect and extract MIME types and content metadata
-    implementation("org.apache.tika:tika-core:3.2.0")
-
+    implementation "org.apache.tika:tika-core:$tikaCoreVersion"
 }
 
 test {
