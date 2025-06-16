@@ -594,7 +594,9 @@ public class ExceptionHandlerMessageHelper {
         log.error(ex.getMessage(), ex);
 
         log.warn("Please check if the controller class is using the \"@Validated\" annotation to improve the mapping " +
-                "of errors with custom messages.");
+                "of errors with custom messages, and make sure the \"@Valid\" annotation is present when using " +
+                "\"@RequestBody\" or \"@RequestPart\".");
+
         return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.validation.failure"));
     }
 
