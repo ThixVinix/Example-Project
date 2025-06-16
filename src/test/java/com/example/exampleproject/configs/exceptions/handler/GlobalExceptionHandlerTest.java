@@ -242,7 +242,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleGlobalException(Exception, WebRequest)}
      */
-    @Order(4)
+    @Order(5)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE +
             " - When Exception is thrown then return internal server error status")
@@ -279,7 +279,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleUnauthorizedException(Exception, WebRequest)}
      */
-    @Order(5)
+    @Order(6)
     @Tag(value = HANDLE_UNAUTHORIZED_EXCEPTION)
     @DisplayName(HANDLE_UNAUTHORIZED_EXCEPTION + " - When UnauthorizedException is thrown then return " +
             "unauthorized status")
@@ -308,7 +308,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleForbiddenException(Exception, WebRequest)}
      */
-    @Order(6)
+    @Order(7)
     @Tag(value = HANDLE_FORBIDDEN_EXCEPTION)
     @DisplayName(HANDLE_FORBIDDEN_EXCEPTION + "handleForbiddenException - When AccessDeniedException is thrown " +
             "then return forbidden status")
@@ -337,7 +337,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleForbiddenException(Exception, WebRequest)}
      */
-    @Order(7)
+    @Order(8)
     @Tag(value = HANDLE_CONFLICT_EXCEPTION)
     @DisplayName(HANDLE_CONFLICT_EXCEPTION + " - When DataIntegrityViolationException is thrown then return " +
             "conflict status")
@@ -366,7 +366,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleTimeoutException(Exception, WebRequest)}
      */
-    @Order(8)
+    @Order(9)
     @Tag(value = HANDLE_TIMEOUT_EXCEPTION)
     @DisplayName(HANDLE_TIMEOUT_EXCEPTION + " - When TimeoutException is thrown then return timeout status")
     @Test
@@ -394,7 +394,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleAsyncRequestTimeoutException(Exception, WebRequest)}
      */
-    @Order(9)
+    @Order(10)
     @Tag(value = HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION)
     @DisplayName(HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION + " - When AsyncRequestTimeoutException is thrown then return service unavailable status")
     @Test
@@ -424,7 +424,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleHttpMediaTypeNotAcceptableException(Exception, WebRequest)}
      */
-    @Order(9)
+    @Order(11)
     @Tag(value = HANDLE_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION)
     @DisplayName(HANDLE_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE_EXCEPTION + " - When HttpMediaTypeNotAcceptableException " +
             "is thrown then return not acceptable status")
@@ -456,7 +456,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleHttpMediaTypeNotSupportedException(Exception, WebRequest)}
      */
-    @Order(10)
+    @Order(12)
     @Tag(value = HANDLE_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION)
     @DisplayName(HANDLE_HTTP_MEDIA_TYPE_NOT_SUPPORTED_EXCEPTION + " - When HttpMediaTypeNotSupportedException " +
             "is thrown then return unsupported media type status")
@@ -489,7 +489,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleMaxUploadSizeExceededException(Exception, WebRequest)}
      */
-    @Order(11)
+    @Order(13)
     @Tag(value = HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION)
     @DisplayName(HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION + " - When MaxUploadSizeExceededException is thrown then " +
             "return Payload Too Large status")
@@ -527,7 +527,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleFeignClientException(FeignException, WebRequest)}
      */
-    @Order(12)
+    @Order(14)
     @Tag(value = HANDLE_FEIGN_CLIENT_EXCEPTION)
     @DisplayName(HANDLE_FEIGN_CLIENT_EXCEPTION + " - When FeignException is thrown then handle accordingly")
     @ParameterizedTest(name = "Test {index} => status={0} | expectedStatus={1} | expectedMessage={2}")
