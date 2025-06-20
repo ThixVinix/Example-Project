@@ -339,6 +339,12 @@ public class ExceptionHandlerMessageHelper {
     private static Map<String, String> handleBusinessException(BusinessException businessException) {
         String errorMessage = businessException.getMessage();
         if (Objects.nonNull(errorMessage)) {
+
+            if (Objects.nonNull(businessException.getFieldName())
+                    && !businessException.getFieldName().trim().isEmpty()) {
+                return Map.of(businessException.getFieldName(), errorMessage);
+            }
+
             return Map.of(DEFAULT_MESSAGE_KEY, errorMessage);
         }
         return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
@@ -539,8 +545,8 @@ public class ExceptionHandlerMessageHelper {
         }
 
         return Arrays.stream(matchedMethod.getParameters())
-                .map(Parameter::getName)
-                .filter(name -> violation.getPropertyPath().toString().contains(name))
+                .filter(param -> violation.getPropertyPath().toString().contains(param.getName()))
+                .map(ExceptionHandlerMessageHelper::getParamName)
                 .findFirst();
     }
 
