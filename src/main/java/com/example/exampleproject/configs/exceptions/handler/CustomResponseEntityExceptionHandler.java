@@ -581,6 +581,6 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
 
         ErrorSingleResponse errorResponse = createErrorSingleResponse(httpStatus, message, path);
 
-        return new ResponseEntity<>(errorResponse, headers, status);
+        return new ResponseEntity<>(errorResponse, headers, httpStatus);
     }
 }
