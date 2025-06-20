@@ -38,16 +38,412 @@ import org.springframework.lang.NonNull;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+
+import static java.util.Objects.isNull;
 
 @Slf4j
 @RestControllerAdvice
 public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleResourceNotFoundException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.NOT_FOUND,
+                "Resource not found: {}",
+                ExceptionHandlerMessageHelper::getNotFoundMessage);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized: {}",
+                ExceptionHandlerMessageHelper::getUnauthorizedMessage);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleForbiddenException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.FORBIDDEN,
+                "Access denied: {}",
+                ExceptionHandlerMessageHelper::getForbiddenMessage);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleConflictException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.CONFLICT,
+                "Conflict: {}",
+                ExceptionHandlerMessageHelper::getConflictMessage);
+    }
+
+    @ExceptionHandler(TimeoutException.class)
+    protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.REQUEST_TIMEOUT,
+                "Request timed out: {}",
+                ExceptionHandlerMessageHelper::getTimeoutMessage);
+    }
+
+    @ExceptionHandler({
+            BusinessException.class,
+            MethodArgumentTypeMismatchException.class,
+            ConstraintViolationException.class
+    })
+    @SuppressWarnings("squid:S1452")
+    protected ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
+        return handleMultipleErrorResponse(
+                ex,
+                request,
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
+
+    @ExceptionHandler({Exception.class, Throwable.class})
+    protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred: {}",
+                ExceptionHandlerMessageHelper::getInternalServerErrorMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@NonNull MaxUploadSizeExceededException ex,
+                                                                          @NonNull HttpHeaders headers,
+                                                                          @NonNull HttpStatusCode status,
+                                                                          @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Max Upload Size Exceeded: {}",
+                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            @NonNull MethodArgumentNotValidException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request) {
+
+        return handleOverrideMultipleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Method argument not valid: {}",
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(@NonNull HttpMessageNotReadableException ex,
+                                                                  @NonNull HttpHeaders headers,
+                                                                  @NonNull HttpStatusCode status,
+                                                                  @NonNull WebRequest request) {
+        return handleOverrideMultipleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "HTTP message not readable: {}",
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(
+            @NonNull MissingServletRequestParameterException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request) {
+        return handleOverrideMultipleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Missing servlet request parameter: {}",
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(@NonNull
+                                                                             HttpRequestMethodNotSupportedException ex,
+                                                                         @NonNull HttpHeaders headers,
+                                                                         @NonNull HttpStatusCode status,
+                                                                         @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "HTTP request method not supported: {}",
+                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotAcceptable(@NonNull HttpMediaTypeNotAcceptableException ex,
+                                                                      @NonNull HttpHeaders headers,
+                                                                      @NonNull HttpStatusCode status,
+                                                                      @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "HTTP media type not acceptable: {}",
+                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(@NonNull HttpMediaTypeNotSupportedException ex,
+                                                                     @NonNull HttpHeaders headers,
+                                                                     @NonNull HttpStatusCode status,
+                                                                     @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "HTTP media type not supported: {}",
+                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingPathVariable(@NonNull MissingPathVariableException ex,
+                                                               @NonNull HttpHeaders headers,
+                                                               @NonNull HttpStatusCode status,
+                                                               @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Missing path variable: {}",
+                e -> "Missing path variable: " + ((MissingPathVariableException) e).getVariableName());
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(@NonNull
+                                                                                HandlerMethodValidationException ex,
+                                                                            @NonNull HttpHeaders headers,
+                                                                            @NonNull HttpStatusCode status,
+                                                                            @NonNull WebRequest request) {
+        return handleOverrideMultipleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Handler method validation exception: {}",
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleAsyncRequestTimeoutException(@NonNull AsyncRequestTimeoutException ex,
+                                                                        @NonNull HttpHeaders headers,
+                                                                        @NonNull HttpStatusCode status,
+                                                                        @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Async request timeout: {}",
+                ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleNoResourceFoundException(@NonNull NoResourceFoundException ex,
+                                                                   @NonNull HttpHeaders headers,
+                                                                   @NonNull HttpStatusCode status,
+                                                                   @NonNull WebRequest request) {
+        return handleOverrideSingleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "No resource found: {}",
+                ExceptionHandlerMessageHelper::getNotFoundMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleServletRequestBindingException(@NonNull ServletRequestBindingException ex,
+                                                                         @NonNull HttpHeaders headers,
+                                                                         @NonNull HttpStatusCode status,
+                                                                         @NonNull WebRequest request) {
+        return handleOverrideMultipleErrorResponse(
+                ex,
+                headers,
+                status,
+                request,
+                "Servlet request binding exception: {}",
+                ExceptionHandlerMessageHelper::getBadRequestMessage);
+    }
 
 
+
+    protected ResponseEntity<ErrorSingleResponse> handleMethodNotAllowedException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "Method not allowed: {}",
+                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
+    }
+
+    protected ResponseEntity<ErrorSingleResponse> handleNotAcceptableException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.NOT_ACCEPTABLE,
+                "Not acceptable: {}",
+                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
+    }
+
+    protected ResponseEntity<ErrorSingleResponse> handleUnsupportedMediaTypeException(Exception ex,
+                                                                                      WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Unsupported media type: {}",
+                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
+    }
+
+    protected ResponseEntity<ErrorSingleResponse> handleServiceUnavailableException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Service unavailable: {}",
+                ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
+    }
+
+    protected ResponseEntity<ErrorSingleResponse> handlePayloadTooLargeException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Payload too large: {}",
+                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
+    }
+
+
+    @SuppressWarnings("squid:S1452")
+    @ExceptionHandler(FeignException.class)
+    protected ResponseEntity<? extends BaseError> handleFeignClientException(FeignException e, WebRequest request) {
+        String requestUri = request.getDescription(false);
+        HttpStatus status = HttpStatus.resolve(e.status());
+        int statusFeign = e.status();
+
+        logFeignErrorDetails(e, requestUri, status);
+
+        if (statusFeign == -1 || isNull(status)) {
+            return this.handleGlobalException(e, request);
+        }
+
+        return getResponseByStatus(status, e, request);
+    }
+
+    private void logFeignErrorDetails(FeignException e, String requestUri, HttpStatus status) {
+        String responseBody = e.responseBody().map(Object::toString).orElse("No response body");
+        String requestHeaders = e.request().headers().toString();
+        String responseHeaders = e.responseHeaders().toString();
+
+        log.error("""
+                        FEIGN CLIENT ERROR:
+                        URI: {}
+                        Status: {}
+                        Request Headers: {}
+                        Response Headers: {}
+                        Response Body: {}
+                        """,
+                requestUri,
+                status != null ? status.name() : "Unknown Status",
+                requestHeaders,
+                responseHeaders,
+                responseBody);
+    }
+
+    private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
+                                                                    FeignException e,
+                                                                    WebRequest request) {
+        return switch (status) {
+            case BAD_REQUEST -> this.handleBadRequestException(e, request);
+            case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
+            case FORBIDDEN -> this.handleForbiddenException(e, request);
+            case NOT_FOUND -> this.handleResourceNotFoundException(e, request);
+            case METHOD_NOT_ALLOWED -> this.handleMethodNotAllowedException(e, request);
+            case NOT_ACCEPTABLE -> this.handleNotAcceptableException(e, request);
+            case REQUEST_TIMEOUT -> this.handleTimeoutException(e, request);
+            case CONFLICT -> this.handleConflictException(e, request);
+            case UNSUPPORTED_MEDIA_TYPE -> this.handleUnsupportedMediaTypeException(e, request);
+            case PAYLOAD_TOO_LARGE -> this.handlePayloadTooLargeException(e, request);
+            case SERVICE_UNAVAILABLE -> this.handleServiceUnavailableException(e, request);
+            default -> this.handleGlobalException(e, request);
+  };
+}
+
+    /**
+     * Helper method to handle exceptions that return a single error response.
+     *
+     * @param ex      The exception
+     * @param request The WebRequest
+     * @param status  The HTTP status
+     * @param logMessage The log message
+     * @param messageSupplier A function that supplies the error message
+     * @return A ResponseEntity with the error response
+     */
+    private ResponseEntity<ErrorSingleResponse> handleSingleErrorResponse(
+            Exception ex,
+            WebRequest request,
+            HttpStatus status,
+            String logMessage,
+            Function<Exception, String> messageSupplier) {
+
+        log.error(logMessage, ex.getMessage(), ex);
+
+        String path = getRequestPath(request);
+        String message = messageSupplier.apply(ex);
+        ErrorSingleResponse errorResponse = createErrorSingleResponse(status, message, path);
+
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
+    /**
+     * Helper method to handle exceptions that return multiple error responses.
+     *
+     * @param ex               The exception
+     * @param request          The WebRequest
+     * @param messagesSupplier A function that supplies the error messages map
+     * @return A ResponseEntity with the appropriate error response
+     */
+    private ResponseEntity<? extends BaseError> handleMultipleErrorResponse(
+            Exception ex,
+            WebRequest request,
+            Function<Exception, Map<String, String>> messagesSupplier) {
+
+        log.error("Bad request: {}", ex.getMessage(), ex);
+
+        String path = getRequestPath(request);
+        Map<String, String> messages = messagesSupplier.apply(ex);
+        BaseError body = createAppropriateErrorResponse(messages, path);
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
 
     /**
      * Extracts the request path from the WebRequest object.
@@ -113,418 +509,17 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     }
 
     /**
-     * Helper method to handle exceptions that return a single error response.
+     * Handles an override for error responses with multiple error messages in a standardized format.
+     * This method logs the error, extracts the request path, generates a structured error response with multiple
+     * messages, and constructs a ResponseEntity using the provided HTTP headers and status.
      *
-     * @param ex      The exception
-     * @param request The WebRequest
-     * @param status  The HTTP status
-     * @param logMessage The log message
-     * @param messageSupplier A function that supplies the error message
-     * @return A ResponseEntity with the error response
-     */
-    private ResponseEntity<ErrorSingleResponse> handleSingleErrorResponse(
-            Exception ex, 
-            WebRequest request, 
-            HttpStatus status, 
-            String logMessage,
-            Function<Exception, String> messageSupplier) {
-
-        log.error(logMessage, ex.getMessage(), ex);
-
-        String path = getRequestPath(request);
-        String message = messageSupplier.apply(ex);
-        ErrorSingleResponse errorResponse = createErrorSingleResponse(status, message, path);
-
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-    /**
-     * Helper method to handle exceptions that return multiple error responses.
-     *
-     * @param ex               The exception
-     * @param request          The WebRequest
-     * @param messagesSupplier A function that supplies the error messages map
-     * @return A ResponseEntity with the appropriate error response
-     */
-    private ResponseEntity<? extends BaseError> handleMultipleErrorResponse(
-            Exception ex, 
-            WebRequest request,
-            Function<Exception, Map<String, String>> messagesSupplier) {
-
-        log.error("Bad request: {}", ex.getMessage(), ex);
-
-        String path = getRequestPath(request);
-        Map<String, String> messages = messagesSupplier.apply(ex);
-        BaseError body = createAppropriateErrorResponse(messages, path);
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleResourceNotFoundException(Exception ex,
-                                                                                  WebRequest request) {
-        return handleSingleErrorResponse(
-                ex, 
-                request, 
-                HttpStatus.NOT_FOUND, 
-                "Resource not found: {}", 
-                ExceptionHandlerMessageHelper::getNotFoundMessage);
-    }
-
-
-
-    @ExceptionHandler(UnauthorizedException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleUnauthorizedException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.UNAUTHORIZED,
-                "Unauthorized: {}",
-                ExceptionHandlerMessageHelper::getUnauthorizedMessage);
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleForbiddenException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.FORBIDDEN,
-                "Access denied: {}",
-                ExceptionHandlerMessageHelper::getForbiddenMessage);
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleConflictException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.CONFLICT,
-                "Conflict: {}",
-                ExceptionHandlerMessageHelper::getConflictMessage);
-    }
-
-    @ExceptionHandler(TimeoutException.class)
-    protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.REQUEST_TIMEOUT,
-                "Request timed out: {}",
-                ExceptionHandlerMessageHelper::getTimeoutMessage);
-    }
-
-    /**
-     * Handles max upload size exceeded exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@NonNull MaxUploadSizeExceededException ex,
-                                                                         @NonNull HttpHeaders headers,
-                                                                         @NonNull HttpStatusCode status,
-                                                                         @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.PAYLOAD_TOO_LARGE,
-                "Max Upload Size Exceeded: {}",
-                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
-    }
-
-    @ExceptionHandler({
-            BusinessException.class,
-            MethodArgumentTypeMismatchException.class,
-            ConstraintViolationException.class
-    })
-    @SuppressWarnings("squid:S1452")
-    protected ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
-        return handleMultipleErrorResponse(
-                ex,
-                request,
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    @ExceptionHandler({Exception.class, Throwable.class})
-    protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred: {}",
-                ExceptionHandlerMessageHelper::getInternalServerErrorMessage);
-    }
-
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            @NonNull MethodArgumentNotValidException ex,
-            @NonNull HttpHeaders headers,
-            @NonNull HttpStatusCode status,
-            @NonNull WebRequest request) {
-
-        return handleOverrideMultipleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                "Method argument not valid: {}",
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    /**
-     * Handles HTTP message not readable exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(@NonNull HttpMessageNotReadableException ex,
-                                                                  @NonNull HttpHeaders headers,
-                                                                  @NonNull HttpStatusCode status,
-                                                                  @NonNull WebRequest request) {
-        return handleOverrideMultipleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                "HTTP message not readable: {}",
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    /**
-     * Handles missing servlet request parameter exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleMissingServletRequestParameter(
-            @NonNull MissingServletRequestParameterException ex,
-            @NonNull HttpHeaders headers,
-            @NonNull HttpStatusCode status,
-            @NonNull WebRequest request) {
-        return handleOverrideMultipleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                "Missing servlet request parameter: {}",
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    /**
-     * Handles HTTP request method not supported exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(@NonNull
-                                                                             HttpRequestMethodNotSupportedException ex,
-                                                                         @NonNull HttpHeaders headers,
-                                                                         @NonNull HttpStatusCode status,
-                                                                         @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.METHOD_NOT_ALLOWED,
-                "HTTP request method not supported: {}",
-                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
-    }
-
-    /**
-     * Handles HTTP media type not acceptable exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMediaTypeNotAcceptable(@NonNull HttpMediaTypeNotAcceptableException ex,
-                                                                      @NonNull HttpHeaders headers,
-                                                                      @NonNull HttpStatusCode status,
-                                                                      @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.NOT_ACCEPTABLE,
-                "HTTP media type not acceptable: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
-    }
-
-    /**
-     * Handles HTTP media type not supported exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(@NonNull HttpMediaTypeNotSupportedException ex,
-                                                                     @NonNull HttpHeaders headers,
-                                                                     @NonNull HttpStatusCode status,
-                                                                     @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                "HTTP media type not supported: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
-    }
-
-    /**
-     * Handles missing path variable exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleMissingPathVariable(@NonNull MissingPathVariableException ex,
-                                                               @NonNull HttpHeaders headers,
-                                                               @NonNull HttpStatusCode status,
-                                                               @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.BAD_REQUEST,
-                "Missing path variable: {}",
-                e -> "Missing path variable: " + ((MissingPathVariableException) e).getVariableName());
-    }
-
-    /**
-     * Handles handler method validation exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleHandlerMethodValidationException(@NonNull
-                                                                                HandlerMethodValidationException ex,
-                                                                            @NonNull HttpHeaders headers,
-                                                                            @NonNull HttpStatusCode status,
-                                                                            @NonNull WebRequest request) {
-        return handleOverrideMultipleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                "Handler method validation exception: {}",
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    /**
-     * Handles async request timeout exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleAsyncRequestTimeoutException(@NonNull AsyncRequestTimeoutException ex,
-                                                                        @NonNull HttpHeaders headers,
-                                                                        @NonNull HttpStatusCode status,
-                                                                        @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "Async request timeout: {}",
-                ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
-    }
-
-    /**
-     * Handles no resource found exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleNoResourceFoundException(@NonNull NoResourceFoundException ex,
-                                                                   @NonNull HttpHeaders headers,
-                                                                   @NonNull HttpStatusCode status,
-                                                                   @NonNull WebRequest request) {
-        return handleOverrideSingleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                HttpStatus.NOT_FOUND,
-                "No resource found: {}",
-                ExceptionHandlerMessageHelper::getNotFoundMessage);
-    }
-
-    /**
-     * Handles servlet request binding exceptions.
-     *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    @Override
-    protected ResponseEntity<Object> handleServletRequestBindingException(@NonNull ServletRequestBindingException ex,
-                                                                         @NonNull HttpHeaders headers,
-                                                                         @NonNull HttpStatusCode status,
-                                                                         @NonNull WebRequest request) {
-        return handleOverrideMultipleErrorResponse(
-                ex,
-                headers,
-                status,
-                request,
-                "Servlet request binding exception: {}",
-                ExceptionHandlerMessageHelper::getBadRequestMessage);
-    }
-
-    /**
-     * Helper method to handle exceptions that override parent class methods and return multiple error responses.
-     *
-     * @param ex               The exception
-     * @param headers          The headers for the response
-     * @param status           The status code
-     * @param request          The current request
-     * @param logMessage       The log message
-     * @param messagesSupplier A function that supplies the error messages map
-     * @return A ResponseEntity with the appropriate error response
+     * @param ex               The exception that triggered the error handling.
+     * @param headers          The headers to be included in the HTTP response.
+     * @param status           The HTTP status code of the response.
+     * @param request          The WebRequest that triggered the error.
+     * @param logMessage       The log message to be recorded with the error.
+     * @param messagesSupplier A function to generate a map of error messages based on the exception.
+     * @return A ResponseEntity containing the structured error response and appropriate HTTP status.
      */
     private ResponseEntity<Object> handleOverrideMultipleErrorResponse(
             Exception ex,
@@ -540,27 +535,36 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         Map<String, String> messages = messagesSupplier.apply(ex);
         BaseError body = createAppropriateErrorResponse(messages, path);
 
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        HttpStatus httpStatus = HttpStatus.resolve(status.value());
+
+        if (isNull(httpStatus)) {
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        return new ResponseEntity<>(body, headers, httpStatus);
     }
 
     /**
-     * Helper method to handle exceptions that override parent class methods and return single error responses.
+     * Handles an override for a single error response in a standardized format.
+     * This method logs the error, extracts the request path, generates a structured
+     * error response, and constructs a ResponseEntity using the provided HTTP headers
+     * and status.
      *
-     * @param ex      The exception
-     * @param headers The headers for the response
-     * @param status  The status code
-     * @param request The current request
-     * @param httpStatus The HTTP status to use
-     * @param logMessage The log message
-     * @param messageSupplier A function that supplies the error message
-     * @return A ResponseEntity with the error response
+     * @param ex              The exception that triggered the error handling.
+     * @param headers         The headers to be included in the HTTP response.
+     * @param status          The HTTP status code of the response, encapsulated in
+     *                        {@link HttpStatusCode}.
+     * @param request         The {@link WebRequest} that triggered the error.
+     * @param logMessage      The log message to be recorded with the error.
+     * @param messageSupplier A function to generate the error message based on the exception.
+     * @return A {@link ResponseEntity} containing the structured single error response
+     *         and appropriate HTTP status.
      */
     private ResponseEntity<Object> handleOverrideSingleErrorResponse(
             Exception ex,
             HttpHeaders headers,
             HttpStatusCode status,
             WebRequest request,
-            HttpStatus httpStatus,
             String logMessage,
             Function<Exception, String> messageSupplier) {
 
@@ -568,145 +572,15 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
 
         String path = getRequestPath(request);
         String message = messageSupplier.apply(ex);
-        ErrorSingleResponse errorResponse = createErrorSingleResponse(httpStatus, message, path);
 
-        return new ResponseEntity<>(errorResponse, httpStatus);
-    }
+        HttpStatus httpStatus = HttpStatus.resolve(status.value());
 
-    /**
-     * Handles method not allowed exceptions for Feign clients.
-     *
-     * @param ex      The exception
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    protected ResponseEntity<ErrorSingleResponse> handleMethodNotAllowedException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.METHOD_NOT_ALLOWED,
-                "Method not allowed: {}",
-                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
-    }
-
-    /**
-     * Handles not acceptable exceptions for Feign clients.
-     *
-     * @param ex      The exception
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    protected ResponseEntity<ErrorSingleResponse> handleNotAcceptableException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.NOT_ACCEPTABLE,
-                "Not acceptable: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
-    }
-
-    /**
-     * Handles unsupported media type exceptions for Feign clients.
-     *
-     * @param ex      The exception
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    protected ResponseEntity<ErrorSingleResponse> handleUnsupportedMediaTypeException(Exception ex,
-                                                                                      WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                "Unsupported media type: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
-    }
-
-    /**
-     * Handles service unavailable exceptions for Feign clients.
-     *
-     * @param ex      The exception
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    protected ResponseEntity<ErrorSingleResponse> handleServiceUnavailableException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "Service unavailable: {}",
-                ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
-    }
-
-    /**
-     * Handles payload too large exceptions for Feign clients.
-     *
-     * @param ex      The exception
-     * @param request The current request
-     * @return A ResponseEntity with appropriate error details
-     */
-    protected ResponseEntity<ErrorSingleResponse> handlePayloadTooLargeException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.PAYLOAD_TOO_LARGE,
-                "Payload too large: {}",
-                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
-    }
-
-
-    @SuppressWarnings("squid:S1452")
-    @ExceptionHandler(FeignException.class)
-    protected ResponseEntity<? extends BaseError> handleFeignClientException(FeignException e, WebRequest request) {
-        String requestUri = request.getDescription(false);
-        HttpStatus status = HttpStatus.resolve(e.status());
-        int statusFeign = e.status();
-
-        logFeignErrorDetails(e, requestUri, status);
-
-        if (statusFeign == -1 || Objects.isNull(status)) {
-            return this.handleGlobalException(e, request);
+        if (httpStatus == null) {
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         }
 
-        return getResponseByStatus(status, e, request);
+        ErrorSingleResponse errorResponse = createErrorSingleResponse(httpStatus, message, path);
+
+        return new ResponseEntity<>(errorResponse, headers, status);
     }
-
-    private void logFeignErrorDetails(FeignException e, String requestUri, HttpStatus status) {
-        String responseBody = e.responseBody().map(Object::toString).orElse("No response body");
-        String requestHeaders = e.request().headers().toString();
-        String responseHeaders = e.responseHeaders().toString();
-
-        log.error("""
-                        FEIGN CLIENT ERROR:
-                        URI: {}
-                        Status: {}
-                        Request Headers: {}
-                        Response Headers: {}
-                        Response Body: {}
-                        """,
-                requestUri,
-                status != null ? status.name() : "Unknown Status",
-                requestHeaders,
-                responseHeaders,
-                responseBody);
-    }
-
-    private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
-                                                                    FeignException e,
-                                                                    WebRequest request) {
-        return switch (status) {
-            case BAD_REQUEST -> this.handleBadRequestException(e, request);
-            case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
-            case FORBIDDEN -> this.handleForbiddenException(e, request);
-            case NOT_FOUND -> this.handleResourceNotFoundException(e, request);
-            case METHOD_NOT_ALLOWED -> this.handleMethodNotAllowedException(e, request);
-            case NOT_ACCEPTABLE -> this.handleNotAcceptableException(e, request);
-            case REQUEST_TIMEOUT -> this.handleTimeoutException(e, request);
-            case CONFLICT -> this.handleConflictException(e, request);
-            case UNSUPPORTED_MEDIA_TYPE -> this.handleUnsupportedMediaTypeException(e, request);
-            case PAYLOAD_TOO_LARGE -> this.handlePayloadTooLargeException(e, request);
-            case SERVICE_UNAVAILABLE -> this.handleServiceUnavailableException(e, request);
-            default -> this.handleGlobalException(e, request);
-  };
-}
 }
