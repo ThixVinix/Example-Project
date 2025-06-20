@@ -293,8 +293,6 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
-
-
     protected ResponseEntity<ErrorSingleResponse> handleMethodNotAllowedException(Exception ex, WebRequest request) {
         return handleSingleErrorResponse(
                 ex,
@@ -340,7 +338,6 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
                 "Payload too large: {}",
                 ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
     }
-
 
     @SuppressWarnings("squid:S1452")
     @ExceptionHandler(FeignException.class)
