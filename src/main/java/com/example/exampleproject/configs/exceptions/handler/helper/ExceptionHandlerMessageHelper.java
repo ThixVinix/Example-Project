@@ -36,6 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.nonNull;
+
 /**
  * <h1>{@link ExceptionHandlerMessageHelper}</h1>
  *
@@ -303,10 +305,10 @@ public class ExceptionHandlerMessageHelper {
     private static String getFieldName(MethodArgumentNotValidException notValidEx, String originalFieldName) {
         try {
             Object target = notValidEx.getTarget();
-            if (Objects.nonNull(target)) {
+            if (nonNull(target)) {
                 Field field = target.getClass().getDeclaredField(originalFieldName);
                 JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-                if (Objects.nonNull(jsonProperty) && !jsonProperty.value().trim().isEmpty()) {
+                if (nonNull(jsonProperty) && !jsonProperty.value().trim().isEmpty()) {
                     return jsonProperty.value().trim();
                 }
             }
@@ -317,7 +319,7 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static String getFieldErrorMessage(FieldError error) {
-        return Objects.nonNull(error.getDefaultMessage())
+        return nonNull(error.getDefaultMessage())
                 ? error.getDefaultMessage()
                 : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
     }
@@ -338,10 +340,9 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> handleBusinessException(BusinessException businessException) {
         String errorMessage = businessException.getMessage();
-        if (Objects.nonNull(errorMessage)) {
+        if (nonNull(errorMessage)) {
 
-            if (Objects.nonNull(businessException.getFieldName())
-                    && !businessException.getFieldName().trim().isEmpty()) {
+            if (nonNull(businessException.getFieldName()) && !businessException.getFieldName().trim().isEmpty()) {
                 return Map.of(businessException.getFieldName(), errorMessage);
             }
 
@@ -351,9 +352,9 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Map<String, String> handleJsonMappingException(JsonMappingException jsonMappingException) {
-        Optional<String> missingProperty = extractMissingProperty(jsonMappingException.getOriginalMessage());
-        if (missingProperty.isPresent()) {
-            String missingField = missingProperty.get();
+        Optional<String> missingPropertyOptional = extractMissingProperty(jsonMappingException.getOriginalMessage());
+        if (missingPropertyOptional.isPresent()) {
+            String missingField = missingPropertyOptional.get();
             return Map.of(missingField,
                     MessageUtils.getMessage("msg.exception.handler.missing.parameter"));
         }
@@ -446,7 +447,7 @@ public class ExceptionHandlerMessageHelper {
     private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
                                                                   String expectTypeName,
                                                                   Parameter parameter) {
-        if (Objects.nonNull(parameter)) {
+        if (nonNull(parameter)) {
             return extractDateTimeFormatPatternMessage(mismatchEx, parameter);
         }
 
@@ -477,7 +478,7 @@ public class ExceptionHandlerMessageHelper {
         if (param.isAnnotationPresent(DateTimeFormat.class)) {
             DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
 
-            if (Objects.nonNull(dateTimeFormat) && !dateTimeFormat.pattern().trim().isEmpty()) {
+            if (nonNull(dateTimeFormat) && !dateTimeFormat.pattern().trim().isEmpty()) {
                 return Map.of(paramName, MessageUtils.getMessage(
                         "msg.exception.handler.argument.type.mismatch.with.format",
                         dateTimeFormat.pattern().trim(),
@@ -608,7 +609,7 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
         String message;
-        if (Objects.nonNull(ex) && Objects.nonNull(ex.getMessage())) {
+        if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
             message = MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error");
@@ -618,7 +619,7 @@ public class ExceptionHandlerMessageHelper {
 
     private static String getErrorMessage(Exception ex, String defaultMessageValue) {
         String message;
-        if (Objects.nonNull(ex) && Objects.nonNull(ex.getMessage())) {
+        if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
             message = MessageUtils.getMessage(defaultMessageValue);
