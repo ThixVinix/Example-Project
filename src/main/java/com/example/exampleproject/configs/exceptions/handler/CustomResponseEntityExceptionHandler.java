@@ -453,47 +453,12 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     }
 
     /**
-     * Creates an ErrorSingleResponse object with the given parameters.
-     *
-     * @param status  The HTTP status
-     * @param message The error message
-     * @param path    The request path
-     * @return The created ErrorSingleResponse object
-     */
-    private ErrorSingleResponse createErrorSingleResponse(HttpStatus status, String message, String path) {
-        return ErrorSingleResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .path(path)
-                .build();
-    }
-
-    /**
-     * Creates an ErrorMultipleResponse object with the given parameters.
+     * Determines if the response should be a single ({@link ErrorSingleResponse})
+     * or multiple ({@link ErrorMultipleResponse}) error response.
      *
      * @param messages The error messages map
      * @param path     The request path
-     * @return The created ErrorMultipleResponse object
-     */
-    private ErrorMultipleResponse createErrorMultipleResponse(Map<String, String> messages,
-                                                              String path) {
-        return ErrorMultipleResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .messages(messages)
-                .path(path)
-                .build();
-    }
-
-    /**
-     * Determines if the response should be a single or multiple error response.
-     *
-     * @param messages The error messages map
-     * @param path     The request path
-     * @return The appropriate BaseError object
+     * @return The appropriate BaseError object ({@link ErrorSingleResponse} or {@link ErrorMultipleResponse})
      */
     private BaseError createAppropriateErrorResponse(Map<String, String> messages, String path) {
         final String DEFAULT_MESSAGE_KEY = "message";
@@ -506,39 +471,39 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     }
 
     /**
-     * Handles an override for error responses with multiple error messages in a standardized format.
-     * This method logs the error, extracts the request path, generates a structured error response with multiple
-     * messages, and constructs a ResponseEntity using the provided HTTP headers and status.
+     * Creates an {@link ErrorSingleResponse} object with the given parameters.
      *
-     * @param ex               The exception that triggered the error handling.
-     * @param headers          The headers to be included in the HTTP response.
-     * @param status           The HTTP status code of the response.
-     * @param request          The WebRequest that triggered the error.
-     * @param logMessage       The log message to be recorded with the error.
-     * @param messagesSupplier A function to generate a map of error messages based on the exception.
-     * @return A ResponseEntity containing the structured error response and appropriate HTTP status.
+     * @param status  The HTTP status
+     * @param message The error message
+     * @param path    The request path
+     * @return The created {@link ErrorSingleResponse} object
      */
-    private ResponseEntity<Object> handleOverrideMultipleErrorResponse(
-            Exception ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request,
-            String logMessage,
-            Function<Exception, Map<String, String>> messagesSupplier) {
+    private ErrorSingleResponse createErrorSingleResponse(HttpStatus status, String message, String path) {
+        return ErrorSingleResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .path(path)
+                .build();
+    }
 
-        log.error(logMessage, ex.getMessage(), ex);
-
-        String path = getRequestPath(request);
-        Map<String, String> messages = messagesSupplier.apply(ex);
-        BaseError body = createAppropriateErrorResponse(messages, path);
-
-        HttpStatus httpStatus = HttpStatus.resolve(status.value());
-
-        if (isNull(httpStatus)) {
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-
-        return new ResponseEntity<>(body, headers, httpStatus);
+    /**
+     * Creates an {@link ErrorMultipleResponse} object with the given parameters.
+     *
+     * @param messages The error messages map
+     * @param path     The request path
+     * @return The created {@link ErrorMultipleResponse} object
+     */
+    private ErrorMultipleResponse createErrorMultipleResponse(Map<String, String> messages,
+                                                              String path) {
+        return ErrorMultipleResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .messages(messages)
+                .path(path)
+                .build();
     }
 
     /**
@@ -570,14 +535,59 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         String path = getRequestPath(request);
         String message = messageSupplier.apply(ex);
 
-        HttpStatus httpStatus = HttpStatus.resolve(status.value());
-
-        if (httpStatus == null) {
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
+        HttpStatus httpStatus = resolveHttpStatus(status);
 
         ErrorSingleResponse errorResponse = createErrorSingleResponse(httpStatus, message, path);
 
         return new ResponseEntity<>(errorResponse, headers, httpStatus);
+    }
+
+    /**
+     * Handles an override for error responses with multiple error messages in a standardized format.
+     * This method logs the error, extracts the request path, generates a structured error response with multiple
+     * messages, and constructs a ResponseEntity using the provided HTTP headers and status.
+     *
+     * @param ex               The exception that triggered the error handling.
+     * @param headers          The headers to be included in the HTTP response.
+     * @param status           The HTTP status code of the response.
+     * @param request          The WebRequest that triggered the error.
+     * @param logMessage       The log message to be recorded with the error.
+     * @param messagesSupplier A function to generate a map of error messages based on the exception.
+     * @return A ResponseEntity containing the structured error response and appropriate HTTP status.
+     */
+    private ResponseEntity<Object> handleOverrideMultipleErrorResponse(
+            Exception ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request,
+            String logMessage,
+            Function<Exception, Map<String, String>> messagesSupplier) {
+
+        log.error(logMessage, ex.getMessage(), ex);
+
+        String path = getRequestPath(request);
+        Map<String, String> messages = messagesSupplier.apply(ex);
+        BaseError body = createAppropriateErrorResponse(messages, path);
+
+        HttpStatus httpStatus = resolveHttpStatus(status);
+
+        return new ResponseEntity<>(body, headers, httpStatus);
+    }
+
+    /**
+     * Resolves a {@link HttpStatus} object from a given {@link HttpStatusCode}.
+     * If the resolution fails, the default value of {@link HttpStatus#INTERNAL_SERVER_ERROR} is returned.
+     *
+     * @param status The {@link HttpStatusCode} to be resolved into a {@link HttpStatus}.
+     * @return The resolved {@link HttpStatus}, or {@link HttpStatus#INTERNAL_SERVER_ERROR}
+     * if resolution is unsuccessful.
+     */
+    private static HttpStatus resolveHttpStatus(HttpStatusCode status) {
+        HttpStatus httpStatus = HttpStatus.resolve(status.value());
+
+        if (isNull(httpStatus)) {
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return httpStatus;
     }
 }
