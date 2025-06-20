@@ -52,9 +52,9 @@ public class CustomLocalTimeDeserializer extends JsonDeserializer<LocalTime> {
             log.warn(e.getMessage(), e);
             throw new BusinessException(
                     MessageUtils.getMessage("msg.deserialization.invalid.datetime.format",
-                            p.getParsingContext().getCurrentName(),
                             time,
-                            EXPECTED_FORMAT));
+                            EXPECTED_FORMAT),
+                    p.getParsingContext().getCurrentName());
         }
     }
 }

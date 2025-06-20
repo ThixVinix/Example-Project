@@ -54,7 +54,8 @@ public class CustomZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateT
                     MessageUtils.getMessage("msg.deserialization.invalid.datetime.format",
                             p.getParsingContext().getCurrentName(),
                             date,
-                            EXPECTED_FORMAT));
+                            EXPECTED_FORMAT),
+                    p.getParsingContext().getCurrentName());
         }
     }
 }
