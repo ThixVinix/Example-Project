@@ -35,22 +35,22 @@ public class OpenAPIConfig {
     private static final String PORTUGUESE_BRAZIL_LANGUAGE_TAG = "pt-BR";
     private static final String ENGLISH_LANGUAGE_TAG = "en";
 
-    public static final String OBJECT_TYPE = "object";
-    public static final String STRING_TYPE = "string";
-    public static final String INTEGER_TYPE = "integer";
-    public static final String DATE_TIME_FORMAT = "date-time";
-    public static final String INTEGER_FORMAT_INT32 = "int32";
+    private static final String OBJECT_TYPE = "object";
+    private static final String STRING_TYPE = "string";
+    private static final String INTEGER_TYPE = "integer";
+    private static final String DATE_TIME_FORMAT = "date-time";
+    private static final String INTEGER_FORMAT_INT32 = "int32";
 
-    public static final String TIMESTAMP_PROPERTY_NAME = "timestamp";
-    public static final String PATH_PROPERTY_NAME = "path";
-    public static final String STATUS_PROPERTY_NAME = "status";
-    public static final String ERROR_PROPERTY_NAME = "error";
+    private static final String TIMESTAMP_PROPERTY_NAME = "timestamp";
+    private static final String PATH_PROPERTY_NAME = "path";
+    private static final String STATUS_PROPERTY_NAME = "status";
+    private static final String ERROR_PROPERTY_NAME = "error";
 
-    public static final String ERROR_SINGLE_RESPONSE = "ErrorSingleResponse";
-    public static final String ERROR_MULTIPLE_RESPONSE = "ErrorMultipleResponse";
+    private static final String ERROR_SINGLE_RESPONSE = "ErrorSingleResponse";
+    private static final String ERROR_MULTIPLE_RESPONSE = "ErrorMultipleResponse";
 
-    public static final String ERROR_SINGLE_RESPONSE_REF = "#/components/schemas/ErrorSingleResponse";
-    public static final String ERROR_MULTIPLE_RESPONSE_REF = "#/components/schemas/ErrorMultipleResponse";
+    private static final String ERROR_SINGLE_RESPONSE_REF = "#/components/schemas/ErrorSingleResponse";
+    private static final String ERROR_MULTIPLE_RESPONSE_REF = "#/components/schemas/ErrorMultipleResponse";
 
     @Value("${api.title}")
     private String apiTitle;
