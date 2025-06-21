@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.exampleproject.configs.swagger.SwaggerHttpDescriptionsHelper.*;
@@ -434,7 +435,8 @@ public class OpenAPIConfig {
                         .type(OBJECT_TYPE)
                         .description("Detailed messages for each field with validation errors")
                         .additionalProperties(new Schema<String>().type(STRING_TYPE))
-                        .example("{\"field1\": \"must not be blank\", \"field2\": \"must be a valid email\"}")));
+                        .example(Map.of("field1", "Field is required.",
+                                "field2", "It should not be empty."))));
     }
 
 }
