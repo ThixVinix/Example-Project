@@ -141,7 +141,8 @@ class GlobalExceptionHandlerTest {
             mockedStatic.when(() -> ExceptionHandlerMessageHelper.getUnauthorizedMessage(ex))
                     .thenReturn("Custom unauthorized message");
 
-            ResponseEntity<ErrorSingleResponse> responseEntity = exceptionHandler.handleUnauthorizedException(ex, request);
+            ResponseEntity<ErrorSingleResponse> responseEntity =
+                    exceptionHandler.handleUnauthorizedException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
@@ -371,7 +372,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleMaxUploadSizeExceededException(MaxUploadSizeExceededException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleMaxUploadSizeExceededException(
+     * MaxUploadSizeExceededException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(9)
     @Tag(value = HANDLE_MAX_UPLOAD_SIZE_EXCEEDED_EXCEPTION)
@@ -412,7 +414,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleMethodArgumentNotValid(MethodArgumentNotValidException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleMethodArgumentNotValid(
+     * MethodArgumentNotValidException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(10)
     @Tag(value = HANDLE_METHOD_ARGUMENT_NOT_VALID)
@@ -453,7 +456,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleHttpMessageNotReadable(HttpMessageNotReadableException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleHttpMessageNotReadable(
+     * HttpMessageNotReadableException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(11)
     @Tag(value = HANDLE_HTTP_MESSAGE_NOT_READABLE)
@@ -494,12 +498,13 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleMissingServletRequestParameter(MissingServletRequestParameterException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleMissingServletRequestParameter(
+     * MissingServletRequestParameterException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(12)
     @Tag(value = HANDLE_MISSING_SERVLET_REQUEST_PARAMETER)
-    @DisplayName(HANDLE_MISSING_SERVLET_REQUEST_PARAMETER + " - When MissingServletRequestParameterException is thrown then " +
-            "return Bad Request status")
+    @DisplayName(HANDLE_MISSING_SERVLET_REQUEST_PARAMETER + " - When MissingServletRequestParameterException is " +
+            "thrown then return Bad Request status")
     @Test
     void testHandleMissingServletRequestParameter() {
         MissingServletRequestParameterException ex = new MissingServletRequestParameterException("param", "String");
@@ -535,12 +540,13 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleHttpRequestMethodNotSupported(
+     * HttpRequestMethodNotSupportedException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(13)
     @Tag(value = HANDLE_HTTP_REQUEST_METHOD_NOT_SUPPORTED)
-    @DisplayName(HANDLE_HTTP_REQUEST_METHOD_NOT_SUPPORTED + " - When HttpRequestMethodNotSupportedException is thrown then " +
-            "return Method Not Allowed status")
+    @DisplayName(HANDLE_HTTP_REQUEST_METHOD_NOT_SUPPORTED + " - When HttpRequestMethodNotSupportedException is " +
+            "thrown then return Method Not Allowed status")
     @Test
     void testHandleHttpRequestMethodNotSupported() {
         HttpRequestMethodNotSupportedException ex = new HttpRequestMethodNotSupportedException("POST");
@@ -574,7 +580,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleHttpMediaTypeNotAcceptable(HttpMediaTypeNotAcceptableException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleHttpMediaTypeNotAcceptable(
+     * HttpMediaTypeNotAcceptableException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(14)
     @Tag(value = HANDLE_HTTP_MEDIA_TYPE_NOT_ACCEPTABLE)
@@ -613,7 +620,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleHttpMediaTypeNotSupported(
+     * HttpMediaTypeNotSupportedException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(15)
     @Tag(value = HANDLE_HTTP_MEDIA_TYPE_NOT_SUPPORTED)
@@ -652,7 +660,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleMissingPathVariable(MissingPathVariableException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleMissingPathVariable(
+     * MissingPathVariableException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(16)
     @Tag(value = HANDLE_MISSING_PATH_VARIABLE)
@@ -688,7 +697,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleHandlerMethodValidationException(HandlerMethodValidationException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleHandlerMethodValidationException(
+     * HandlerMethodValidationException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(17)
     @Tag(value = HANDLE_HANDLER_METHOD_VALIDATION_EXCEPTION)
@@ -729,7 +739,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleAsyncRequestTimeoutException(AsyncRequestTimeoutException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleAsyncRequestTimeoutException(
+     * AsyncRequestTimeoutException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(18)
     @Tag(value = HANDLE_ASYNC_REQUEST_TIMEOUT_EXCEPTION)
@@ -768,7 +779,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleNoResourceFoundException(NoResourceFoundException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleNoResourceFoundException(
+     * NoResourceFoundException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(19)
     @Tag(value = HANDLE_NO_RESOURCE_FOUND_EXCEPTION)
@@ -807,7 +819,8 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleServletRequestBindingException(ServletRequestBindingException, HttpHeaders, HttpStatusCode, WebRequest)}
+     * {@link GlobalExceptionHandler#handleServletRequestBindingException(
+     * ServletRequestBindingException, HttpHeaders, HttpStatusCode, WebRequest)}
      */
     @Order(20)
     @Tag(value = HANDLE_SERVLET_REQUEST_BINDING_EXCEPTION)
@@ -1059,7 +1072,8 @@ class GlobalExceptionHandlerTest {
                 mockedStatic.when(() -> messageFunction.apply(ex)).thenReturn(mockMessages);
             }
 
-            ResponseEntity<? extends BaseError> responseEntity = exceptionHandler.handleFeignClientException(ex, request);
+            ResponseEntity<? extends BaseError> responseEntity =
+                    exceptionHandler.handleFeignClientException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(expectedStatus, responseEntity.getStatusCode());
@@ -1084,31 +1098,44 @@ class GlobalExceptionHandlerTest {
     static Stream<Arguments> feignClientExceptionProvider() {
         return Stream.of(
                 Arguments.of(401, HttpStatus.UNAUTHORIZED, "Custom unauthorized message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getUnauthorizedMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getUnauthorizedMessage, true)),
                 Arguments.of(400, HttpStatus.BAD_REQUEST, "Custom bad request message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getBadRequestMessage, false)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getBadRequestMessage, false)),
                 Arguments.of(404, HttpStatus.NOT_FOUND, "Custom not found message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getNotFoundMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getNotFoundMessage, true)),
                 Arguments.of(405, HttpStatus.METHOD_NOT_ALLOWED, "Custom method not allowed message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getMethodNotAllowedMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage, true)),
                 Arguments.of(403, HttpStatus.FORBIDDEN, "Custom forbidden message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getForbiddenMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getForbiddenMessage, true)),
                 Arguments.of(408, HttpStatus.REQUEST_TIMEOUT, "Custom timeout message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getTimeoutMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getTimeoutMessage, true)),
                 Arguments.of(409, HttpStatus.CONFLICT, "Custom conflict message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getConflictMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getConflictMessage, true)),
                 Arguments.of(-1, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message1",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
                 Arguments.of(500, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message2",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
                 Arguments.of(406, HttpStatus.NOT_ACCEPTABLE, "Custom not acceptable message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException, true)),
                 Arguments.of(415, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Custom unsupported media type message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException, true)),
                 Arguments.of(413, HttpStatus.PAYLOAD_TOO_LARGE, "Custom payload too large message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true)),
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true)),
                 Arguments.of(503, HttpStatus.SERVICE_UNAVAILABLE, "Custom service unavailable message",
-                        new GlobalExceptionHandlerTest.HandlerConfig(ExceptionHandlerMessageHelper::getServiceUnavailableMessage, true))
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getServiceUnavailableMessage, true))
         );
     }
 
