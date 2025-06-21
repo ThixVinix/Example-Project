@@ -114,10 +114,10 @@ public class ExceptionHandlerMessageHelper {
      */
     public static String getNotFoundMessage(Exception ex) {
         if (ex instanceof NoResourceFoundException || ex instanceof NoHandlerFoundException) {
-            return MessageUtils.getMessage("msg.exception.handler.resource.url.not.found");
+            return getMessageUtils("msg.exception.handler.resource.url.not.found");
         }
 
-        return MessageUtils.getMessage("msg.exception.handler.resource.not.found");
+        return getMessageUtils("msg.exception.handler.resource.not.found");
     }
 
     /**
@@ -129,7 +129,7 @@ public class ExceptionHandlerMessageHelper {
      */
     public static String getMethodNotAllowedMessage(Exception ex) {
         HttpRequestMethodNotSupportedException methodNotSupportedEx = (HttpRequestMethodNotSupportedException) ex;
-        return MessageUtils.getMessage("msg.exception.handler.http.method.not.supported",
+        return getMessageUtils("msg.exception.handler.http.method.not.supported",
                 methodNotSupportedEx.getMethod());
     }
 
@@ -321,7 +321,7 @@ public class ExceptionHandlerMessageHelper {
     private static String getFieldErrorMessage(FieldError error) {
         return nonNull(error.getDefaultMessage())
                 ? error.getDefaultMessage()
-                : MessageUtils.getMessage("msg.exception.handler.argument.type.invalid");
+                : getMessageUtils("msg.exception.handler.argument.type.invalid");
     }
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException notReadableException) {
@@ -335,7 +335,7 @@ public class ExceptionHandlerMessageHelper {
             return handleJsonMappingException(jsonMappingException);
         }
 
-        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
+        return Map.of(DEFAULT_MESSAGE_KEY, getMessageUtils(JSON_MALFORMED_MESSAGE_VALUE));
     }
 
     private static Map<String, String> handleBusinessException(BusinessException businessException) {
@@ -348,15 +348,14 @@ public class ExceptionHandlerMessageHelper {
 
             return Map.of(DEFAULT_MESSAGE_KEY, errorMessage);
         }
-        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE));
+        return Map.of(DEFAULT_MESSAGE_KEY, getMessageUtils(JSON_MALFORMED_MESSAGE_VALUE));
     }
 
     private static Map<String, String> handleJsonMappingException(JsonMappingException jsonMappingException) {
         Optional<String> missingPropertyOptional = extractMissingProperty(jsonMappingException.getOriginalMessage());
         if (missingPropertyOptional.isPresent()) {
             String missingField = missingPropertyOptional.get();
-            return Map.of(missingField,
-                    MessageUtils.getMessage("msg.exception.handler.missing.parameter"));
+            return Map.of(missingField, getMessageUtils("msg.exception.handler.missing.parameter"));
         }
 
         String fieldName = jsonMappingException.getPath().stream()
@@ -365,8 +364,8 @@ public class ExceptionHandlerMessageHelper {
 
         return extractTargetType(jsonMappingException)
                 .map(targetType -> Map.of(fieldName,
-                        MessageUtils.getMessage("msg.exception.handler.invalid.deserialize", targetType)))
-                .orElseGet(() -> Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage(JSON_MALFORMED_MESSAGE_VALUE)));
+                        getMessageUtils("msg.exception.handler.invalid.deserialize", targetType)))
+                .orElseGet(() -> Map.of(DEFAULT_MESSAGE_KEY, getMessageUtils(JSON_MALFORMED_MESSAGE_VALUE)));
     }
 
 
@@ -391,13 +390,11 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getMissingServletRequestParameterMessage(
             MissingServletRequestParameterException missingEx) {
-        return Map.of(missingEx.getParameterName(),
-                MessageUtils.getMessage("msg.exception.handler.missing.parameter"));
+        return Map.of(missingEx.getParameterName(), getMessageUtils("msg.exception.handler.missing.parameter"));
     }
 
     private static Map<String, String> getMissingRequestHeaderMessage(MissingRequestHeaderException missingEx) {
-        return Map.of(missingEx.getHeaderName(),
-                MessageUtils.getMessage("msg.exception.handler.missing.header"));
+        return Map.of(missingEx.getHeaderName(), getMessageUtils("msg.exception.handler.missing.header"));
     }
 
     private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
@@ -410,8 +407,7 @@ public class ExceptionHandlerMessageHelper {
 
         return switch (expectedTypeName) {
             case null -> Map.of(mismatchEx.getName(),
-                    MessageUtils.getMessage(
-                            "msg.exception.handler.argument.type.mismatch.without.format",
+                    getMessageUtils("msg.exception.handler.argument.type.mismatch.without.format",
                             mismatchEx.getValue()));
             case LOCAL_DATE_TYPE,
                  LOCAL_DATE_TIME_TYPE,
@@ -456,7 +452,7 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getDefaultMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
                                                                  String expectedTypeName) {
-        return Map.of(mismatchEx.getName(), MessageUtils.getMessage(
+        return Map.of(mismatchEx.getName(), getMessageUtils(
                 "msg.exception.handler.argument.type.mismatch.default",
                 expectedTypeName,
                 mismatchEx.getValue()));
@@ -479,7 +475,7 @@ public class ExceptionHandlerMessageHelper {
             DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
 
             if (nonNull(dateTimeFormat) && !dateTimeFormat.pattern().trim().isEmpty()) {
-                return Map.of(paramName, MessageUtils.getMessage(
+                return Map.of(paramName, getMessageUtils(
                         "msg.exception.handler.argument.type.mismatch.with.format",
                         dateTimeFormat.pattern().trim(),
                         ex.getValue()));
@@ -489,9 +485,9 @@ public class ExceptionHandlerMessageHelper {
         Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
 
         return defaultDateTimePatternOptional
-                .map(s -> Map.of(paramName, MessageUtils.getMessage(
+                .map(s -> Map.of(paramName, getMessageUtils(
                         "msg.exception.handler.argument.type.mismatch.with.format", s, ex.getValue())))
-                .orElseGet(() -> Map.of(paramName, MessageUtils.getMessage(
+                .orElseGet(() -> Map.of(paramName, getMessageUtils(
                         "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
     }
 
@@ -604,7 +600,7 @@ public class ExceptionHandlerMessageHelper {
                 "of errors with custom messages, and make sure the \"@Valid\" annotation is present when using " +
                 "\"@RequestBody\" or \"@RequestPart\".");
 
-        return Map.of(DEFAULT_MESSAGE_KEY, MessageUtils.getMessage("msg.exception.handler.validation.failure"));
+        return Map.of(DEFAULT_MESSAGE_KEY, getMessageUtils("msg.exception.handler.validation.failure"));
     }
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
@@ -612,7 +608,7 @@ public class ExceptionHandlerMessageHelper {
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
-            message = MessageUtils.getMessage("msg.exception.handler.unknown.bad.request.error");
+            message = getMessageUtils("msg.exception.handler.unknown.bad.request.error");
         }
         return Map.of(DEFAULT_MESSAGE_KEY, message);
     }
@@ -622,9 +618,13 @@ public class ExceptionHandlerMessageHelper {
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
-            message = MessageUtils.getMessage(defaultMessageValue);
+            message = getMessageUtils(defaultMessageValue);
         }
         return message;
+    }
+
+    private static String getMessageUtils(String messageKey, Object... params) {
+        return MessageUtils.getMessage(messageKey, params);
     }
 
 }
