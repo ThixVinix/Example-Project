@@ -133,7 +133,7 @@ public class OpenAPIConfig {
         }
 
         // Add global response components
-        openApi.getPaths().forEach((path, pathItem) ->
+        openApi.getPaths().forEach((_, pathItem) ->
                 pathItem.readOperations().forEach(operation -> {
             if (operation.getResponses() == null) {
                 operation.setResponses(new ApiResponses());
