@@ -34,6 +34,23 @@ public class OpenAPIConfig {
     private static final String PORTUGUESE_BRAZIL_LANGUAGE_TAG = "pt-BR";
     private static final String ENGLISH_LANGUAGE_TAG = "en";
 
+    public static final String OBJECT_TYPE = "object";
+    public static final String STRING_TYPE = "string";
+    public static final String INTEGER_TYPE = "integer";
+    public static final String DATE_TIME_FORMAT = "date-time";
+    public static final String INTEGER_FORMAT_INT32 = "int32";
+
+    public static final String TIMESTAMP_PROPERTY_NAME = "timestamp";
+    public static final String PATH_PROPERTY_NAME = "path";
+    public static final String STATUS_PROPERTY_NAME = "status";
+    public static final String ERROR_PROPERTY_NAME = "error";
+
+    public static final String ERROR_SINGLE_RESPONSE = "ErrorSingleResponse";
+    public static final String ERROR_MULTIPLE_RESPONSE = "ErrorMultipleResponse";
+
+    public static final String ERROR_SINGLE_RESPONSE_REF = "#/components/schemas/ErrorSingleResponse";
+    public static final String ERROR_MULTIPLE_RESPONSE_REF = "#/components/schemas/ErrorMultipleResponse";
+
     @Value("${api.title}")
     private String apiTitle;
 
@@ -128,7 +145,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 404 Not Found Example", new Example()
                                                     .summary("English: Example of a 404 error response.")
                                                     .value(NOT_FOUND_EXAMPLE_EN))
@@ -145,7 +162,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 405 Method Not Allowed",
                                                     new Example()
                                                     .summary("English: Example of a 405 error response when " +
@@ -166,9 +183,13 @@ public class OpenAPIConfig {
                                             .schema(new Schema<>()
                                                     .oneOf(List.of(
                                                             new Schema<ErrorMultipleResponse>()
-                                                                    .$ref("#/components/schemas/ErrorMultipleResponse"),
+                                                                    .$ref(ERROR_MULTIPLE_RESPONSE_REF)
+                                                                    .title(ERROR_MULTIPLE_RESPONSE)
+                                                                    .example(BAD_REQUEST_MULTIPLE_ERRORS_EXAMPLE_EN),
                                                             new Schema<ErrorSingleResponse>()
-                                                                    .$ref("#/components/schemas/ErrorSingleResponse"))))
+                                                                    .$ref(ERROR_SINGLE_RESPONSE_REF)
+                                                                    .title(ERROR_SINGLE_RESPONSE)
+                                                                    .example(BAD_REQUEST_SINGLE_ERROR_EXAMPLE_EN))))
                                             .addExamples("English - 400 Bad Request (Multiple Errors)",
                                                     new Example()
                                                     .summary("English: Example of a 400 error response with " +
@@ -199,7 +220,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 401 Unauthorized",
                                                     new Example()
                                                     .summary("English: Example of a 401 error response caused by " +
@@ -219,7 +240,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 403 Forbidden", new Example()
                                                     .summary("English: Example of a 403 error response when " +
                                                             "access is denied.")
@@ -236,7 +257,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 409 Conflict",
                                                     new Example()
                                                     .summary("English: Example of a 409 error response caused by " +
@@ -255,7 +276,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 408 Request Timeout",
                                                     new Example()
                                                     .summary("English: Example of a 408 error response caused by " +
@@ -275,7 +296,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 503 Service Unavailable",
                                                     new Example()
                                                     .summary("English: Example of a 503 error response caused by " +
@@ -294,7 +315,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 406 Not Acceptable", new Example()
                                                     .summary("English: Example of a 406 error response caused by " +
                                                             "unsupported 'Accept' header value.")
@@ -313,7 +334,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 415 Unsupported Media Type", new Example()
                                                     .summary("English: Example of a 415 error response caused by " +
                                                             "an unsupported 'Content-Type' header.")
@@ -333,7 +354,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 413 Payload Too Large", new Example()
                                                     .summary("English: Example of a 413 error response caused by " +
                                                             "an uploaded file that exceeds the allowed size.")
@@ -352,7 +373,7 @@ public class OpenAPIConfig {
                             .addMediaType(MediaType.APPLICATION_JSON_VALUE,
                                     new io.swagger.v3.oas.models.media.MediaType()
                                             .schema(new Schema<ErrorSingleResponse>()
-                                                    .$ref("#/components/schemas/ErrorSingleResponse"))
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
                                             .addExamples("English - 500 Internal Server Error", new Example()
                                                     .summary("English: Example of a 500 error response caused by " +
                                                             "an unexpected server-side failure.")
@@ -368,22 +389,52 @@ public class OpenAPIConfig {
     }
 
     private void addSchemasInComponents(OpenAPI openApi) {
-        openApi.getComponents().addSchemas("ErrorSingleResponse", new Schema<ErrorSingleResponse>()
-                .type("object")
-                .addProperty("timestamp", new Schema<>().type("string").format("date-time"))
-                .addProperty("path", new Schema<>().type("string"))
-                .addProperty("status", new Schema<>().type("integer").format("int32"))
-                .addProperty("error", new Schema<>().type("string"))
-                .addProperty("message", new Schema<>().type("string")));
+        // ErrorSingleResponse schema with detailed information from the class
+        openApi.getComponents().addSchemas(ERROR_SINGLE_RESPONSE, new Schema<ErrorSingleResponse>()
+                .type(OBJECT_TYPE)
+                .description("Response object containing details for a single error.")
+                .addProperty(TIMESTAMP_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .format(DATE_TIME_FORMAT)
+                        .description("The time when the error occurred"))
+                .addProperty(PATH_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .description("The request path that triggered the error"))
+                .addProperty(STATUS_PROPERTY_NAME, new Schema<Integer>()
+                        .type(INTEGER_TYPE)
+                        .format(INTEGER_FORMAT_INT32)
+                        .description("The HTTP status code representing the error category"))
+                .addProperty(ERROR_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .description("A short description of the error type"))
+                .addProperty("message", new Schema<String>()
+                        .type(STRING_TYPE)
+                        .description("Detailed message providing additional information about the error")
+                        .example("The requested resource was not found.")));
 
-        openApi.getComponents().addSchemas("ErrorMultipleResponse", new Schema<ErrorMultipleResponse>()
-                .type("object")
-                .addProperty("timestamp", new Schema<>().type("string").format("date-time"))
-                .addProperty("path", new Schema<>().type("string"))
-                .addProperty("status", new Schema<>().type("integer").format("int32"))
-                .addProperty("error", new Schema<>().type("string"))
-                .addProperty("messages", new Schema<>().type("object")
-                        .additionalProperties(new Schema<>().type("string"))));
+        // ErrorMultipleResponse schema with detailed information from the class
+        openApi.getComponents().addSchemas(ERROR_MULTIPLE_RESPONSE, new Schema<ErrorMultipleResponse>()
+                .type(OBJECT_TYPE)
+                .description("Response object containing details for multiple validation errors.")
+                .addProperty(TIMESTAMP_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .format(DATE_TIME_FORMAT)
+                        .description("The time when the errors occurred"))
+                .addProperty(PATH_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .description("The request path that triggered the errors"))
+                .addProperty(STATUS_PROPERTY_NAME, new Schema<Integer>()
+                        .type(INTEGER_TYPE)
+                        .format(INTEGER_FORMAT_INT32)
+                        .description("The HTTP status code representing the error category"))
+                .addProperty(ERROR_PROPERTY_NAME, new Schema<String>()
+                        .type(STRING_TYPE)
+                        .description("A short description of the error type"))
+                .addProperty("messages", new Schema<>()
+                        .type(OBJECT_TYPE)
+                        .description("Detailed messages for each field with validation errors")
+                        .additionalProperties(new Schema<String>().type(STRING_TYPE))
+                        .example("{\"field1\": \"must not be blank\", \"field2\": \"must be a valid email\"}")));
     }
 
 }
