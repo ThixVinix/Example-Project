@@ -2,10 +2,13 @@ package com.example.exampleproject.configs.annotations.validators.base;
 
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static java.util.Objects.nonNull;
 
 /**
  * Abstract base class for validators that validate lists of items.
@@ -47,7 +50,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
         Set<T> uniqueItems = new HashSet<>();
 
         for (T item : list) {
-            if (item != null && !uniqueItems.add(item)) {
+            if (nonNull(item) && !uniqueItems.add(item)) {
                 addConstraintViolation(context, "msg.validation.request.field.base64file.duplicate.file");
                 return false;
             }
@@ -78,6 +81,68 @@ public abstract class AbstractListValidator extends AbstractValidator {
         }
 
         return true;
+    }
+
+    /**
+     * Validates that the total size of the items in the list does not exceed a specified maximum size in MB.
+     *
+     * @param <T> the type of elements in the list
+     * @param list the list of items to validate
+     * @param maxTotalSizeMB the maximum allowed total size in megabytes; if invalid, a default value is used
+     * @param sizeCalculator the strategy for calculating the size of individual items in bytes
+     * @param context the validation context used to report constraint violations
+     * @param messageKey the key for the error message in case of a violation
+     * @return true if the total size of the items exceeds the maximum allowed size, false otherwise
+     */
+    protected <T> boolean validateTotalSize(List<T> list,
+                                           int maxTotalSizeMB,
+                                           SizeCalculator<T> sizeCalculator,
+                                           ConstraintValidatorContext context,
+                                           String messageKey) {
+
+        final int DEFAULT_MAX_TOTAL_SIZE_IN_MB = 10;
+
+        if (maxTotalSizeMB <= NumberUtils.INTEGER_ZERO) {
+            log.warn("The value of maxTotalSizeMB provided is invalid ({}). Default value of {} MB will be used.",
+                    maxTotalSizeMB, DEFAULT_MAX_TOTAL_SIZE_IN_MB);
+            maxTotalSizeMB = DEFAULT_MAX_TOTAL_SIZE_IN_MB;
+        }
+
+        final long BYTES_IN_ONE_MB = 1024L * 1024L;
+        long maxTotalSizeInBytes = maxTotalSizeMB * BYTES_IN_ONE_MB;
+        long totalSizeInBytes = NumberUtils.LONG_ZERO;
+
+        for (T item : list) {
+            if (nonNull(item)) {
+                long itemSize = sizeCalculator.calculateSize(item);
+                totalSizeInBytes += itemSize;
+            }
+        }
+
+        if (totalSizeInBytes > maxTotalSizeInBytes) {
+            double actualTotalSizeInMB = (double) totalSizeInBytes / BYTES_IN_ONE_MB;
+            addConstraintViolation(context, messageKey, 
+                    String.format("%.4f", actualTotalSizeInMB),
+                    String.valueOf(maxTotalSizeMB));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Interface for calculating the size of individual items.
+     *
+     * @param <T> the type of item to calculate size for
+     */
+    @FunctionalInterface
+    public interface SizeCalculator<T> {
+        /**
+         * Calculates the size of an item in bytes.
+         *
+         * @param item the item to calculate size for
+         * @return the size in bytes
+         */
+        long calculateSize(T item);
     }
 
     /**
