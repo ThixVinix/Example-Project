@@ -81,5 +81,10 @@ public @interface Base64FileValidation {
      */
     int maxFileCount() default 5;
 
+    /**
+     * Maximum total size in megabytes for all files combined (Default: 10 MB). 
+     * Internally converted to bytes. Set to 0 to disable total size validation.
+     */
+    int maxTotalSizeMB() default 10;
 
 }
