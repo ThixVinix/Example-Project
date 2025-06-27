@@ -814,8 +814,14 @@ class Base64FileMapValidatorTest {
     @Order(22)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
-    @Test
-    void initialize_WhenNegativeMaxFileCount_ThenShouldUseDefaultValue() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Número máximo de arquivos permitidos para envio é -1.",
+            "en_US|Maximum number of allowed files is -1."
+    }, delimiter = CSV_DELIMITER)
+    void initialize_WhenNegativeMaxFileCount_ThenShouldUseDefaultValue(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
@@ -838,7 +844,515 @@ class Base64FileMapValidatorTest {
         // Act
         boolean isValid = validator.isValid(manyFiles, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false when exceeding the default max file count");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(23)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a file name with multiple dots, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo file.name.pdf, do 1º item da lista, é inválido. O nome do arquivo deve incluir uma extensão (ex: arquivo.pdf) e conter apenas caracteres válidos: letras (a-z, A-Z), números (0-9), underscores (_), hífens (-) e exatamente um ponto (.) para separar o nome e a extensão.",
+            "en_US|The file name file.name.pdf, from the item #1 in the list, is invalid. The filename must include an extension (e.g., file.pdf) and contain only valid characters: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), and exactly one dot (.) to separate the name and extension."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileNameWithMultipleDots_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithInvalidName = new HashMap<>();
+        filesWithInvalidName.put("file.name.pdf", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithInvalidName, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a file name with multiple dots");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(24)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a file name starting with dot, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo .hidden.pdf, do 1º item da lista, é inválido. O nome do arquivo deve incluir uma extensão (ex: arquivo.pdf) e conter apenas caracteres válidos: letras (a-z, A-Z), números (0-9), underscores (_), hífens (-) e exatamente um ponto (.) para separar o nome e a extensão.",
+            "en_US|The file name .hidden.pdf, from the item #1 in the list, is invalid. The filename must include an extension (e.g., file.pdf) and contain only valid characters: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), and exactly one dot (.) to separate the name and extension."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileNameStartingWithDot_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithInvalidName = new HashMap<>();
+        filesWithInvalidName.put(".hidden.pdf", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithInvalidName, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a file name starting with dot");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(25)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a file name with spaces, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo file name.pdf, do 1º item da lista, é inválido. O nome do arquivo deve incluir uma extensão (ex: arquivo.pdf) e conter apenas caracteres válidos: letras (a-z, A-Z), números (0-9), underscores (_), hífens (-) e exatamente um ponto (.) para separar o nome e a extensão.",
+            "en_US|The file name file name.pdf, from the item #1 in the list, is invalid. The filename must include an extension (e.g., file.pdf) and contain only valid characters: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), and exactly one dot (.) to separate the name and extension."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenFileNameWithSpaces_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithInvalidName = new HashMap<>();
+        filesWithInvalidName.put("file name.pdf", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithInvalidName, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a file name with spaces");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(26)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given zero maxTotalSizeMB, then should skip total size validation")
+    @Test
+    void isValid_WhenZeroMaxTotalSizeMB_ThenShouldSkipTotalSizeValidation() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(3);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(0);
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        Map<String, String> validFiles = new HashMap<>();
+        validFiles.put(VALID_PDF_NAME, VALID_SMALL_PDF);
+        validFiles.put(VALID_JPEG_NAME, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(validFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true when maxTotalSizeMB is zero (disabled)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(27)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with whitespace-only file name, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O nome do arquivo, do 1º item da lista, não foi fornecido.",
+            "en_US|The file name, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenWhitespaceOnlyFileName_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithWhitespaceFileName = new HashMap<>();
+        filesWithWhitespaceFileName.put("   ", VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithWhitespaceFileName, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a whitespace-only file name");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     */
+    @Order(28)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a map with blank base64 content, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O conteúdo Base64 do arquivo document.pdf, do 1º item da lista, não foi fornecido.",
+            "en_US|The Base64 content of the file document.pdf, from the item #1 in the list, was not provided."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenBlankBase64Content_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithBlankContent = new HashMap<>();
+        filesWithBlankContent.put(VALID_PDF_NAME, "   ");
+
+        // Act
+        boolean isValid = base64FileMapValidator.isValid(filesWithBlankContent, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for blank base64 content");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(29)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given negative maxTotalSizeMB, then should skip total size validation")
+    @Test
+    void validateTotalSize_WhenNegativeMaxTotalSizeMB_ThenShouldSkipTotalSizeValidation() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(3);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(-1);
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        Map<String, String> validFiles = new HashMap<>();
+        validFiles.put(VALID_PDF_NAME, VALID_SMALL_PDF);
+        validFiles.put(VALID_JPEG_NAME, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(validFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true when maxTotalSizeMB is negative (disabled)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(30)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given total size within limit, then should return true")
+    @Test
+    void validateTotalSize_WhenTotalSizeWithinLimit_ThenShouldReturnTrue() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(3);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        Map<String, String> validFiles = new HashMap<>();
+        validFiles.put(VALID_PDF_NAME, VALID_SMALL_PDF);
+        validFiles.put(VALID_JPEG_NAME, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(validFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true when total size is within the limit");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(31)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given total size exceeding limit, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O tamanho total de todos os arquivos é de 8,0000 MB, excede o limite permitido de 5 MB.",
+            "en_US|The total size of all files is 8,0000 MB, exceeding the allowed limit of 5 MB."
+    }, delimiter = CSV_DELIMITER)
+    void validateTotalSize_WhenTotalSizeExceedingLimit_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(10);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(5); // 5MB limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        // Create files that exceed the total size limit (2 files of 4MB each = 8MB > 5MB limit)
+        byte[] largeFile = new byte[4 * 1024 * 1024]; // 4MB each
+        String largeBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(largeFile);
+
+        Map<String, String> filesExceedingTotalSize = new HashMap<>();
+        filesExceedingTotalSize.put("file1.pdf", largeBase64);
+        filesExceedingTotalSize.put("file2.pdf", largeBase64);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = validator.isValid(filesExceedingTotalSize, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false when total size exceeds limit");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(32)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given map with null values, then should skip null values in calculation")
+    @Test
+    void validateTotalSize_WhenMapWithNullValues_ThenShouldSkipNullValuesInCalculation() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithNullValues = new HashMap<>();
+        filesWithNullValues.put(VALID_PDF_NAME, VALID_SMALL_PDF);
+        filesWithNullValues.put("null-file.pdf", null);
+        filesWithNullValues.put(VALID_JPEG_NAME, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithNullValues, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false when map contains null values (validation should fail for null content)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(33)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given map with only null values, then should return false")
+    @Test
+    void validateTotalSize_WhenMapWithOnlyNullValues_ThenShouldReturnFalse() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(1); // Very small limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithOnlyNullValues = new HashMap<>();
+        filesWithOnlyNullValues.put("file1.pdf", null);
+        filesWithOnlyNullValues.put("file2.pdf", null);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithOnlyNullValues, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false when map contains only null values (validation should fail for null content)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(34)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given empty map, then should return true")
+    @Test
+    void validateTotalSize_WhenEmptyMap_ThenShouldReturnTrue() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(1); // Very small limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        Map<String, String> emptyMap = new HashMap<>();
+
+        // Act
+        boolean isValid = validator.isValid(emptyMap, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for empty map");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(35)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given map with empty base64 content, then should return false")
+    @Test
+    void validateTotalSize_WhenMapWithEmptyBase64Content_ThenShouldReturnFalse() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        Map<String, String> filesWithEmptyContent = new HashMap<>();
+        filesWithEmptyContent.put(VALID_PDF_NAME, VALID_SMALL_PDF);
+        filesWithEmptyContent.put("empty-file.pdf", "");
+        filesWithEmptyContent.put(VALID_JPEG_NAME, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(filesWithEmptyContent, context);
+
+        // Assert
+        assertFalse(isValid, "isValid should return false when map contains empty base64 content " +
+                "(validation should fail for empty content)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileMapValidator#isValid(Map, ConstraintValidatorContext)}
+     * Testing validateTotalSize method conditions
+     */
+    @Order(36)
+    @Tag(value = IS_VALID)
+    @DisplayName("validateTotalSize - Given exactly at size limit, then should return false due to MIME type detection")
+    @Test
+    void validateTotalSize_WhenExactlyAtSizeLimit_ThenShouldReturnFalse() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(10);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(4); // 4MB limit
+
+        Base64FileMapValidator validator = new Base64FileMapValidator();
+        validator.initialize(base64FileValidation);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Create a file that is exactly 4MB (but will be detected as octet-stream by Tika)
+        byte[] exactSizeFile = new byte[4 * 1024 * 1024]; // Exactly 4MB
+        String exactSizeBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(exactSizeFile);
+
+        Map<String, String> filesAtExactLimit = new HashMap<>();
+        filesAtExactLimit.put("exact-size.pdf", exactSizeBase64);
+
+        // Act
+        boolean isValid = validator.isValid(filesAtExactLimit, context);
+
+        // Assert
+        assertFalse(isValid, 
+                "isValid should return false because Tika detects the file as octet-stream, not PDF");
     }
 }

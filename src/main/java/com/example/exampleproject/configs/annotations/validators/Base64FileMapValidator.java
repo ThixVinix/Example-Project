@@ -3,6 +3,7 @@ package com.example.exampleproject.configs.annotations.validators;
 import com.example.exampleproject.configs.annotations.Base64FileValidation;
 import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
 import com.example.exampleproject.configs.annotations.validators.base.AbstractValidator;
+import com.example.exampleproject.configs.annotations.validators.helpers.Base64FileCollectionValidatorHelper;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 public class Base64FileMapValidator
@@ -44,33 +48,27 @@ public class Base64FileMapValidator
      */
     private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$";
 
-    private int maxFileCount;
-
-    private Base64FileValidator base64FileValidator;
+    private Base64FileCollectionValidatorHelper helper;
 
     @Override
     public void initialize(Base64FileValidation annotation) {
-        this.maxFileCount = annotation.maxFileCount();
-        base64FileValidator = new Base64FileValidator();
-        base64FileValidator.initialize(annotation);
-
-        if (this.maxFileCount <= NumberUtils.INTEGER_ZERO) {
-            final int DEFAULT_MAX_FILE = 5;
-            log.warn("The value of maxFileCount provided is invalid ({}). Default value of {} will be used.",
-                    this.maxFileCount, DEFAULT_MAX_FILE);
-            this.maxFileCount = DEFAULT_MAX_FILE;
-        }
+        this.helper = new Base64FileCollectionValidatorHelper();
+        this.helper.initialize(annotation);
     }
 
     @Override
     public boolean isValid(Map<String, String> values, ConstraintValidatorContext context) {
-        if (values == null || values.isEmpty()) {
+        if (isNull(values) || values.isEmpty()) {
             return true;
         }
 
-        if (values.size() > maxFileCount) {
+        if (values.size() > helper.getMaxFileCount()) {
             addConstraintViolation(context, "msg.validation.request.field.base64file.max.file.count", 
-                    String.valueOf(maxFileCount));
+                    String.valueOf(helper.getMaxFileCount()));
+            return false;
+        }
+
+        if (!validateTotalSize(values, context)) {
             return false;
         }
 
@@ -139,7 +137,7 @@ public class Base64FileMapValidator
     }
 
     private boolean validateFileNamePresence(String fileName, int index, ConstraintValidatorContext context) {
-        if (fileName == null || fileName.trim().isEmpty()) {
+        if (isNull(fileName) || fileName.trim().isEmpty()) {
             addConstraintViolation(context, "msg.validation.request.field.missing.filename", 
                     String.valueOf(index + 1));
             return false;
@@ -149,7 +147,7 @@ public class Base64FileMapValidator
 
     private boolean validateBase64ContentPresence(String fileName, String base64File, int index,
                                                   ConstraintValidatorContext context) {
-        if (base64File == null || base64File.isBlank()) {
+        if (isNull(base64File) || base64File.isBlank()) {
             addConstraintViolation(context, "msg.validation.request.field.missing.base64content",
                     fileName, String.valueOf(index + 1));
             return false;
@@ -167,7 +165,7 @@ public class Base64FileMapValidator
     }
 
     private boolean validateBase64Content(String base64File, int index, ConstraintValidatorContext context) {
-        if (!base64FileValidator.isValid(base64File, context)) {
+        if (!helper.validateIndividualBase64File(base64File, context)) {
             addConstraintViolation(context, "msg.validation.request.field.base64file.invalid.list", 
                     String.valueOf(index + 1));
             return false;
@@ -176,7 +174,7 @@ public class Base64FileMapValidator
     }
 
     private boolean validateMimeTypeSupported(String expectedExtension, int index, ConstraintValidatorContext context) {
-        if (Objects.isNull(expectedExtension)) {
+        if (isNull(expectedExtension)) {
             addConstraintViolation(context, "msg.validation.request.field.unsupported.filetype", 
                     String.valueOf(index + 1));
             return false;
@@ -222,7 +220,7 @@ public class Base64FileMapValidator
      * otherwise false.
      */
     private boolean isFileNameValid(String fileName) {
-        if (fileName == null || fileName.isBlank()) {
+        if (isNull(fileName) || fileName.isBlank()) {
             return false;
         }
 
@@ -240,7 +238,7 @@ public class Base64FileMapValidator
      * null if the input is null or does not contain a valid MIME type.
      */
     private String extractMimeTypeFromBase64(String base64File) {
-        if (base64File == null || !base64File.contains(";base64,")) {
+        if (isNull(base64File) || !base64File.contains(";base64,")) {
             return null;
         }
 
@@ -258,9 +256,42 @@ public class Base64FileMapValidator
      * @return the extension part of the filename
      */
     private String extractExtensionFromFileName(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
+        if (isNull(fileName) || !fileName.contains(".")) {
             return StringUtils.EMPTY;
         }
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
+
+    /**
+     * Validates that the total size of all files does not exceed the maximum total size.
+     *
+     * @param values the map of files to validate
+     * @param context the validation context
+     * @return true if the total size is valid, false otherwise
+     */
+    private boolean validateTotalSize(Map<String, String> values, ConstraintValidatorContext context) {
+        if (helper.getMaxTotalSizeMB() <= NumberUtils.INTEGER_ZERO) {
+            return true;
+        }
+
+        final long BYTES_IN_ONE_MB = 1024L * 1024L;
+        long maxTotalSizeInBytes = helper.getMaxTotalSizeMB() * BYTES_IN_ONE_MB;
+        long totalSizeInBytes = NumberUtils.LONG_ZERO;
+
+        for (String base64Value : values.values()) {
+            if (nonNull(base64Value)) {
+                long fileSize = helper.calculateBase64FileSize(base64Value);
+                totalSizeInBytes += fileSize;
+            }
+        }
+
+        if (totalSizeInBytes > maxTotalSizeInBytes) {
+            double actualTotalSizeInMB = (double) totalSizeInBytes / BYTES_IN_ONE_MB;
+            addConstraintViolation(context, "msg.validation.request.field.base64file.max.total.size",
+                    String.format("%.4f", actualTotalSizeInMB), String.valueOf(helper.getMaxTotalSizeMB()));
+            return false;
+        }
+        return true;
+    }
+
 }
