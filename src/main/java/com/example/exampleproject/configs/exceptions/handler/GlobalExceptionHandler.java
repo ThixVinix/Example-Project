@@ -39,6 +39,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @RestControllerAdvice
@@ -366,7 +367,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         Response Body: {}
                         """,
                 requestUri,
-                status != null ? status.name() : "Unknown Status",
+                nonNull(status) ? status.name() : "Unknown Status",
                 requestHeaders,
                 responseHeaders,
                 responseBody);
