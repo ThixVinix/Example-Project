@@ -395,8 +395,14 @@ class Base64FileListValidatorTest {
     @Order(12)
     @Tag(value = INITIALIZE)
     @DisplayName(INITIALIZE + " - Given a negative maxFileCount, then should use default value")
-    @Test
-    void initialize_WhenNegativeMaxFileCount_ThenShouldUseDefaultValue() {
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|Número máximo de arquivos permitidos para envio é -1.",
+            "en_US|Maximum number of allowed files is -1."
+    }, delimiter = CSV_DELIMITER)
+    void initialize_WhenNegativeMaxFileCount_ThenShouldUseDefaultValue(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
@@ -419,7 +425,245 @@ class Base64FileListValidatorTest {
         // Act
         boolean isValid = validator.isValid(manyFiles, context);
 
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
         // Assert
+        assertEquals(expectedMessage, capturedMessage);
         assertFalse(isValid, "isValid should return false when exceeding the default max file count");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(13)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list exceeding total size limit, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O tamanho total de todos os arquivos é de 12,0000 MB, excede o limite permitido de 10 MB.",
+            "en_US|The total size of all files is 12,0000 MB, exceeding the allowed limit of 10 MB."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenExceedingTotalSizeLimit_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10);
+
+        Base64FileListValidator validator = new Base64FileListValidator();
+        validator.initialize(base64FileValidation);
+
+        // Create files that exceed total size limit (3 files of 4MB each = 12MB > 10MB limit)
+        byte[] largeFile = new byte[4 * 1024 * 1024]; // 4MB each
+        String largeBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(largeFile);
+
+        List<String> filesExceedingTotalSize = Arrays.asList(largeBase64, largeBase64, largeBase64);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = validator.isValid(filesExceedingTotalSize, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false when total size exceeds limit");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(14)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given zero maxTotalSizeMB, then should skip total size validation")
+    @Test
+    void isValid_WhenZeroMaxTotalSizeMB_ThenShouldSkipTotalSizeValidation() {
+        // Arrange
+        Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
+        when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
+        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxFileCount()).thenReturn(5);
+        when(base64FileValidation.maxTotalSizeMB()).thenReturn(0);
+
+        Base64FileListValidator validator = new Base64FileListValidator();
+        validator.initialize(base64FileValidation);
+
+        List<String> validFiles = Arrays.asList(VALID_SMALL_PDF, VALID_SMALL_JPEG);
+
+        // Act
+        boolean isValid = validator.isValid(validFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true when maxTotalSizeMB is zero (disabled)");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(15)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with mixed valid and invalid files, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O 2º item da lista está inválido.",
+            "en_US|The item #2 in the list is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenMixedValidAndInvalidFiles_ThenShouldReturnFalse(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        List<String> mixedFiles = Arrays.asList(VALID_SMALL_PDF, INVALID_FORMAT, VALID_SMALL_JPEG);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(mixedFiles, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a list with mixed valid and invalid files");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(16)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with exactly max file count, then should return true")
+    @Test
+    void isValid_WhenExactlyMaxFileCount_ThenShouldReturnTrue() {
+        // Arrange
+        String validSmallPdf2 = "data:application/pdf;base64,JVBERi0xLjQKJeKAow0KMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwo" +
+                "vUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW" +
+                "5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQo+PgplbmRvY" +
+                "moKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAw" +
+                "MDAwMDExNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3NAolJUVPRgo=";
+
+        List<String> exactMaxFiles = Arrays.asList(VALID_SMALL_PDF, VALID_SMALL_JPEG, validSmallPdf2);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(exactMaxFiles, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true when list size equals max file count");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(17)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with duplicate null values, then should return true")
+    @Test
+    void isValid_WhenDuplicateNullValues_ThenShouldReturnTrue() {
+        // Arrange
+        List<String> filesWithNulls = Arrays.asList(VALID_SMALL_PDF, null, null);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(filesWithNulls, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with duplicate null values");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(18)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with whitespace-only content, then should return true")
+    @Test
+    void isValid_WhenWhitespaceOnlyContent_ThenShouldReturnTrue() {
+        // Arrange
+        List<String> filesWithWhitespace = Arrays.asList(VALID_SMALL_PDF, "", null);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(filesWithWhitespace, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a list with empty and null content");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(19)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a single file list, then should return true")
+    @Test
+    void isValid_WhenSingleFileList_ThenShouldReturnTrue() {
+        // Arrange
+        List<String> singleFile = List.of(VALID_SMALL_PDF);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(singleFile, context);
+
+        // Assert
+        assertTrue(isValid, "isValid should return true for a single valid file");
+    }
+
+    /**
+     * Method test for
+     * {@link Base64FileListValidator#isValid(List, ConstraintValidatorContext)}
+     */
+    @Order(20)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given a list with multiple duplicate files at different positions, then should return false")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|A lista não deve conter arquivos idênticos. Envie apenas arquivos únicos.",
+            "en_US|The list must not contain identical files. Please send only unique files."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenMultipleDuplicatesAtDifferentPositions_ThenShouldReturnFalse(String languageTag,
+                                                                                  String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        List<String> filesWithMultipleDuplicates = Arrays.asList(
+                VALID_SMALL_PDF, 
+                VALID_SMALL_JPEG, 
+                VALID_SMALL_PDF  // Duplicate of the first file
+        );
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = base64FileListValidator.isValid(filesWithMultipleDuplicates, context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context, atLeastOnce()).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(isValid, "isValid should return false for a list with duplicates at different positions");
     }
 }
