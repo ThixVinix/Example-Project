@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 /**
  * Validator to check if a value matches with the custom "value" of an Enum,
  * if available (via a "getValue" method), or falls back to validating against
@@ -24,7 +27,7 @@ public class EnumValueValidator
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null) {
+        if (isNull(value)) {
             return true;
         }
 
@@ -34,7 +37,7 @@ public class EnumValueValidator
                 return true;
             }
 
-            if (accessorMethod != null) {
+            if (nonNull(accessorMethod)) {
                 try {
                     Object enumValue = accessorMethod.invoke(enumConstant);
                     if (enumValue instanceof String string && string.equalsIgnoreCase(value)) {
