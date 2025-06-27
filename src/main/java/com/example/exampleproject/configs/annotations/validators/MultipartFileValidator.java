@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Objects;
+
+import static java.util.Objects.isNull;
 
 /**
  * Validator class for validating MultipartFile objects for specific constraints such as file type
@@ -35,7 +38,7 @@ public class MultipartFileValidator
 
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
-        if (file == null || file.isEmpty()) {
+        if (isNull(file) || file.isEmpty()) {
             return true;
         }
 
@@ -100,7 +103,7 @@ public class MultipartFileValidator
      * @return the file extension, or null if it cannot be determined.
      */
     private String getFileExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
+        if (isNull(fileName) || !fileName.contains(".")) {
             return null;
         }
         return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
