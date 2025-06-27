@@ -5,6 +5,10 @@ import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import java.util.Objects;
+
+import static java.util.Objects.isNull;
+
 /**
  * Abstract base class for validators providing common functionality.
  * <p>
@@ -43,7 +47,7 @@ public abstract class AbstractValidator {
      * @return true if the collection is null or empty, false otherwise
      */
     protected <T> boolean isNullOrEmpty(Iterable<T> collection) {
-        return collection == null || !collection.iterator().hasNext();
+        return isNull(collection) || !collection.iterator().hasNext();
     }
 
     /**
@@ -53,7 +57,7 @@ public abstract class AbstractValidator {
      * @return true if the string is null or empty, false otherwise
      */
     protected boolean isNullOrEmpty(String value) {
-        return value == null || value.isEmpty();
+        return isNull(value) || value.isEmpty();
     }
 
     /**
