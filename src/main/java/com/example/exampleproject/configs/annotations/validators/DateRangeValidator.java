@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 import java.time.*;
 import java.util.Objects;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 public class DateRangeValidator extends AbstractValidator implements ConstraintValidator<DateRangeValidation, Object> {
 
@@ -49,16 +51,16 @@ public class DateRangeValidator extends AbstractValidator implements ConstraintV
             Object dateAValue = clazz.getMethod(dateAField).invoke(value);
             Object dateBValue = clazz.getMethod(dateBField).invoke(value);
 
-            if (dateAValue == null && dateBValue == null) {
+            if (isNull(dateAValue) && isNull(dateBValue)) {
                 return true;
             }
 
-            if (dateAValue == null) {
+            if (isNull(dateAValue)) {
                 addConstraintViolationWithPropertyNode(context, dateAField,
                         "msg.validation.request.field.date.range.empty",
                         dateAJsonProperty, dateBJsonProperty);
                 isValid = false;
-            } else if (dateBValue == null) {
+            } else if (isNull(dateBValue)) {
                 addConstraintViolationWithPropertyNode(context, dateBField,
                         "msg.validation.request.field.date.range.empty",
                         dateAJsonProperty, dateBJsonProperty);
