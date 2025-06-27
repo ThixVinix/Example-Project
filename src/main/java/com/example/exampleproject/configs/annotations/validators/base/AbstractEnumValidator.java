@@ -8,6 +8,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.nonNull;
+
 /**
  * Abstract base class for validators that validate enum values.
  * <p>
@@ -62,7 +64,7 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
             );
 
             var builder = context.buildConstraintViolationWithTemplate(message);
-            if (builder != null) {
+            if (nonNull(builder)) {
                 builder.addConstraintViolation();
             } else {
                 log.warn("Could not build constraint violation for value: {}", invalidValue);
@@ -92,7 +94,7 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
      * @return the value of the enum constant
      */
     protected Object getEnumValue(Enum<?> enumConstant) {
-        if (accessorMethod != null) {
+        if (nonNull(accessorMethod)) {
             try {
                 return accessorMethod.invoke(enumConstant);
             } catch (Exception e) {
@@ -112,7 +114,7 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
      * @return true if the value matches the enum value, false otherwise
      */
     protected boolean enumValueMatches(Enum<?> enumConstant, Object value) {
-        if (accessorMethod != null) {
+        if (nonNull(accessorMethod)) {
             try {
                 Object enumValue = accessorMethod.invoke(enumConstant);
                 return enumValue.equals(value);
