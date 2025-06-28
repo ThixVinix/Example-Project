@@ -67,7 +67,7 @@ class Base64FileValidatorTest {
         context = mock(ConstraintValidatorContext.class);
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         base64FileValidator.initialize(base64FileValidation);
     }
 
@@ -326,7 +326,7 @@ class Base64FileValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(-1);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(-1);
 
         // Act
         base64FileValidator.initialize(base64FileValidation);

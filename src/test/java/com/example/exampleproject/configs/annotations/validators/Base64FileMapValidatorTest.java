@@ -72,7 +72,7 @@ class Base64FileMapValidatorTest {
         context = mock(ConstraintValidatorContext.class);
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(3);
         base64FileMapValidator.initialize(base64FileValidation);
     }
@@ -825,7 +825,7 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(-1);
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
@@ -967,15 +967,15 @@ class Base64FileMapValidatorTest {
      */
     @Order(26)
     @Tag(value = IS_VALID)
-    @DisplayName(IS_VALID + " - Given zero maxTotalSizeMB, then should skip total size validation")
+    @DisplayName(IS_VALID + " - Given zero maxTotalSizeInMB, then should skip total size validation")
     @Test
-    void isValid_WhenZeroMaxTotalSizeMB_ThenShouldSkipTotalSizeValidation() {
+    void isValid_WhenZeroMaxTotalSizeInMB_ThenShouldSkipTotalSizeValidation() {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(3);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(0);
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(0);
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -988,7 +988,7 @@ class Base64FileMapValidatorTest {
         boolean isValid = validator.isValid(validFiles, context);
 
         // Assert
-        assertTrue(isValid, "isValid should return true when maxTotalSizeMB is zero (disabled)");
+        assertTrue(isValid, "isValid should return true when maxTotalSizeInMB is zero (disabled)");
     }
 
     /**
@@ -1070,15 +1070,15 @@ class Base64FileMapValidatorTest {
      */
     @Order(29)
     @Tag(value = IS_VALID)
-    @DisplayName("validateTotalSize - Given negative maxTotalSizeMB, then should skip total size validation")
+    @DisplayName("validateTotalSize - Given negative maxTotalSizeInMB, then should skip total size validation")
     @Test
-    void validateTotalSize_WhenNegativeMaxTotalSizeMB_ThenShouldSkipTotalSizeValidation() {
+    void validateTotalSize_WhenNegativeMaxTotalSizeInMB_ThenShouldSkipTotalSizeValidation() {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(3);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(-1);
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(-1);
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1107,9 +1107,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(3);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(10); // 10MB limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1144,9 +1144,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(10);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(10);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(5); // 5MB limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(5); // 5MB limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1189,9 +1189,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(10); // 10MB limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1226,9 +1226,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(1); // Very small limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(1); // Very small limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1262,9 +1262,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(1); // Very small limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(1); // Very small limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1291,9 +1291,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(5);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(5);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(10); // 10MB limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(10); // 10MB limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
@@ -1329,9 +1329,9 @@ class Base64FileMapValidatorTest {
         // Arrange
         Base64FileValidation base64FileValidation = mock(Base64FileValidation.class);
         when(base64FileValidation.allowedTypes()).thenReturn(new String[]{VALID_PDF_MIME_TYPE, VALID_JPEG_MIME_TYPE});
-        when(base64FileValidation.maxSizeInMB()).thenReturn(10);
+        when(base64FileValidation.maxSizePerFileInMB()).thenReturn(10);
         when(base64FileValidation.maxFileCount()).thenReturn(5);
-        when(base64FileValidation.maxTotalSizeMB()).thenReturn(4); // 4MB limit
+        when(base64FileValidation.maxTotalSizeInMB()).thenReturn(4); // 4MB limit
 
         Base64FileMapValidator validator = new Base64FileMapValidator();
         validator.initialize(base64FileValidation);
