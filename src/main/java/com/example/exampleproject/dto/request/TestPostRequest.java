@@ -110,7 +110,7 @@ public record TestPostRequest(
         @NotBlank
         @Base64FileValidation(
                 allowedTypes = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"},
-                maxSizeInMB = 3)
+                maxSizePerFileInMB = 3)
         @JsonProperty(value = "imagemBase64", required = true)
         @Schema(description = "Base64 encoded image. Expected format: data:[type]/[subtype];base64,[content]",
                 example = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAADMElEQVR4nOzVwQnAIBQF" +
@@ -120,7 +120,8 @@ public record TestPostRequest(
         @NotEmpty
         @Base64FileValidation(
                 allowedTypes = {"application/pdf", "text/plain"},
-                maxSizeInMB = 4,
+                maxSizePerFileInMB = 4,
+                maxTotalSizeInMB = 12,
                 maxFileCount = 3
         )
         @JsonProperty("listaBase64")
@@ -133,7 +134,8 @@ public record TestPostRequest(
         @NotEmpty
         @Base64FileValidation(
                 allowedTypes = {"application/pdf", "text/plain"},
-                maxSizeInMB = 4,
+                maxSizePerFileInMB = 4,
+                maxTotalSizeInMB = 12,
                 maxFileCount = 3
         )
         @JsonProperty("mapaBase64")
