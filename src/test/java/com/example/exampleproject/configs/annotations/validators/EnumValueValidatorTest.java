@@ -205,4 +205,46 @@ class EnumValueValidatorTest {
         assertFalse(isValid,
                 "isValid should return false for an invalid enum name when getValue is not available");
     }
+
+    /**
+     * Method test for
+     * {@link EnumValueValidator#isValid(String, ConstraintValidatorContext)}
+     */
+    @Order(6)
+    @Tag(value = IS_VALID)
+    @DisplayName(IS_VALID + " - Given hideValidOptions=true, then should hide valid values in error message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O valor invalid é inválido.",
+            "en_US|The value invalid is invalid."
+    }, delimiter = CSV_DELIMITER)
+    void isValid_WhenHideValidOptionsTrue_ThenShouldHideValidValues(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        EnumValueValidation enumValueValidation = mock(EnumValueValidation.class);
+        when(enumValueValidation.enumClass()).thenAnswer(_ -> TestValueEnum.class);
+        when(enumValueValidation.hideValidOptions()).thenReturn(true);
+
+        EnumValueValidator localValidator = new EnumValueValidator();
+        localValidator.initialize(enumValueValidation);
+
+        var builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+        doNothing().when(context).disableDefaultConstraintViolation();
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addConstraintViolation()).thenReturn(context);
+
+        // Act
+        boolean isValid = localValidator.isValid("invalid", context);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context).buildConstraintViolationWithTemplate(messageCaptor.capture());
+        String capturedMessage = messageCaptor.getValue();
+
+        // Assert
+        assertEquals(expectedMessage, capturedMessage);
+        assertFalse(capturedMessage.contains("valid values are"));
+        assertFalse(capturedMessage.contains("one, three, two"));
+        assertFalse(isValid, "isValid should return false for an invalid enum value");
+    }
 }
