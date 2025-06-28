@@ -203,10 +203,10 @@ O projeto utiliza o Spring Cloud OpenFeign para simplificar a integração com A
 1. **Interfaces de Cliente**: 
    Definidas com a anotação `@FeignClient`, especificando o nome do serviço e a URL base.
    ```java
-   @FeignClient(name = "jsonplaceholder", url = "https://jsonplaceholder.typicode.com")
-   public interface JsonPlaceholderClient {
-       @GetMapping("/posts/{id}")
-       JsonPlaceholderPost getPostById(@PathVariable("id") Long id);
+   @FeignClient(name = "name-client-example", url = "${url.client.example}")
+   public interface ExampleClient {
+       @GetMapping("/context/{id}")
+       ExampleObject getById(@PathVariable("id") Long id);
 
        // outros métodos...
    }
@@ -216,17 +216,17 @@ O projeto utiliza o Spring Cloud OpenFeign para simplificar a integração com A
    Implementa a lógica de negócios e utiliza os clientes Feign para fazer as chamadas externas.
    ```java
    @Service
-   public class JsonPlaceholderServiceImpl implements JsonPlaceholderService {
-       private final JsonPlaceholderClient jsonPlaceholderClient;
+   public class ExampleServiceImpl implements ExampleService {
+       private final ExampleClient exampleClient;
 
        @Autowired
-       public JsonPlaceholderServiceImpl(JsonPlaceholderClient jsonPlaceholderClient) {
-           this.jsonPlaceholderClient = jsonPlaceholderClient;
+       public ExampleServiceImpl(ExampleClient exampleClient) {
+           this.exampleClient = exampleClient;
        }
 
        @Override
-       public JsonPlaceholderPost getPostById(Long id) {
-           return jsonPlaceholderClient.getPostById(id);
+       public ExampleObject getById(Long id) {
+           return exampleClient.getById(id);
        }
 
        // outros métodos...
@@ -253,8 +253,55 @@ O projeto utiliza o Spring Cloud OpenFeign para simplificar a integração com A
 
 O projeto implementa diversas anotações customizadas para validação de dados, seguindo o padrão do Bean Validation:
 
+#### `@Base64FileValidation`
+Valida se uma string (ou coleção de strings) contém arquivos Base64 válidos, verificando formato, tamanho, tipo MIME e quantidade.
+
+**Características:**
+- ✅ Suporta validação de strings individuais, listas e mapas
+- ✅ Validação de tipos MIME permitidos
+- ✅ Controle de tamanho individual e total dos arquivos
+- ✅ Limite de quantidade de arquivos em coleções
+
+```java
+// Validação de arquivo único
+@Base64FileValidation(maxSizePerFileInMB = 5, allowedTypes = {"image/jpeg", "image/png"})
+private String profileImage;
+
+// Validação de lista de arquivos
+@Base64FileValidation(maxSizePerFileInMB = 4, maxTotalSizeInMB = 12, maxFileCount = 3, allowedTypes = {"image/jpeg", "image/png"})
+private List<String> attachments;
+
+// Validação de mapa de arquivos
+@Base64FileValidation(maxSizePerFileInMB = 4, maxTotalSizeInMB = 12, maxFileCount = 3, allowedTypes = {"image/jpeg", "image/png"})
+private Map<String, String> documentFiles;
+```
+
+#### `@MultipartFileValidation`
+Valida arquivos MultipartFile, verificando tipo MIME, tamanho individual, quantidade e tamanho total.
+
+**Características:**
+- ✅ Suporta validação de arquivos individuais e listas
+- ✅ Validação de tipos MIME com conjunto padrão abrangente
+- ✅ Controle de tamanho individual e total dos arquivos
+- ✅ Limite de quantidade de arquivos
+
+```java
+// Validação de arquivo único
+@MultipartFileValidation(maxSizeInMB = 10,  allowedTypes = {"application/pdf"})
+private MultipartFile document;
+
+// Validação de lista de arquivos
+@MultipartFileValidation(maxSizeInMB = 4, maxTotalSizeMB = 12, maxFileCount = 3,  allowedTypes = {"image/png"})
+private List<MultipartFile> images;
+```
+
 #### `@EnumCodeValidation`
 Valida se um valor numérico corresponde ao código de uma constante em uma classe Enum específica.
+
+**Características:**
+- ✅ Validação baseada em códigos numéricos de enums
+- ✅ Suporte a enums que implementam interfaces com método `getCode()`
+- ✅ Mensagens de erro localizadas
 
 ```java
 @EnumCodeValidation(enumClass = StatusEnum.class)
@@ -262,7 +309,12 @@ private Integer statusCode;
 ```
 
 #### `@EnumValueValidation`
-Valida se um valor de string corresponde ao valor de uma constante em uma classe Enum específica.
+Valida se um valor de string corresponde ao valor (name) de uma constante em uma classe Enum específica.
+
+**Características:**
+- ✅ Validação baseada nos nomes das constantes do enum
+- ✅ Comparação case-sensitive
+- ✅ Mensagens de erro localizadas
 
 ```java
 @EnumValueValidation(enumClass = StatusEnum.class)
@@ -270,7 +322,13 @@ private String statusValue;
 ```
 
 #### `@DateRangeValidation`
-Valida se um par de datas forma um intervalo válido, onde a primeira data deve ser anterior à segunda.
+Valida se um par de datas forma um intervalo válido, onde a data inicial deve ser anterior ou igual à data final.
+
+**Características:**
+- ✅ Validação de intervalos de datas em nível de classe
+- ✅ Suporte a diferentes tipos de data (LocalDate, LocalDateTime, etc.)
+- ✅ Configuração flexível dos nomes dos campos
+- ✅ Permite datas iguais por padrão
 
 ```java
 @DateRangeValidation(startDateField = "startDate", endDateField = "endDate")
@@ -278,14 +336,32 @@ public class DateRangeRequest {
     private LocalDate startDate;
     private LocalDate endDate;
 }
+
+// Múltiplas validações de intervalo na mesma classe
+@ValidDateRanges({
+    @DateRangeValidation(startDateField = "checkIn", endDateField = "checkOut"),
+    @DateRangeValidation(startDateField = "validFrom", endDateField = "validUntil")
+})
+public class ReservationRequest {
+    private LocalDate checkIn;
+    private LocalDate checkOut;
+    private LocalDate validFrom;
+    private LocalDate validUntil;
+}
 ```
 
-#### `@Base64FileValidation`
-Valida se uma string é um arquivo Base64 válido, verificando formato, tamanho e tipo.
+#### `@CpfCnpjValidation`
+Valida se uma string contém um CPF (Cadastro de Pessoas Físicas) ou CNPJ (Cadastro Nacional da Pessoa Jurídica) brasileiro válido.
+
+**Características:**
+- ✅ Validação de CPF (11 dígitos) e CNPJ (14 dígitos)
+- ✅ Verificação de dígitos verificadores
+- ✅ Aceita formatos com ou sem máscara
+- ✅ Mensagens de erro localizadas
 
 ```java
-@Base64FileValidation(maxSizeMB = 5, allowedTypes = {"image/jpeg", "image/png"})
-private String fileBase64;
+@CpfCnpjValidation
+private String document; // Aceita: "12345678901", "123.456.789-01", "12345678000195", "12.345.678/0001-95"
 ```
 
 #### Implementação
@@ -389,7 +465,7 @@ Este projeto foi desenvolvido seguindo os princípios SOLID, fundamentais para c
 > "Subtipos devem ser substituíveis por seus tipos-base."
 
 - ✅ Implementações de interfaces devem respeitar os contratos definidos
-- 📝 **Exemplo**: Uma classe `JsonPlaceholderServiceImpl` deve poder substituir completamente a interface `JsonPlaceholderService`
+- 📝 **Exemplo**: Uma classe `ExampleServiceImpl` deve poder substituir completamente a interface `ExampleService`
 
 ### 🧩 Interface Segregation Principle (ISP)
 > "Clientes não devem ser forçados a depender de interfaces que não utilizam."
@@ -401,7 +477,7 @@ Este projeto foi desenvolvido seguindo os princípios SOLID, fundamentais para c
 > "Módulos de alto nível não devem depender de módulos de baixo nível. Ambos devem depender de abstrações."
 
 - ✅ Usar injeção de dependência e programar para interfaces, não implementações
-- 📝 **Exemplo**: Injetar `JsonPlaceholderService` em vez de `JsonPlaceholderServiceImpl`
+- 📝 **Exemplo**: Injetar `ExampleService` em vez de `ExampleServiceImpl`
 
 [🔼 _**Retornar ao sumário**_](#-sumário)
 
