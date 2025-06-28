@@ -24,6 +24,8 @@ public @interface EnumCodeValidation {
     @SuppressWarnings("squid:S1452")
     Class<? extends Enum<?>> enumClass();
 
+    boolean hideValidOptions() default false;
+
     String message() default "The code provided does not correspond to a valid value of the ENUM.";
 
     Class<?>[] groups() default {};

@@ -16,8 +16,11 @@ import java.util.Arrays;
 public class EnumCodeValidator
         extends AbstractEnumValidator implements ConstraintValidator<EnumCodeValidation, Integer> {
 
+    private EnumCodeValidation annotation;
+
     @Override
     public void initialize(EnumCodeValidation annotation) {
+        this.annotation = annotation;
         super.initialize(annotation.enumClass(), "getCode");
     }
 
@@ -44,8 +47,17 @@ public class EnumCodeValidator
                 .anyMatch(enumConstant -> enumValueMatches(enumConstant, value));
 
         if (!isValid) {
-            addConstraintViolationWithValidValues(context, value, 
-                    "msg.validation.request.field.enum.invalid.code");
+            if (annotation.hideValidOptions()) {
+                context.disableDefaultConstraintViolation();
+                String errorMessage = MessageUtils.getMessage(
+                        "msg.validation.request.field.enum.invalid.code.hidden",
+                        String.valueOf(value)
+                );
+                context.buildConstraintViolationWithTemplate(errorMessage).addConstraintViolation();
+            } else {
+                addConstraintViolationWithValidValues(context, value, 
+                        "msg.validation.request.field.enum.invalid.code");
+            }
         }
 
         return isValid;
