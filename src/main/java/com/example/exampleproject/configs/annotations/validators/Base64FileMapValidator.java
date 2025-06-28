@@ -12,7 +12,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import static java.util.Objects.isNull;
@@ -270,12 +269,12 @@ public class Base64FileMapValidator
      * @return true if the total size is valid, false otherwise
      */
     private boolean validateTotalSize(Map<String, String> values, ConstraintValidatorContext context) {
-        if (helper.getMaxTotalSizeMB() <= NumberUtils.INTEGER_ZERO) {
+        if (helper.getMaxTotalSizeInMB() <= NumberUtils.INTEGER_ZERO) {
             return true;
         }
 
         final long BYTES_IN_ONE_MB = 1024L * 1024L;
-        long maxTotalSizeInBytes = helper.getMaxTotalSizeMB() * BYTES_IN_ONE_MB;
+        long maxTotalSizeInBytes = helper.getMaxTotalSizeInMB() * BYTES_IN_ONE_MB;
         long totalSizeInBytes = NumberUtils.LONG_ZERO;
 
         for (String base64Value : values.values()) {
@@ -288,7 +287,7 @@ public class Base64FileMapValidator
         if (totalSizeInBytes > maxTotalSizeInBytes) {
             double actualTotalSizeInMB = (double) totalSizeInBytes / BYTES_IN_ONE_MB;
             addConstraintViolation(context, "msg.validation.request.field.base64file.max.total.size",
-                    String.format("%.4f", actualTotalSizeInMB), String.valueOf(helper.getMaxTotalSizeMB()));
+                    String.format("%.4f", actualTotalSizeInMB), String.valueOf(helper.getMaxTotalSizeInMB()));
             return false;
         }
         return true;

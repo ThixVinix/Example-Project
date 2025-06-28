@@ -23,7 +23,7 @@ import static java.util.Objects.isNull;
 public class Base64FileCollectionValidatorHelper {
 
     private int maxFileCount;
-    private int maxTotalSizeMB;
+    private int maxTotalSizeInMB;
     private Base64FileValidator base64FileValidator;
 
     /**
@@ -33,7 +33,7 @@ public class Base64FileCollectionValidatorHelper {
      */
     public void initialize(Base64FileValidation annotation) {
         this.maxFileCount = annotation.maxFileCount();
-        this.maxTotalSizeMB = annotation.maxTotalSizeMB();
+        this.maxTotalSizeInMB = annotation.maxTotalSizeInMB();
         this.base64FileValidator = new Base64FileValidator();
         this.base64FileValidator.initialize(annotation);
     }

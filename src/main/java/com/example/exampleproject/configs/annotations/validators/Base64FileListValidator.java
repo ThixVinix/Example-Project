@@ -32,7 +32,7 @@ public class Base64FileListValidator extends AbstractListValidator
             return false;
         }
 
-        if (validateTotalSize(values, helper.getMaxTotalSizeMB(), helper::calculateBase64FileSize, context,
+        if (validateTotalSize(values, helper.getMaxTotalSizeInMB(), helper::calculateBase64FileSize, context,
                 "msg.validation.request.field.base64file.max.total.size")) {
             return false;
         }

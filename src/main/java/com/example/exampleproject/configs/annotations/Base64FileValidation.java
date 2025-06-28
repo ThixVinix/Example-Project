@@ -34,7 +34,7 @@ import java.lang.annotation.*;
  *   <li><strong>groups:</strong> Defines validation groups, allowing selective application of rules.</li>
  *   <li><strong>payload:</strong> Provides custom metadata for validation.</li>
  *   <li><strong>allowedTypes:</strong> Specifies a set of permissible MIME types for the base64 file(s).</li>
- *   <li><strong>maxSizeInMB:</strong> Sets the maximum allowed size of a base64-encoded file in megabytes.</li>
+ *   <li><strong>maxSizePerFileInMB:</strong> Sets the maximum allowed size of a base64-encoded file in megabytes.</li>
  *   <li><strong>maxFileCount:</strong> Specifies the maximum number of files allowed when validating collections.</li>
  * </ul>
  */
@@ -74,7 +74,7 @@ public @interface Base64FileValidation {
     /**
      * Maximum file size in megabytes (Default: 2 MB). Internally converted to bytes.
      */
-    int maxSizeInMB() default 2;
+    int maxSizePerFileInMB() default 2;
 
     /**
      * Maximum file count in the list (Default: 5 files).
@@ -85,6 +85,6 @@ public @interface Base64FileValidation {
      * Maximum total size in megabytes for all files combined (Default: 10 MB). 
      * Internally converted to bytes. Set to 0 to disable total size validation.
      */
-    int maxTotalSizeMB() default 10;
+    int maxTotalSizeInMB() default 10;
 
 }

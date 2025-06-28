@@ -39,7 +39,7 @@ public class Base64FileValidator
     @Override
     public void initialize(Base64FileValidation annotation) {
         this.allowedTypes = annotation.allowedTypes();
-        this.maxSizeInMB = validateMaxSizeInMB(annotation.maxSizeInMB());
+        this.maxSizeInMB = validateMaxSizeInMB(annotation.maxSizePerFileInMB());
         this.tika = new Tika();
     }
 
