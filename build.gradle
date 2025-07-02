@@ -73,6 +73,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    jvmArgs '-XX:+EnableDynamicAgentLoading', '-Xshare:off'
 }
 
 dependencyManagement {
