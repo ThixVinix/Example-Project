@@ -1,6 +1,8 @@
 package com.example.exampleproject.configs.annotations.validators;
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.annotations.CpfCnpjValidation;
+import com.example.exampleproject.utils.MessageUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for class {@link CpfCnpjValidator}
  */
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @Tag(value = "CpfCnpjValidator_Tests")
 @DisplayName("CpfCnpjValidator Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

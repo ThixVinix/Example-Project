@@ -1,6 +1,8 @@
 package com.example.exampleproject.configs.exceptions.handler.helper;
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
+import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.annotation.Nonnull;
@@ -44,7 +46,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for class {@link ExceptionHandlerMessageHelper}
  */
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @Tag(value = "ExceptionHandlerMessageHelper_Tests")
 @DisplayName("ExceptionHandlerMessageHelper Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

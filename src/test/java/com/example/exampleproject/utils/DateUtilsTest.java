@@ -1,5 +1,6 @@
 package com.example.exampleproject.utils;
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,7 +16,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @Tag(value = "DateUtils_Tests")
 @DisplayName("DateUtils Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

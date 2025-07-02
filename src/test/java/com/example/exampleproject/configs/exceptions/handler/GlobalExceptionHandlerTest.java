@@ -1,6 +1,7 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.exceptions.BaseError;
 import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
 import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
@@ -8,6 +9,7 @@ import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolati
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.configs.exceptions.custom.UnauthorizedException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
+import com.example.exampleproject.utils.MessageUtils;
 import feign.FeignException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,7 +50,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for class {@link GlobalExceptionHandler}
  */
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @AutoConfigureMockMvc
 @Tag(value = "GlobalExceptionHandler_Tests")
 @DisplayName("GlobalExceptionHandler Tests")

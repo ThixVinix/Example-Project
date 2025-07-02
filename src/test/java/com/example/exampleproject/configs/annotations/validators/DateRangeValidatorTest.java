@@ -1,5 +1,6 @@
 package com.example.exampleproject.configs.annotations.validators;
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for class {@link DateRangeValidator}
  */
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @Tag("DateRangeValidator_Tests")
 @DisplayName("DateRangeValidator Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

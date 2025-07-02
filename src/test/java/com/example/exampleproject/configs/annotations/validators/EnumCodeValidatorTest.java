@@ -1,6 +1,8 @@
 package com.example.exampleproject.configs.annotations.validators;
 
+import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.annotations.EnumCodeValidation;
+import com.example.exampleproject.utils.MessageUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for class {@link EnumCodeValidator}
  */
-@SpringBootTest
+@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
 @Tag(value = "EnumCodeValidator_Tests")
 @DisplayName("EnumCodeValidator Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
