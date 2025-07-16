@@ -7,6 +7,8 @@ import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.regex.Pattern;
+
 /**
  * Validator class for validating if a string is a valid CPF or CNPJ.
  * <p>
@@ -19,6 +21,40 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
 
     private static final byte CPF_LENGTH = 11;
     private static final byte CNPJ_LENGTH = 14;
+    private static final Pattern DIGITS_ONLY_PATTERN = Pattern.compile("^\\d+$");
+
+    // Constants for verification digit calculation
+    private static final int VERIFICATION_DIGIT_MODULO = 11;
+    private static final int VERIFICATION_DIGIT_THRESHOLD = 2;
+    private static final int VERIFICATION_DIGIT_BASE = 11;
+
+    // CPF weight constants
+    private static final int CPF_WEIGHT_10 = 10;
+    private static final int CPF_WEIGHT_9 = 9;
+    private static final int CPF_WEIGHT_8 = 8;
+    private static final int CPF_WEIGHT_7 = 7;
+    private static final int CPF_WEIGHT_6 = 6;
+    private static final int CPF_WEIGHT_5 = 5;
+    private static final int CPF_WEIGHT_4 = 4;
+    private static final int CPF_WEIGHT_3 = 3;
+    private static final int CPF_WEIGHT_2 = 2;
+    private static final int CPF_WEIGHT_11 = 11;
+
+    // CNPJ weight constants
+    private static final int CNPJ_WEIGHT_9 = 9;
+    private static final int CNPJ_WEIGHT_8 = 8;
+    private static final int CNPJ_WEIGHT_7 = 7;
+    private static final int CNPJ_WEIGHT_6 = 6;
+    private static final int CNPJ_WEIGHT_5 = 5;
+    private static final int CNPJ_WEIGHT_4 = 4;
+    private static final int CNPJ_WEIGHT_3 = 3;
+    private static final int CNPJ_WEIGHT_2 = 2;
+
+    // Position constants
+    private static final int CPF_FIRST_DIGIT_POSITION = 9;
+    private static final int CPF_SECOND_DIGIT_POSITION = 10;
+    private static final int CNPJ_FIRST_DIGIT_POSITION = 12;
+    private static final int CNPJ_SECOND_DIGIT_POSITION = 13;
 
     @Override
     public void initialize(CpfCnpjValidation constraintAnnotation) {
@@ -31,32 +67,48 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
             return true;
         }
 
-        if (!value.matches("^\\d+$")) {
+        if (!hasValidFormat(value, context)) {
+            return false;
+        }
+
+        return validateByLength(value, context);
+    }
+
+    private boolean hasValidFormat(String value, ConstraintValidatorContext context) {
+        if (!DIGITS_ONLY_PATTERN.matcher(value).matches()) {
             addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalid");
             return false;
         }
+        return true;
+    }
 
-        String unformatted = value.replaceAll("\\D", "");
-
-        if (unformatted.length() == CPF_LENGTH) {
-            if (isValidCpf(unformatted)) {
-                return true;
-            }
-            addConstraintViolation(context, "msg.validation.request.field.cpf.invalidCheckDigit");
+    private boolean validateByLength(String value, ConstraintValidatorContext context) {
+        if (value.length() == CPF_LENGTH) {
+            return validateCpf(value, context);
+        } else if (value.length() == CNPJ_LENGTH) {
+            return validateCnpj(value, context);
+        } else {
+            addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalidLength");
             return false;
         }
+    }
 
-        if (unformatted.length() == CNPJ_LENGTH) {
-            if (isValidCnpj(unformatted)) {
-                return true;
-            }
-            addConstraintViolation(context, "msg.validation.request.field.cnpj.invalidCheckDigit");
-            return false;
+    private boolean validateCpf(String value, ConstraintValidatorContext context) {
+        if (isValidCpf(value)) {
+            return true;
         }
-
-        addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalidLength");
+        addConstraintViolation(context, "msg.validation.request.field.cpf.invalidCheckDigit");
         return false;
     }
+
+    private boolean validateCnpj(String value, ConstraintValidatorContext context) {
+        if (isValidCnpj(value)) {
+            return true;
+        }
+        addConstraintViolation(context, "msg.validation.request.field.cnpj.invalidCheckDigit");
+        return false;
+    }
+
 
     /**
      * Validates whether the provided CPF (Cadastro de Pessoas Físicas - Brazilian individual taxpayer registry number)
@@ -69,9 +121,18 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
         if (isRepeatedDigits(cpf) || cpf.length() != CPF_LENGTH) {
             return false;
         }
-        int digit1 = calculateVerificationDigit(cpf, new int[]{10, 9, 8, 7, 6, 5, 4, 3, 2}, 9);
-        int digit2 = calculateVerificationDigit(cpf, new int[]{11, 10, 9, 8, 7, 6, 5, 4, 3, 2}, 10);
-        return cpf.charAt(9) - '0' == digit1 && cpf.charAt(10) - '0' == digit2;
+        int digit1 = calculateVerificationDigit(cpf, new int[]{
+                CPF_WEIGHT_10, CPF_WEIGHT_9, CPF_WEIGHT_8, CPF_WEIGHT_7, CPF_WEIGHT_6,
+                CPF_WEIGHT_5, CPF_WEIGHT_4, CPF_WEIGHT_3, CPF_WEIGHT_2
+        }, CPF_FIRST_DIGIT_POSITION);
+
+        int digit2 = calculateVerificationDigit(cpf, new int[]{
+                CPF_WEIGHT_11, CPF_WEIGHT_10, CPF_WEIGHT_9, CPF_WEIGHT_8, CPF_WEIGHT_7,
+                CPF_WEIGHT_6, CPF_WEIGHT_5, CPF_WEIGHT_4, CPF_WEIGHT_3, CPF_WEIGHT_2
+        }, CPF_SECOND_DIGIT_POSITION);
+
+        return (cpf.charAt(CPF_FIRST_DIGIT_POSITION) - '0' == digit1) &&
+                (cpf.charAt(CPF_SECOND_DIGIT_POSITION) - '0' == digit2);
     }
 
     /**
@@ -86,9 +147,18 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
         if (isRepeatedDigits(cnpj) || cnpj.length() != CNPJ_LENGTH) {
             return false;
         }
-        int digit1 = calculateVerificationDigit(cnpj, new int[]{5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2}, 12);
-        int digit2 = calculateVerificationDigit(cnpj, new int[]{6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2}, 13);
-        return cnpj.charAt(12) - '0' == digit1 && cnpj.charAt(13) - '0' == digit2;
+        int digit1 = calculateVerificationDigit(cnpj, new int[]{
+                CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2, CNPJ_WEIGHT_9, CNPJ_WEIGHT_8,
+                CNPJ_WEIGHT_7, CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2
+        }, CNPJ_FIRST_DIGIT_POSITION);
+
+        int digit2 = calculateVerificationDigit(cnpj, new int[]{
+                CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2, CNPJ_WEIGHT_9,
+                CNPJ_WEIGHT_8, CNPJ_WEIGHT_7, CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2
+        }, CNPJ_SECOND_DIGIT_POSITION);
+
+        return (cnpj.charAt(CNPJ_FIRST_DIGIT_POSITION) - '0' == digit1) &&
+                (cnpj.charAt(CNPJ_SECOND_DIGIT_POSITION) - '0' == digit2);
     }
 
     /**
@@ -115,9 +185,9 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     private int calculateVerificationDigit(String value, int[] weights, int length) {
         int sum = 0;
         for (int i = 0; i < length; i++) {
-            sum += (value.charAt(i) - '0') * weights[i];
+            sum += ((value.charAt(i) - '0') * weights[i]);
         }
-        int remainder = sum % 11;
-        return remainder < 2 ? 0 : 11 - remainder;
+        int remainder = (sum % VERIFICATION_DIGIT_MODULO);
+        return (remainder < VERIFICATION_DIGIT_THRESHOLD) ? 0 : (VERIFICATION_DIGIT_BASE - remainder);
     }
 }
