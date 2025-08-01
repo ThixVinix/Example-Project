@@ -22,9 +22,9 @@ public abstract class AbstractListValidator extends AbstractValidator {
     /**
      * Validates that the list does not exceed the maximum size.
      *
-     * @param list the list to validate
-     * @param maxSize the maximum allowed size
-     * @param context the validation context
+     * @param list       the list to validate
+     * @param maxSize    the maximum allowed size
+     * @param context    the validation context
      * @param messageKey the message key for the error message
      * @return true if validation fails (list size exceeds max size), false otherwise
      */
@@ -62,15 +62,15 @@ public abstract class AbstractListValidator extends AbstractValidator {
     /**
      * Validates each item in the list using the provided item validator.
      *
-     * @param list the list to validate
-     * @param itemValidator the validator for individual items
-     * @param context the validation context
+     * @param list                  the list to validate
+     * @param itemValidator         the validator for individual items
+     * @param context               the validation context
      * @param invalidItemMessageKey the message key for invalid item error messages
      * @return true if all items are valid, false otherwise
      */
-    protected <T> boolean validateEachItem(List<T> list, ItemValidator<T> itemValidator, 
-                                          ConstraintValidatorContext context, 
-                                          String invalidItemMessageKey) {
+    protected <T> boolean validateEachItem(List<T> list, ItemValidator<T> itemValidator,
+                                           ConstraintValidatorContext context,
+                                           String invalidItemMessageKey) {
         for (int i = 0; i < list.size(); i++) {
             T item = list.get(i);
 
@@ -86,29 +86,21 @@ public abstract class AbstractListValidator extends AbstractValidator {
     /**
      * Validates that the total size of the items in the list does not exceed a specified maximum size in MB.
      *
-     * @param <T> the type of elements in the list
-     * @param list the list of items to validate
+     * @param <T>            the type of elements in the list
+     * @param list           the list of items to validate
      * @param maxTotalSizeMB the maximum allowed total size in megabytes; if invalid, a default value is used
      * @param sizeCalculator the strategy for calculating the size of individual items in bytes
-     * @param context the validation context used to report constraint violations
-     * @param messageKey the key for the error message in case of a violation
+     * @param context        the validation context used to report constraint violations
+     * @param messageKey     the key for the error message in case of a violation
      * @return true if the total size of the items exceeds the maximum allowed size, false otherwise
      */
     protected <T> boolean validateTotalSize(List<T> list,
-                                           int maxTotalSizeMB,
-                                           SizeCalculator<T> sizeCalculator,
-                                           ConstraintValidatorContext context,
-                                           String messageKey) {
+                                            int maxTotalSizeMB,
+                                            SizeCalculator<T> sizeCalculator,
+                                            ConstraintValidatorContext context,
+                                            String messageKey) {
 
-        final int DEFAULT_MAX_TOTAL_SIZE_IN_MB = 10;
-
-        if (maxTotalSizeMB <= NumberUtils.INTEGER_ZERO) {
-            log.warn("The value of maxTotalSizeMB provided is invalid ({}). Default value of {} MB will be used.",
-                    maxTotalSizeMB, DEFAULT_MAX_TOTAL_SIZE_IN_MB);
-            maxTotalSizeMB = DEFAULT_MAX_TOTAL_SIZE_IN_MB;
-        }
-
-        final long BYTES_IN_ONE_MB = 1024L * 1024L;
+        maxTotalSizeMB = validateMaxTotalSizeMB(maxTotalSizeMB);
         long maxTotalSizeInBytes = maxTotalSizeMB * BYTES_IN_ONE_MB;
         long totalSizeInBytes = NumberUtils.LONG_ZERO;
 
@@ -121,7 +113,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
 
         if (totalSizeInBytes > maxTotalSizeInBytes) {
             double actualTotalSizeInMB = (double) totalSizeInBytes / BYTES_IN_ONE_MB;
-            addConstraintViolation(context, messageKey, 
+            addConstraintViolation(context, messageKey,
                     String.format("%.4f", actualTotalSizeInMB),
                     String.valueOf(maxTotalSizeMB));
             return true;
@@ -155,7 +147,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
         /**
          * Validates an individual item.
          *
-         * @param item the item to validate
+         * @param item    the item to validate
          * @param context the validation context
          * @return true if the item is valid, false otherwise
          */

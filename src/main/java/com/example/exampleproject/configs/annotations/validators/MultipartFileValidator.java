@@ -1,19 +1,15 @@
 package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.MultipartFileValidation;
-import com.example.exampleproject.configs.annotations.enums.MimeTypeEnum;
 import com.example.exampleproject.configs.annotations.validators.base.AbstractFileValidator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tika.Tika;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Objects;
 
 import static java.util.Objects.isNull;
 
@@ -59,7 +55,7 @@ public class MultipartFileValidator
             return false;
         }
 
-        return validateFileSize(file.getSize(), context, 
+        return validateFileSize(file.getSize(), context,
                 "msg.validation.request.field.multipartfile.invalid.size");
     }
 
@@ -77,59 +73,4 @@ public class MultipartFileValidator
             return file.getContentType();
         }
     }
-
-    /**
-     * Validates the consistency between MIME type and file extension.
-     *
-     * @param mimeType the detected MIME type.
-     * @param extension the file extension.
-     * @return true if the MIME type matches the extension, false otherwise.
-     */
-    private boolean isMimeTypeExtensionConsistent(String mimeType, String extension) {
-        if (MimeTypeEnum.isNotValidExtension(extension)) {
-            log.warn("No known MIME found for the extension: {}", extension);
-            return false;
-        }
-
-        String expectedExtension = MimeTypeEnum.getExtensionFromMimeType(mimeType);
-
-        return extension.equalsIgnoreCase(expectedExtension);
-    }
-
-    /**
-     * Retrieves the file extension from its name.
-     *
-     * @param fileName the file name to extract the extension from.
-     * @return the file extension, or null if it cannot be determined.
-     */
-    private String getFileExtension(String fileName) {
-        if (isNull(fileName) || !fileName.contains(".")) {
-            return null;
-        }
-        return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
-    }
-
-    /**
-     * Checks if the MIME type is in the list of allowed types.
-     *
-     * @param contentType the MIME type to check.
-     * @return true if the MIME type is allowed, false otherwise.
-     */
-    @Override
-    protected boolean isMimeTypeAllowed(String contentType) {
-        return ArrayUtils.isEmpty(allowedTypes) || super.isMimeTypeAllowed(contentType);
-    }
-
-
-    /**
-     * Checks if the MIME type is not in the list of allowed types.
-     *
-     * @param contentType the MIME type to check.
-     * @return true if the MIME type is not allowed, false otherwise.
-     */
-    @Override
-    protected boolean isMimeTypeNotAllowed(String contentType) {
-        return !ArrayUtils.isEmpty(allowedTypes) && !Arrays.asList(allowedTypes).contains(contentType);
-    }
-
 }

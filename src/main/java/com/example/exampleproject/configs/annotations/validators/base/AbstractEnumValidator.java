@@ -22,16 +22,19 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
     protected Class<? extends Enum<?>> enumClass;
     protected Method accessorMethod;
     protected String methodName;
+    protected boolean hideValidOptions;
 
     /**
      * Initializes the validator with the enum class and accessor method name.
      *
-     * @param enumClass the enum class to validate against
-     * @param methodName the name of the accessor method (e.g., "getValue", "getCode")
+     * @param enumClass        the enum class to validate against
+     * @param methodName       the name of the accessor method (e.g., "getValue", "getCode")
+     * @param hideValidOptions whether to hide valid options in error messages
      */
-    protected void initialize(Class<? extends Enum<?>> enumClass, String methodName) {
+    protected void initialize(Class<? extends Enum<?>> enumClass, String methodName, boolean hideValidOptions) {
         this.enumClass = enumClass;
         this.methodName = methodName;
+        this.hideValidOptions = hideValidOptions;
 
         try {
             this.accessorMethod = enumClass.getMethod(methodName);
@@ -45,13 +48,13 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
     /**
      * Adds a constraint violation with a list of valid values.
      *
-     * @param context the validation context
+     * @param context      the validation context
      * @param invalidValue the invalid value
-     * @param messageKey the message key for the error message
+     * @param messageKey   the message key for the error message
      */
-    protected void addConstraintViolationWithValidValues(ConstraintValidatorContext context, 
-                                                        Object invalidValue, 
-                                                        String messageKey) {
+    protected void addConstraintViolationWithValidValues(ConstraintValidatorContext context,
+                                                         Object invalidValue,
+                                                         String messageKey) {
         try {
             context.disableDefaultConstraintViolation();
 
@@ -71,6 +74,29 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
             }
         } catch (Exception e) {
             log.error("Error adding constraint violation for value {}: {}", invalidValue, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Adds a constraint violation with the appropriate error message based on the hideValidOptions setting.
+     *
+     * @param context                  the validation context
+     * @param invalidValue             the invalid value
+     * @param messageKeyWithOptions    the message key for an error message with options
+     * @param messageKeyWithoutOptions the message key for an error message without options
+     */
+    protected void addConstraintViolationForEnum(ConstraintValidatorContext context,
+                                                 Object invalidValue,
+                                                 String messageKeyWithOptions,
+                                                 String messageKeyWithoutOptions) {
+        if (hideValidOptions) {
+            context.disableDefaultConstraintViolation();
+            String errorMessage = MessageUtils.getMessage(
+                    messageKeyWithoutOptions, String.valueOf(invalidValue)
+            );
+            context.buildConstraintViolationWithTemplate(errorMessage).addConstraintViolation();
+        } else {
+            addConstraintViolationWithValidValues(context, invalidValue, messageKeyWithOptions);
         }
     }
 
@@ -110,7 +136,7 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
      * Checks if the provided value matches the enum value.
      *
      * @param enumConstant the enum constant
-     * @param value the value to check
+     * @param value        the value to check
      * @return true if the value matches the enum value, false otherwise
      */
     protected boolean enumValueMatches(Enum<?> enumConstant, Object value) {
@@ -119,16 +145,16 @@ public abstract class AbstractEnumValidator extends AbstractValidator {
                 Object enumValue = accessorMethod.invoke(enumConstant);
                 return enumValue.equals(value);
             } catch (Exception e) {
-                log.warn("Failed to access the '{}' method of Enum {}: {}", 
+                log.warn("Failed to access the '{}' method of Enum {}: {}",
                         methodName, enumClass.getSimpleName(), e.getMessage());
 
                 // Fall back to comparing with the enum name if method access fails
-                return enumConstant.name().equals(value) || 
-                       (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
+                return enumConstant.name().equals(value) ||
+                        (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
             }
         } else {
-            return enumConstant.name().equals(value) || 
-                   (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
+            return enumConstant.name().equals(value) ||
+                    (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
         }
     }
 }

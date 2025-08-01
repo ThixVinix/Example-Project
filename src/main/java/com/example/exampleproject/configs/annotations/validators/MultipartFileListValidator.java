@@ -54,7 +54,7 @@ public class MultipartFileListValidator
             return false;
         }
 
-        if (!validateEachItem(files, this::validateMultipartFile, context, 
+        if (!validateEachItem(files, this::validateMultipartFile, context,
                 "msg.validation.request.field.multipartfile.invalid.list")) {
             return false;
         }

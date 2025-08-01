@@ -42,7 +42,7 @@ public class Base64FileCollectionValidatorHelper {
      * Validates an individual base64 file using the Base64FileValidator.
      *
      * @param base64Value the base64 file value
-     * @param context the validation context
+     * @param context     the validation context
      * @return true if the file is valid, false otherwise
      */
     public boolean validateIndividualBase64File(String base64Value, ConstraintValidatorContext context) {

@@ -2,7 +2,6 @@ package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.EnumValueValidation;
 import com.example.exampleproject.configs.annotations.validators.base.AbstractEnumValidator;
-import com.example.exampleproject.utils.MessageUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +20,9 @@ import static java.util.Objects.nonNull;
 public class EnumValueValidator
         extends AbstractEnumValidator implements ConstraintValidator<EnumValueValidation, String> {
 
-    private EnumValueValidation annotation;
-
     @Override
     public void initialize(EnumValueValidation annotation) {
-        this.annotation = annotation;
-        super.initialize(annotation.enumClass(), "getValue");
+        super.initialize(annotation.enumClass(), "getValue", annotation.hideValidOptions());
     }
 
     @Override
@@ -39,29 +35,12 @@ public class EnumValueValidator
                 .anyMatch(enumConstant -> enumValueMatches(enumConstant, value));
 
         if (!isValid) {
-            addConstraintViolation(context, value);
+            addConstraintViolationForEnum(context, value,
+                    "msg.validation.request.field.enum.invalid.value",
+                    "msg.validation.request.field.enum.invalid.value.hidden");
         }
 
         return isValid;
-    }
-
-    /**
-     * Adds a constraint violation with appropriate error message based on hideValidOptions setting.
-     *
-     * @param context the validation context
-     * @param value the invalid value
-     */
-    private void addConstraintViolation(ConstraintValidatorContext context, String value) {
-        if (annotation.hideValidOptions()) {
-            context.disableDefaultConstraintViolation();
-            String errorMessage = MessageUtils.getMessage(
-                    "msg.validation.request.field.enum.invalid.value.hidden", value
-            );
-            context.buildConstraintViolationWithTemplate(errorMessage).addConstraintViolation();
-        } else {
-            addConstraintViolationWithValidValues(context, value, 
-                    "msg.validation.request.field.enum.invalid.value");
-        }
     }
 
     /**
@@ -69,29 +48,39 @@ public class EnumValueValidator
      * Overrides the parent method to ensure case-insensitive matching for string values.
      *
      * @param enumConstant the enum constant
-     * @param value the value to check
+     * @param value        the value to check
      * @return true if the value matches the enum value, false otherwise
      */
     @Override
     protected boolean enumValueMatches(Enum<?> enumConstant, Object value) {
-        if (enumConstant.name().equals(value) ||
-            (value instanceof String string && enumConstant.name().equalsIgnoreCase(string))) {
+        if (matchesEnumName(enumConstant, value)) {
             return true;
         }
 
         if (nonNull(accessorMethod)) {
-            try {
-                Object enumValue = accessorMethod.invoke(enumConstant);
-                if (enumValue instanceof String enumString && value instanceof String valueString) {
-                    return enumString.equalsIgnoreCase(valueString);
-                }
-                return enumValue.equals(value);
-            } catch (Exception e) {
-                log.debug("Error accessing getValue for enum {}: {}", 
-                        enumConstant.name(), e.getMessage());
-            }
+            return matchesEnumValueViaAccessor(enumConstant, value);
         }
 
         return false;
     }
+
+    private boolean matchesEnumName(Enum<?> enumConstant, Object value) {
+        return enumConstant.name().equals(value) ||
+                (value instanceof String string && enumConstant.name().equalsIgnoreCase(string));
+    }
+
+    private boolean matchesEnumValueViaAccessor(Enum<?> enumConstant, Object value) {
+        try {
+            Object enumValue = accessorMethod.invoke(enumConstant);
+            if (enumValue instanceof String enumString && value instanceof String valueString) {
+                return enumString.equalsIgnoreCase(valueString);
+            }
+            return enumValue.equals(value);
+        } catch (Exception e) {
+            log.debug("Error accessing getValue for enum {}: {}",
+                    enumConstant.name(), e.getMessage());
+            return false;
+        }
+    }
+
 }

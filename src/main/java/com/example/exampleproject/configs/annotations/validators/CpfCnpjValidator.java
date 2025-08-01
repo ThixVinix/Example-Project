@@ -177,9 +177,9 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
      * This method applies a weighted sum algorithm to determine the verification digit, commonly used for validation
      * of numeric identifiers such as CPF or CNPJ.
      *
-     * @param value  the numeric string for which the verification digit should be calculated
+     * @param value   the numeric string for which the verification digit should be calculated
      * @param weights an array of integers representing the weights to be applied to each digit of the value
-     * @param length the number of digits from the value to be considered for the calculation
+     * @param length  the number of digits from the value to be considered for the calculation
      * @return the calculated verification digit as an integer
      */
     private int calculateVerificationDigit(String value, int[] weights, int length) {

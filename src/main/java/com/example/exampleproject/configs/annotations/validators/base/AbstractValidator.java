@@ -5,8 +5,6 @@ import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import java.util.Objects;
-
 import static java.util.Objects.isNull;
 
 /**
@@ -19,11 +17,38 @@ import static java.util.Objects.isNull;
 public abstract class AbstractValidator {
 
     /**
+     * Default maximum total size in megabytes for file validations.
+     */
+    protected static final int DEFAULT_MAX_TOTAL_SIZE_IN_MB = 10;
+
+    /**
+     * Number of bytes in one megabyte.
+     */
+    protected static final long BYTES_IN_ONE_MB = 1024L * 1024L;
+
+    /**
+     * Validates and normalizes the maximum total size in megabytes.
+     * If the provided value is invalid (less than or equal to zero),
+     * the default value will be used.
+     *
+     * @param maxTotalSizeMB the maximum total size in megabytes to validate
+     * @return the validated maximum total size (either the provided value or the default)
+     */
+    protected int validateMaxTotalSizeMB(int maxTotalSizeMB) {
+        if (maxTotalSizeMB <= NumberUtils.INTEGER_ZERO) {
+            log.warn("The value of maxTotalSizeMB provided is invalid ({}). Default value of {} MB will be used.",
+                    maxTotalSizeMB, DEFAULT_MAX_TOTAL_SIZE_IN_MB);
+            return DEFAULT_MAX_TOTAL_SIZE_IN_MB;
+        }
+        return maxTotalSizeMB;
+    }
+
+    /**
      * Adds a custom validation message with parameters.
      *
-     * @param context validation context
+     * @param context    validation context
      * @param messageKey the message key to use
-     * @param params parameters to include in the message
+     * @param params     parameters to include in the message
      */
     protected void addConstraintViolation(ConstraintValidatorContext context, String messageKey, String... params) {
         try {
@@ -63,15 +88,15 @@ public abstract class AbstractValidator {
     /**
      * Adds a constraint violation with a property node.
      *
-     * @param context validation context
+     * @param context      validation context
      * @param propertyName the name of the property
-     * @param messageKey the message key to use
-     * @param params parameters to include in the message
+     * @param messageKey   the message key to use
+     * @param params       parameters to include in the message
      */
-    protected void addConstraintViolationWithPropertyNode(ConstraintValidatorContext context, 
-                                                         String propertyName, 
-                                                         String messageKey, 
-                                                         String... params) {
+    protected void addConstraintViolationWithPropertyNode(ConstraintValidatorContext context,
+                                                          String propertyName,
+                                                          String messageKey,
+                                                          String... params) {
         try {
             context.disableDefaultConstraintViolation();
 

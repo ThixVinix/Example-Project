@@ -59,7 +59,7 @@ public class Base64FileValidator
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Content);
 
-            if (!validateFileSize(decodedBytes.length, context, 
+            if (!validateFileSize(decodedBytes.length, context,
                     "msg.validation.request.field.base64file.invalid.size")) {
                 return false;
             }
