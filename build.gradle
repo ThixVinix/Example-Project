@@ -7,7 +7,7 @@ plugins {
 ext {
     springCloudVersion = "2023.0.3"
     jacksonDatatypeVersion = "2.18.0"
-    commonsLang3Version = "3.17.0"
+    commonsLang3Version = '3.18.0'
     tikaCoreVersion = "3.2.0"
     springdocOpenApiVersion = "2.6.0"
     junitJupiterVersion = "5.10.5"
@@ -46,7 +46,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
 
     // Dependency for the JUnit 5 engine
-    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion"
 
     // Optional dependency for generating reports
     testImplementation "org.junit.platform:junit-platform-launcher:$junitPlatformLauncherVersion"
@@ -82,6 +82,3 @@ dependencyManagement {
     }
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
