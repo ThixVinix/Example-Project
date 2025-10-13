@@ -631,8 +631,10 @@ public class ExceptionHandlerMessageHelper {
         
         if (ex instanceof FeignException feignException) {
             Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
-            String details = extractedMessageOptional.orElseGet(
-                    () -> getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
+            String details = extractedMessageOptional.orElseGet(() -> 
+                    nonNull(feignException.getMessage()) && !feignException.getMessage().trim().isEmpty()
+                            ? feignException.getMessage()
+                            : getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
             message = getMessageUtils("msg.exception.handler.feign.client.error", details);
             return Map.of(DEFAULT_MESSAGE_KEY, message);
         }
@@ -650,7 +652,10 @@ public class ExceptionHandlerMessageHelper {
         
         if (ex instanceof FeignException feignException) {
             Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
-            String details = extractedMessageOptional.orElseGet(() -> getMessageUtils(defaultMessageValue));
+            String details = extractedMessageOptional.orElseGet(() -> 
+                    nonNull(feignException.getMessage()) && !feignException.getMessage().trim().isEmpty()
+                            ? feignException.getMessage()
+                            : getMessageUtils(defaultMessageValue));
             message = getMessageUtils("msg.exception.handler.feign.client.error", details);
             return message;
         }
