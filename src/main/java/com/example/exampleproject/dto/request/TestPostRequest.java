@@ -7,6 +7,7 @@ import com.example.exampleproject.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
+import org.hibernate.validator.constraints.Range;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -54,8 +55,7 @@ public record TestPostRequest(
         String cpfCnpj,
 
         @NotNull
-        @Min(value = 0)
-        @Max(value = Byte.MAX_VALUE)
+        @Range(min = 0, max = Byte.MAX_VALUE)
         @JsonProperty(value = "idade", required = true)
         @Schema(description = "Age of the applicant.", example = "34", implementation = String.class)
         Byte age,
