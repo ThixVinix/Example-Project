@@ -28,6 +28,10 @@ package com.example.exampleproject.configs.swagger;
  *       a request based on the requested content type.</li>
  *   <li><b>415 Unsupported Media Type:</b> Examples depict errors caused by unsupported
  *       media types in the request body.</li>
+ *   <li><b>413 Payload Too Large:</b> Examples for file upload size limit violations.</li>
+ *   <li><b>500 Internal Server Error:</b> Examples for unexpected server-side errors.</li>
+ *   <li><b>502 Bad Gateway:</b> Examples for gateway or proxy errors when receiving invalid
+ *       responses from upstream servers.</li>
  * </ul>
  *
  * <h2>Utility Nature</h2>
@@ -333,6 +337,27 @@ public final class SwaggerBodyExamplesHelper {
               "status": 500,
               "error": "Internal Server Error",
               "message": "Ocorreu um erro inesperado durante o processamento da solicitação."
+            }
+        """;
+
+    // 502 Bad Gateway examples
+    public static final String BAD_GATEWAY_EXAMPLE_EN = """
+            {
+              "timestamp": "2023-01-01T21:00:00",
+              "path": "/api/resource",
+              "status": 502,
+              "error": "Bad Gateway",
+              "message": "The server received an invalid response from the upstream server."
+            }
+        """;
+
+    public static final String BAD_GATEWAY_EXAMPLE_PT = """
+            {
+              "timestamp": "2023-01-01T21:00:00",
+              "path": "/api/resource",
+              "status": 502,
+              "error": "Bad Gateway",
+              "message": "O servidor recebeu uma resposta inválida do servidor upstream."
             }
         """;
 }

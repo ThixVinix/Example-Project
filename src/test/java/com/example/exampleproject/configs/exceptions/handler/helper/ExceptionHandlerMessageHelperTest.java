@@ -77,6 +77,8 @@ class ExceptionHandlerMessageHelperTest {
 
     private static final String GET_SERVICE_UNAVAILABLE_MESSAGE = "getServiceUnavailableMessage";
 
+    private static final String GET_BAD_GATEWAY_MESSAGE = "getBadGatewayMessage";
+
     private static final char CSV_DELIMITER = '|';
 
     private Locale defaultLocale;
@@ -1666,6 +1668,30 @@ class ExceptionHandlerMessageHelperTest {
         // Assert
         assertEquals(expectedMessage, result,
                 "Checks if the default service unavailable message is returned correctly " +
+                        "for the locale " + languageTag + ".");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadGatewayMessage(Exception)}
+     */
+    @Order(46)
+    @Tag(value = GET_BAD_GATEWAY_MESSAGE)
+    @DisplayName(GET_BAD_GATEWAY_MESSAGE + " - with default message")
+    @ParameterizedTest(name = "Test {index} => locale={0} | expectedMessage={1}")
+    @CsvSource(value = {
+            "pt_BR|O servidor recebeu uma resposta inválida do servidor upstream. Por favor, tente novamente mais tarde.",
+            "en_US|The server received an invalid response from the upstream server. Please try again later."
+    }, delimiter = CSV_DELIMITER)
+    void getBadGatewayMessage_WithDefaultMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Act
+        String result = ExceptionHandlerMessageHelper.getBadGatewayMessage(new Exception());
+
+        // Assert
+        assertEquals(expectedMessage, result,
+                "Checks if the default bad gateway message is returned correctly " +
                         "for the locale " + languageTag + ".");
     }
 

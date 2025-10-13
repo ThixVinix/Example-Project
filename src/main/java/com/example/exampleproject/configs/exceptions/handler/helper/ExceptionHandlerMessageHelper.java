@@ -208,6 +208,18 @@ public class ExceptionHandlerMessageHelper {
     }
 
     /**
+     * Generates an error message indicating that a bad gateway error has occurred.
+     * The message is derived from the provided exception or a default bad gateway message key.
+     *
+     * @param ex The exception that triggered the bad gateway message.
+     *           This may provide additional context about the gateway communication failure.
+     * @return A localized error message indicating that a bad gateway error has occurred.
+     */
+    public static String getBadGatewayMessage(Exception ex) {
+        return getErrorMessage(ex, "msg.exception.handler.bad.gateway.default");
+    }
+
+    /**
      * Generates an error message indicating that the requested HTTP media type
      * is not acceptable. This typically happens when the 'Accept' header in
      * the request specifies a response format not supported by the server.

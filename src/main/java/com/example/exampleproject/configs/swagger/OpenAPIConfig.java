@@ -385,6 +385,25 @@ public class OpenAPIConfig {
                                                             "erro 500 causada por uma falha inesperada do lado " +
                                                             "do servidor.")
                                                     .value(INTERNAL_SERVER_ERROR_EXAMPLE_PT)))));
+
+            // 502 Bad Gateway
+            operation.getResponses().addApiResponse("502", new ApiResponse()
+                    .description(BAD_GATEWAY_DESCRIPTION)
+                    .content(new Content()
+                            .addMediaType(MediaType.APPLICATION_JSON_VALUE,
+                                    new io.swagger.v3.oas.models.media.MediaType()
+                                            .schema(new Schema<ErrorSingleResponse>()
+                                                    .$ref(ERROR_SINGLE_RESPONSE_REF))
+                                            .addExamples("English - 502 Bad Gateway", new Example()
+                                                    .summary("English: Example of a 502 error response caused by " +
+                                                            "an invalid response from an upstream server.")
+                                                    .value(BAD_GATEWAY_EXAMPLE_EN))
+                                            .addExamples("Brazilian Portuguese - 502 Gateway Inválido",
+                                                    new Example()
+                                                    .summary("Brazilian Portuguese: Exemplo de uma resposta de " +
+                                                            "erro 502 causada por uma resposta inválida de um " +
+                                                            "servidor upstream.")
+                                                    .value(BAD_GATEWAY_EXAMPLE_PT)))));
         }));
 
     }

@@ -158,4 +158,17 @@ public final class SwaggerHttpDescriptionsHelper {
             servidor encontra uma condição inesperada que o impede de atender à solicitação. Entre em \
             contato com a equipe de suporte da API se o problema persistir.</p>
             """;
+
+    // 502 Bad Gateway description
+    public static final String BAD_GATEWAY_DESCRIPTION = """
+            <p><strong>English:</strong> Bad Gateway. This error occurs when the server, while acting as a \
+            gateway or proxy, received an invalid response from the upstream server it accessed in \
+            attempting to fulfill the request. This typically indicates a problem with communication between \
+            servers.</p>\
+            
+            <p><strong>Brazilian Portuguese:</strong> Gateway Inválido. Este erro ocorre quando o servidor, \
+            atuando como gateway ou proxy, recebeu uma resposta inválida do servidor upstream que acessou ao \
+            tentar atender à solicitação. Isso normalmente indica um problema na comunicação entre \
+            servidores.</p>
+            """;
 }

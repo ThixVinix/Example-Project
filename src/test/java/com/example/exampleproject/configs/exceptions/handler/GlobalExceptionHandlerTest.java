@@ -80,6 +80,7 @@ class GlobalExceptionHandlerTest {
     private static final String HANDLE_NOT_ACCEPTABLE_EXCEPTION = "handleNotAcceptableException";
     private static final String HANDLE_UNSUPPORTED_MEDIA_TYPE_EXCEPTION = "handleUnsupportedMediaTypeException";
     private static final String HANDLE_SERVICE_UNAVAILABLE_EXCEPTION = "handleServiceUnavailableException";
+    private static final String HANDLE_BAD_GATEWAY_EXCEPTION = "handleBadGatewayException";
     private static final String HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION = "handlePayloadTooLargeException";
     private static final String HANDLE_FEIGN_CLIENT_EXCEPTION = "handleFeignClientException";
 
@@ -1003,9 +1004,44 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handlePayloadTooLargeException(Exception, WebRequest)}
+     * {@link GlobalExceptionHandler#handleBadGatewayException(Exception, WebRequest)}
      */
     @Order(25)
+    @Tag(value = HANDLE_BAD_GATEWAY_EXCEPTION)
+    @DisplayName(HANDLE_BAD_GATEWAY_EXCEPTION + " - When Exception is thrown then " +
+            "return Bad Gateway status")
+    @Test
+    void testHandleBadGatewayException() {
+        Exception ex = new Exception("Bad gateway");
+        WebRequest request = mock(WebRequest.class);
+
+        when(request.getDescription(false)).thenReturn("/test/path");
+
+        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
+            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getBadGatewayMessage(ex))
+                    .thenReturn("Custom bad gateway message");
+
+            ResponseEntity<ErrorSingleResponse> responseEntity =
+                    exceptionHandler.handleBadGatewayException(ex, request);
+
+            assertNotNull(responseEntity);
+            assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+
+            ErrorSingleResponse errorResponse = responseEntity.getBody();
+            assertNotNull(errorResponse);
+            assertEquals(HttpStatus.BAD_GATEWAY.value(), errorResponse.status());
+            assertEquals("Custom bad gateway message", errorResponse.message());
+            assertEquals(HttpStatus.BAD_GATEWAY.getReasonPhrase(), errorResponse.error());
+            assertEquals("/test/path", errorResponse.path());
+            assertNotNull(errorResponse.timestamp());
+        }
+    }
+
+    /**
+     * Method test for
+     * {@link GlobalExceptionHandler#handlePayloadTooLargeException(Exception, WebRequest)}
+     */
+    @Order(26)
     @Tag(value = HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION)
     @DisplayName(HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION + " - When Exception is thrown then " +
             "return Payload Too Large status")
@@ -1040,7 +1076,7 @@ class GlobalExceptionHandlerTest {
      * Method test for
      * {@link GlobalExceptionHandler#handleFeignClientException(FeignException, WebRequest)}
      */
-    @Order(26)
+    @Order(27)
     @Tag(value = HANDLE_FEIGN_CLIENT_EXCEPTION)
     @DisplayName(HANDLE_FEIGN_CLIENT_EXCEPTION + " - When FeignException is thrown then handle accordingly")
     @ParameterizedTest(name = "Test {index} => status={0} | expectedStatus={1} | expectedMessage={2}")

@@ -328,6 +328,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
     }
 
+    protected ResponseEntity<ErrorSingleResponse> handleBadGatewayException(Exception ex, WebRequest request) {
+        return handleSingleErrorResponse(
+                ex,
+                request,
+                HttpStatus.BAD_GATEWAY,
+                "Bad gateway: {}",
+                ExceptionHandlerMessageHelper::getBadGatewayMessage);
+    }
+
     protected ResponseEntity<ErrorSingleResponse> handlePayloadTooLargeException(Exception ex, WebRequest request) {
         return handleSingleErrorResponse(
                 ex,
@@ -387,6 +396,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             case CONFLICT -> this.handleConflictException(e, request);
             case UNSUPPORTED_MEDIA_TYPE -> this.handleUnsupportedMediaTypeException(e, request);
             case PAYLOAD_TOO_LARGE -> this.handlePayloadTooLargeException(e, request);
+            case BAD_GATEWAY -> this.handleBadGatewayException(e, request);
             case SERVICE_UNAVAILABLE -> this.handleServiceUnavailableException(e, request);
             default -> this.handleGlobalException(e, request);
         };
