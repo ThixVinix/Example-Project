@@ -1173,7 +1173,10 @@ class GlobalExceptionHandlerTest {
                                 ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException, true)),
                 Arguments.of(503, HttpStatus.SERVICE_UNAVAILABLE, "Custom service unavailable message",
                         new GlobalExceptionHandlerTest.HandlerConfig(
-                                ExceptionHandlerMessageHelper::getServiceUnavailableMessage, true))
+                                ExceptionHandlerMessageHelper::getServiceUnavailableMessage, true)),
+                Arguments.of(502, HttpStatus.BAD_GATEWAY, "Custom bad gateway message",
+                        new GlobalExceptionHandlerTest.HandlerConfig(
+                                ExceptionHandlerMessageHelper::getBadGatewayMessage, true))
         );
     }
 
