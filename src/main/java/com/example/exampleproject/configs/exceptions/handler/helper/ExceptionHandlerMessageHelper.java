@@ -3,7 +3,11 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +88,12 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static final String DEFAULT_MESSAGE_KEY = "message";
+
+    private static final String FEIGN_CLIENT_FIELD_MESSAGE = "message";
+
+    private static final String FEIGN_CLIENT_FIELD_ERROR = "error";
+
+    private static final String FEIGN_CLIENT_FIELD_DESCRIPTION = "description";
 
     private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
 
@@ -617,6 +628,15 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
         String message;
+        
+        if (ex instanceof FeignException feignException) {
+            Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
+            String details = extractedMessageOptional.orElseGet(
+                    () -> getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
+            message = getMessageUtils("msg.exception.handler.feign.client.error", details);
+            return Map.of(DEFAULT_MESSAGE_KEY, message);
+        }
+        
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
@@ -627,12 +647,59 @@ public class ExceptionHandlerMessageHelper {
 
     private static String getErrorMessage(Exception ex, String defaultMessageValue) {
         String message;
+        
+        if (ex instanceof FeignException feignException) {
+            Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
+            String details = extractedMessageOptional.orElseGet(() -> getMessageUtils(defaultMessageValue));
+            message = getMessageUtils("msg.exception.handler.feign.client.error", details);
+            return message;
+        }
+        
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
             message = getMessageUtils(defaultMessageValue);
         }
         return message;
+    }
+
+    private static Optional<String> extractMessageFromFeignException(final FeignException feignException) {
+        try {
+            Optional<String> bodyOpt = feignException.responseBody()
+                    .map(bb -> new String(bb.array(), StandardCharsets.UTF_8))
+                    .map(String::trim);
+
+            if (bodyOpt.isEmpty() || bodyOpt.get().isEmpty()) {
+                log.debug("FeignException response body is null or empty");
+                return Optional.empty();
+            }
+
+            String body = bodyOpt.get();
+            JsonNode root = parseJson(body);
+            return extractNonBlankField(root, FEIGN_CLIENT_FIELD_MESSAGE)
+                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
+                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_ERROR));
+
+        } catch (Exception e) {
+            log.warn("Failed to extract message from FeignException response body: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
+
+    private static JsonNode parseJson(final String json) throws JsonProcessingException {
+        return new ObjectMapper().readTree(json);
+    }
+
+    private static Optional<String> extractNonBlankField(final JsonNode root, final String fieldName) {
+        if (root.has(fieldName) && !root.get(fieldName).isNull()) {
+            String value = root.get(fieldName).asText().trim();
+            if (!value.isEmpty()) {
+                log.debug("Extracted '{}' field from FeignException: {}", fieldName, value);
+                return Optional.of(value);
+            }
+        }
+        log.debug("Field '{}' not found or blank in FeignException response body", fieldName);
+        return Optional.empty();
     }
 
     private static String getMessageUtils(String messageKey, Object... params) {

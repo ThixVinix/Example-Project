@@ -5,6 +5,7 @@ import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import feign.FeignException;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -37,6 +38,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -1695,6 +1698,213 @@ class ExceptionHandlerMessageHelperTest {
                         "for the locale " + languageTag + ".");
     }
 
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)} with FeignException containing "message" field
+     */
+    @Order(47)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException containing message field")
+    @Test
+    void getBadRequestMessage_WithFeignExceptionContainingMessageField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"message\": \"Custom error message from API\"}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("An error occurred while calling the external service. Details: Custom error message from API", result.get("message"),
+                "Should display unified Feign client error message with extracted message from 'message' field as details");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)} with FeignException containing "error" field
+     */
+    @Order(48)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException containing error field")
+    @Test
+    void getBadRequestMessage_WithFeignExceptionContainingErrorField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"error\": \"Custom error from error field\"}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("An error occurred while calling the external service. Details: Custom error from error field", result.get("message"),
+                "Should display unified Feign client error message with extracted error from 'error' field as details when 'message' is not present");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)} with FeignException without message or error field
+     */
+    @Order(49)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException without message or error field")
+    @Test
+    void getBadRequestMessage_WithFeignExceptionWithoutMessageOrErrorField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"status\": 400, \"code\": \"BAD_REQUEST\"}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+        when(feignException.getMessage()).thenReturn("400 Bad Request");
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("An error occurred while calling the external service. Details: 400 Bad Request", result.get("message"),
+                "Should use unified Feign client error message when neither 'message' nor 'error' field is present");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)} with FeignException with malformed JSON
+     */
+    @Order(50)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException with malformed JSON")
+    @Test
+    void getBadRequestMessage_WithFeignExceptionWithMalformedJson() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String malformedJson = "{invalid json";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(malformedJson.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+        when(feignException.getMessage()).thenReturn("Malformed response");
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("An error occurred while calling the external service. Details: Malformed response", result.get("message"),
+                "Should use unified Feign client error message when JSON parsing fails");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getBadRequestMessage(Exception)} with FeignException with empty response body
+     */
+    @Order(51)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException with empty response body")
+    @Test
+    void getBadRequestMessage_WithFeignExceptionWithEmptyResponseBody() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        FeignException feignException = mock(FeignException.class);
+        when(feignException.responseBody()).thenReturn(Optional.empty());
+        when(feignException.getMessage()).thenReturn("Empty response body");
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("An error occurred while calling the external service. Details: Empty response body", result.get("message"),
+                "Should use unified Feign client error message when response body is empty");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)} with FeignException containing "message" field
+     */
+    @Order(52)
+    @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
+    @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException containing message field")
+    @Test
+    void getInternalServerErrorMessage_WithFeignExceptionContainingMessageField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"message\": \"Internal server error details\"}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
+
+        // Assert
+        assertEquals("An error occurred while calling the external service. Details: Internal server error details", result,
+                "Should display unified Feign client error message with extracted message from 'message' field as details");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)} with FeignException containing "error" field
+     */
+    @Order(53)
+    @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
+    @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException containing error field")
+    @Test
+    void getInternalServerErrorMessage_WithFeignExceptionContainingErrorField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"error\": \"Error details from error field\"}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
+
+        // Assert
+        assertEquals("An error occurred while calling the external service. Details: Error details from error field", result,
+                "Should display unified Feign client error message with extracted error from 'error' field as details when 'message' is not present");
+    }
+
+    /**
+     * Method test for
+     * {@link ExceptionHandlerMessageHelper#getInternalServerErrorMessage(Exception)} with FeignException without message or error field
+     */
+    @Order(54)
+    @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
+    @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException without message or error field")
+    @Test
+    void getInternalServerErrorMessage_WithFeignExceptionWithoutMessageOrErrorField() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+        
+        // Arrange
+        String jsonResponse = "{\"status\": 500}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+        when(feignException.getMessage()).thenReturn("500 Internal Server Error");
+
+        // Act
+        String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
+
+        // Assert
+        assertEquals("An error occurred while calling the external service. Details: 500 Internal Server Error", result,
+                "Should use unified Feign client error message when neither 'message' nor 'error' field is present");
+    }
 
     /**
      * Mocks the specified annotation on a given method parameter.
