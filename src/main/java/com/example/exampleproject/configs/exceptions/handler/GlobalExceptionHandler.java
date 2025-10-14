@@ -34,8 +34,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static java.util.Objects.isNull;
@@ -44,6 +46,25 @@ import static java.util.Objects.nonNull;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private final Map<HttpStatus, BiFunction<FeignException, WebRequest, ResponseEntity<? extends BaseError>>>
+            statusHandlers;
+
+    private GlobalExceptionHandler() {
+        this.statusHandlers = new EnumMap<>(HttpStatus.class);
+        this.statusHandlers.put(HttpStatus.BAD_REQUEST, this::handleBadRequestException);
+        this.statusHandlers.put(HttpStatus.UNAUTHORIZED, this::handleUnauthorizedException);
+        this.statusHandlers.put(HttpStatus.FORBIDDEN, this::handleForbiddenException);
+        this.statusHandlers.put(HttpStatus.NOT_FOUND, this::handleResourceNotFoundException);
+        this.statusHandlers.put(HttpStatus.METHOD_NOT_ALLOWED, this::handleMethodNotAllowedException);
+        this.statusHandlers.put(HttpStatus.NOT_ACCEPTABLE, this::handleNotAcceptableException);
+        this.statusHandlers.put(HttpStatus.REQUEST_TIMEOUT, this::handleTimeoutException);
+        this.statusHandlers.put(HttpStatus.CONFLICT, this::handleConflictException);
+        this.statusHandlers.put(HttpStatus.UNSUPPORTED_MEDIA_TYPE, this::handleUnsupportedMediaTypeException);
+        this.statusHandlers.put(HttpStatus.PAYLOAD_TOO_LARGE, this::handlePayloadTooLargeException);
+        this.statusHandlers.put(HttpStatus.BAD_GATEWAY, this::handleBadGatewayException);
+        this.statusHandlers.put(HttpStatus.SERVICE_UNAVAILABLE, this::handleServiceUnavailableException);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     protected ResponseEntity<ErrorSingleResponse> handleResourceNotFoundException(Exception ex, WebRequest request) {
@@ -385,22 +406,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
                                                                     FeignException e,
                                                                     WebRequest request) {
-        return switch (status) {
-            case BAD_REQUEST -> this.handleBadRequestException(e, request);
-            case UNAUTHORIZED -> this.handleUnauthorizedException(e, request);
-            case FORBIDDEN -> this.handleForbiddenException(e, request);
-            case NOT_FOUND -> this.handleResourceNotFoundException(e, request);
-            case METHOD_NOT_ALLOWED -> this.handleMethodNotAllowedException(e, request);
-            case NOT_ACCEPTABLE -> this.handleNotAcceptableException(e, request);
-            case REQUEST_TIMEOUT -> this.handleTimeoutException(e, request);
-            case CONFLICT -> this.handleConflictException(e, request);
-            case UNSUPPORTED_MEDIA_TYPE -> this.handleUnsupportedMediaTypeException(e, request);
-            case PAYLOAD_TOO_LARGE -> this.handlePayloadTooLargeException(e, request);
-            case BAD_GATEWAY -> this.handleBadGatewayException(e, request);
-            case SERVICE_UNAVAILABLE -> this.handleServiceUnavailableException(e, request);
-            default -> this.handleGlobalException(e, request);
-        };
-    }
+        var handler = statusHandlers.get(status);
+
+        if (nonNull(handler)) {
+            return handler.apply(e, request);
+        }
+
+        return this.handleGlobalException(e, request);
+}
 
     /**
      * Helper method to handle exceptions that return a single error response.
