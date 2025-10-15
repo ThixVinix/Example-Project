@@ -32,11 +32,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -631,10 +627,8 @@ public class ExceptionHandlerMessageHelper {
         
         if (ex instanceof FeignException feignException) {
             Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
-            String details = extractedMessageOptional.orElseGet(() -> 
-                    nonNull(feignException.getMessage()) && !feignException.getMessage().trim().isEmpty()
-                            ? feignException.getMessage()
-                            : getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
+            String details = extractedMessageOptional
+                    .orElseGet(() -> getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
             message = getMessageUtils("msg.exception.handler.feign.client.error", details);
             return Map.of(DEFAULT_MESSAGE_KEY, message);
         }
@@ -652,10 +646,7 @@ public class ExceptionHandlerMessageHelper {
         
         if (ex instanceof FeignException feignException) {
             Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
-            String details = extractedMessageOptional.orElseGet(() -> 
-                    nonNull(feignException.getMessage()) && !feignException.getMessage().trim().isEmpty()
-                            ? feignException.getMessage()
-                            : getMessageUtils(defaultMessageValue));
+            String details = extractedMessageOptional.orElseGet(() -> getMessageUtils(defaultMessageValue));
             message = getMessageUtils("msg.exception.handler.feign.client.error", details);
             return message;
         }
@@ -682,8 +673,11 @@ public class ExceptionHandlerMessageHelper {
             String body = bodyOpt.get();
             JsonNode root = parseJson(body);
             return extractNonBlankField(root, FEIGN_CLIENT_FIELD_MESSAGE)
+                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_MESSAGE))
                     .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
-                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_ERROR));
+                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
+                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_ERROR))
+                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_ERROR));
 
         } catch (Exception e) {
             log.warn("Failed to extract message from FeignException response body: {}", e.getMessage(), e);
@@ -705,6 +699,57 @@ public class ExceptionHandlerMessageHelper {
         }
         log.debug("Field '{}' not found or blank in FeignException response body", fieldName);
         return Optional.empty();
+    }
+
+    private static Optional<String> findFieldRecursively(JsonNode node, String fieldName) {
+        if (isNullNode(node)) {
+            return Optional.empty();
+        }
+
+        Optional<String> direct = extractIfHasNonBlank(node, fieldName);
+        if (direct.isPresent()) {
+            return direct;
+        }
+
+        for (JsonNode child : iterableChildren(node)) {
+            Optional<String> found = findFieldRecursively(child, fieldName);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static boolean isNullNode(JsonNode node) {
+        return node == null || node.isNull();
+    }
+
+    private static Optional<String> extractIfHasNonBlank(JsonNode node, String fieldName) {
+        if (!node.has(fieldName) || node.get(fieldName).isNull()) {
+            return Optional.empty();
+        }
+        String value = node.get(fieldName).asText().trim();
+        if (value.isEmpty()) {
+            return Optional.empty();
+        }
+        log.debug("Recursively extracted '{}' field from FeignException", fieldName);
+        return Optional.of(value);
+    }
+
+    private static Iterable<JsonNode> iterableChildren(JsonNode node) {
+        if (node.isObject()) {
+            var iterator = node.fields();
+            return () -> new Iterator<>() {
+                @Override public boolean hasNext() { return iterator.hasNext(); }
+                @Override public JsonNode next() { return iterator.next().getValue(); }
+            };
+        }
+        if (node.isArray()) {
+            var iterator = node.elements();
+            return () -> iterator;
+        }
+        return Collections::emptyIterator;
     }
 
     private static String getMessageUtils(String messageKey, Object... params) {
