@@ -1706,10 +1706,14 @@ class ExceptionHandlerMessageHelperTest {
     @Order(47)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException containing message field")
-    @Test
-    void getBadRequestMessage_WithFeignExceptionContainingMessageField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
-        
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Custom error message from API",
+            "en_US|An error occurred while calling the external service. Details: Custom error message from API"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionContainingMessageField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
         // Arrange
         String jsonResponse = "{\"message\": \"Custom error message from API\"}";
         FeignException feignException = mock(FeignException.class);
@@ -1721,7 +1725,7 @@ class ExceptionHandlerMessageHelperTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("An error occurred while calling the external service. Details: Custom error message from API", result.get("message"),
+        assertEquals(expectedMessage, result.get("message"),
                 "Should display unified Feign client error message with extracted message from 'message' field as details");
     }
 
@@ -1732,9 +1736,13 @@ class ExceptionHandlerMessageHelperTest {
     @Order(48)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException containing error field")
-    @Test
-    void getBadRequestMessage_WithFeignExceptionContainingErrorField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Custom error from error field",
+            "en_US|An error occurred while calling the external service. Details: Custom error from error field"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionContainingErrorField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String jsonResponse = "{\"error\": \"Custom error from error field\"}";
@@ -1747,7 +1755,7 @@ class ExceptionHandlerMessageHelperTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("An error occurred while calling the external service. Details: Custom error from error field", result.get("message"),
+        assertEquals(expectedMessage, result.get("message"),
                 "Should display unified Feign client error message with extracted error from 'error' field as details when 'message' is not present");
     }
 
@@ -1758,23 +1766,26 @@ class ExceptionHandlerMessageHelperTest {
     @Order(49)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException without message or error field")
-    @Test
-    void getBadRequestMessage_WithFeignExceptionWithoutMessageOrErrorField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
+            "en_US|An error occurred while calling the external service. Details: An error occurred in the submitted request, please check the submitted parameters and try again."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionWithoutMessageOrErrorField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String jsonResponse = "{\"status\": 400, \"code\": \"BAD_REQUEST\"}";
         FeignException feignException = mock(FeignException.class);
         ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
         when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
-        when(feignException.getMessage()).thenReturn("400 Bad Request");
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
 
         // Assert
         assertNotNull(result);
-        assertEquals("An error occurred while calling the external service. Details: 400 Bad Request", result.get("message"),
+        assertEquals(expectedMessage, result.get("message"),
                 "Should use unified Feign client error message when neither 'message' nor 'error' field is present");
     }
 
@@ -1785,23 +1796,26 @@ class ExceptionHandlerMessageHelperTest {
     @Order(50)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException with malformed JSON")
-    @Test
-    void getBadRequestMessage_WithFeignExceptionWithMalformedJson() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
+            "en_US|An error occurred while calling the external service. Details: An error occurred in the submitted request, please check the submitted parameters and try again."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionWithMalformedJson(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String malformedJson = "{invalid json";
         FeignException feignException = mock(FeignException.class);
         ByteBuffer byteBuffer = ByteBuffer.wrap(malformedJson.getBytes(StandardCharsets.UTF_8));
         when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
-        when(feignException.getMessage()).thenReturn("Malformed response");
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
 
         // Assert
         assertNotNull(result);
-        assertEquals("An error occurred while calling the external service. Details: Malformed response", result.get("message"),
+        assertEquals(expectedMessage, result.get("message"),
                 "Should use unified Feign client error message when JSON parsing fails");
     }
 
@@ -1812,21 +1826,24 @@ class ExceptionHandlerMessageHelperTest {
     @Order(51)
     @Tag(value = GET_BAD_REQUEST_MESSAGE)
     @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException with empty response body")
-    @Test
-    void getBadRequestMessage_WithFeignExceptionWithEmptyResponseBody() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
+            "en_US|An error occurred while calling the external service. Details: An error occurred in the submitted request, please check the submitted parameters and try again."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionWithEmptyResponseBody(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         FeignException feignException = mock(FeignException.class);
         when(feignException.responseBody()).thenReturn(Optional.empty());
-        when(feignException.getMessage()).thenReturn("Empty response body");
 
         // Act
         Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
 
         // Assert
         assertNotNull(result);
-        assertEquals("An error occurred while calling the external service. Details: Empty response body", result.get("message"),
+        assertEquals(expectedMessage, result.get("message"),
                 "Should use unified Feign client error message when response body is empty");
     }
 
@@ -1837,9 +1854,13 @@ class ExceptionHandlerMessageHelperTest {
     @Order(52)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException containing message field")
-    @Test
-    void getInternalServerErrorMessage_WithFeignExceptionContainingMessageField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Internal server error details",
+            "en_US|An error occurred while calling the external service. Details: Internal server error details"
+    }, delimiter = CSV_DELIMITER)
+    void getInternalServerErrorMessage_WithFeignExceptionContainingMessageField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String jsonResponse = "{\"message\": \"Internal server error details\"}";
@@ -1851,7 +1872,7 @@ class ExceptionHandlerMessageHelperTest {
         String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
 
         // Assert
-        assertEquals("An error occurred while calling the external service. Details: Internal server error details", result,
+        assertEquals(expectedMessage, result,
                 "Should display unified Feign client error message with extracted message from 'message' field as details");
     }
 
@@ -1862,9 +1883,13 @@ class ExceptionHandlerMessageHelperTest {
     @Order(53)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException containing error field")
-    @Test
-    void getInternalServerErrorMessage_WithFeignExceptionContainingErrorField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Error details from error field",
+            "en_US|An error occurred while calling the external service. Details: Error details from error field"
+    }, delimiter = CSV_DELIMITER)
+    void getInternalServerErrorMessage_WithFeignExceptionContainingErrorField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String jsonResponse = "{\"error\": \"Error details from error field\"}";
@@ -1876,7 +1901,7 @@ class ExceptionHandlerMessageHelperTest {
         String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
 
         // Assert
-        assertEquals("An error occurred while calling the external service. Details: Error details from error field", result,
+        assertEquals(expectedMessage, result,
                 "Should display unified Feign client error message with extracted error from 'error' field as details when 'message' is not present");
     }
 
@@ -1887,23 +1912,146 @@ class ExceptionHandlerMessageHelperTest {
     @Order(54)
     @Tag(value = GET_INTERNAL_SERVER_ERROR_MESSAGE)
     @DisplayName(GET_INTERNAL_SERVER_ERROR_MESSAGE + " - with FeignException without message or error field")
-    @Test
-    void getInternalServerErrorMessage_WithFeignExceptionWithoutMessageOrErrorField() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("en-US"));
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Erro inesperado, tente novamente mais tarde.",
+            "en_US|An error occurred while calling the external service. Details: Unexpected error, please try again later."
+    }, delimiter = CSV_DELIMITER)
+    void getInternalServerErrorMessage_WithFeignExceptionWithoutMessageOrErrorField(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
         
         // Arrange
         String jsonResponse = "{\"status\": 500}";
         FeignException feignException = mock(FeignException.class);
         ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
         when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
-        when(feignException.getMessage()).thenReturn("500 Internal Server Error");
 
         // Act
         String result = ExceptionHandlerMessageHelper.getInternalServerErrorMessage(feignException);
 
         // Assert
-        assertEquals("An error occurred while calling the external service. Details: 500 Internal Server Error", result,
+        assertEquals(expectedMessage, result,
                 "Should use unified Feign client error message when neither 'message' nor 'error' field is present");
+    }
+
+    /**
+     * Method test for recursive extraction: nested object contains 'message' field
+     * Covers findFieldRecursively and iterableChildren for object nodes
+     */
+    @Order(55)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException nested object containing message field")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Nested message from object",
+            "en_US|An error occurred while calling the external service. Details: Nested message from object"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionNestedObjectMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"data\": { \"details\": { \"message\": \"Nested message from object\" }}}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should extract nested 'message' inside object hierarchy using recursive search");
+    }
+
+    /**
+     * Method test for recursive extraction: array contains objects with 'message' field
+     * Covers findFieldRecursively and iterableChildren for array nodes
+     */
+    @Order(56)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException nested array containing message field")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Nested message from array",
+            "en_US|An error occurred while calling the external service. Details: Nested message from array"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionNestedArrayMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"errors\":[{\"code\":\"E1\",\"message\":\"Nested message from array\"}]}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should extract nested 'message' from array element using recursive search");
+    }
+
+    /**
+     * Method test where root has blank 'message' but nested object has non-blank 'message'
+     * Covers extractIfHasNonBlank returning empty and recursion finding a deeper value
+     */
+    @Order(57)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException root blank message but nested non-blank message")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Nested non-blank message",
+            "en_US|An error occurred while calling the external service. Details: Nested non-blank message"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionRootBlankButNestedMessage(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"message\":\"   \", \"data\":{\"message\":\"Nested non-blank message\"}}";
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should ignore blank root value and use nested non-blank value");
+    }
+
+    /**
+     * Method test with non-container JSON root (e.g., a JSON string), ensuring iterableChildren returns empty
+     * and default i18n detail is used
+     */
+    @Order(58)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with FeignException non-container JSON root (string)")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Ocorreu um erro na solicitação enviada, verifique os parâmetros enviados e tente novamente.",
+            "en_US|An error occurred while calling the external service. Details: An error occurred in the submitted request, please check the submitted parameters and try again."
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithFeignExceptionNonContainerJsonRoot(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "\"plain text\""; // valid JSON string (not an object/array)
+        FeignException feignException = mock(FeignException.class);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        when(feignException.responseBody()).thenReturn(Optional.of(byteBuffer));
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(feignException);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should fall back to default bad request detail when body is a non-container JSON node");
     }
 
     /**
@@ -1937,4 +2085,6 @@ class ExceptionHandlerMessageHelperTest {
             default -> throw new UnsupportedOperationException("Unsupported annotation type: " + annotationType);
         }
     }
+
+
 }
