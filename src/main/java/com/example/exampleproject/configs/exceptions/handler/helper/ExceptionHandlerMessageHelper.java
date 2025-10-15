@@ -672,11 +672,8 @@ public class ExceptionHandlerMessageHelper {
 
             String body = bodyOpt.get();
             JsonNode root = parseJson(body);
-            return extractNonBlankField(root, FEIGN_CLIENT_FIELD_MESSAGE)
-                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_MESSAGE))
-                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
+            return findFieldRecursively(root, FEIGN_CLIENT_FIELD_MESSAGE)
                     .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
-                    .or(() -> extractNonBlankField(root, FEIGN_CLIENT_FIELD_ERROR))
                     .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_ERROR));
 
         } catch (Exception e) {
@@ -687,18 +684,6 @@ public class ExceptionHandlerMessageHelper {
 
     private static JsonNode parseJson(final String json) throws JsonProcessingException {
         return new ObjectMapper().readTree(json);
-    }
-
-    private static Optional<String> extractNonBlankField(final JsonNode root, final String fieldName) {
-        if (root.has(fieldName) && !root.get(fieldName).isNull()) {
-            String value = root.get(fieldName).asText().trim();
-            if (!value.isEmpty()) {
-                log.debug("Extracted '{}' field from FeignException: {}", fieldName, value);
-                return Optional.of(value);
-            }
-        }
-        log.debug("Field '{}' not found or blank in FeignException response body", fieldName);
-        return Optional.empty();
     }
 
     private static Optional<String> findFieldRecursively(JsonNode node, String fieldName) {
