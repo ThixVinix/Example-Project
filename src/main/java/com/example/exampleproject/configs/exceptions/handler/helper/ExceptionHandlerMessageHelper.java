@@ -86,10 +86,44 @@ public class ExceptionHandlerMessageHelper {
     private static final String DEFAULT_MESSAGE_KEY = "message";
 
     private static final String FEIGN_CLIENT_FIELD_MESSAGE = "message";
-
+    private static final String FEIGN_CLIENT_FIELD_MSG = "msg";
+    private static final String FEIGN_CLIENT_FIELD_MENSAGEM = "mensagem";
+    private static final String FEIGN_CLIENT_FIELD_DEFAULT_MESSAGE = "defaultMessage";
+    private static final String FEIGN_CLIENT_FIELD_MESSAGE_DETAIL = "messageDetail";
+    private static final String FEIGN_CLIENT_FIELD_DETAILED_MESSAGE = "detailedMessage";
+    private static final String FEIGN_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE = "message_details";
+    private static final String FEIGN_CLIENT_FIELD_DETAIL = "detail";
+    private static final String FEIGN_CLIENT_FIELD_DETAILS = "details";
+    private static final String FEIGN_CLIENT_FIELD_DESCRIPTION = "description";
+    private static final String FEIGN_CLIENT_FIELD_REASON = "reason";
+    private static final String FEIGN_CLIENT_FIELD_CAUSE = "cause";
+    private static final String FEIGN_CLIENT_FIELD_HINT = "hint";
+    private static final String FEIGN_CLIENT_FIELD_ERROR_DESCRIPTION = "error_description";
+    private static final String FEIGN_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE = "error_message";
+    private static final String FEIGN_CLIENT_FIELD_ERROR_MESSAGE = "errorMessage";
+    private static final String FEIGN_CLIENT_FIELD_ERRO = "erro";
     private static final String FEIGN_CLIENT_FIELD_ERROR = "error";
 
-    private static final String FEIGN_CLIENT_FIELD_DESCRIPTION = "description";
+    private static final List<String> MESSAGE_FIELD_CANDIDATES = List.of(
+            FEIGN_CLIENT_FIELD_MESSAGE,
+            FEIGN_CLIENT_FIELD_MSG,
+            FEIGN_CLIENT_FIELD_MENSAGEM,
+            FEIGN_CLIENT_FIELD_DEFAULT_MESSAGE,
+            FEIGN_CLIENT_FIELD_MESSAGE_DETAIL,
+            FEIGN_CLIENT_FIELD_DETAILED_MESSAGE,
+            FEIGN_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE,
+            FEIGN_CLIENT_FIELD_DETAIL,
+            FEIGN_CLIENT_FIELD_DETAILS,
+            FEIGN_CLIENT_FIELD_DESCRIPTION,
+            FEIGN_CLIENT_FIELD_REASON,
+            FEIGN_CLIENT_FIELD_CAUSE,
+            FEIGN_CLIENT_FIELD_HINT,
+            FEIGN_CLIENT_FIELD_ERROR_DESCRIPTION,
+            FEIGN_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE,
+            FEIGN_CLIENT_FIELD_ERROR_MESSAGE,
+            FEIGN_CLIENT_FIELD_ERRO,
+            FEIGN_CLIENT_FIELD_ERROR
+    );
 
     private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
 
@@ -662,22 +696,19 @@ public class ExceptionHandlerMessageHelper {
     private static Optional<String> extractMessageFromFeignException(final FeignException feignException) {
         try {
             Optional<String> bodyOpt = feignException.responseBody()
-                    .map(bb -> new String(bb.array(), StandardCharsets.UTF_8))
+                    .map(bodyBytes -> new String(bodyBytes.array(), StandardCharsets.UTF_8))
                     .map(String::trim);
 
             if (bodyOpt.isEmpty() || bodyOpt.get().isEmpty()) {
-                log.debug("FeignException response body is null or empty");
+                log.debug("FeignException response body missing or empty");
                 return Optional.empty();
             }
 
-            String body = bodyOpt.get();
-            JsonNode root = parseJson(body);
-            return findFieldRecursively(root, FEIGN_CLIENT_FIELD_MESSAGE)
-                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_DESCRIPTION))
-                    .or(() -> findFieldRecursively(root, FEIGN_CLIENT_FIELD_ERROR));
-
+            String bodyString = bodyOpt.get();
+            JsonNode rootNode = parseJson(bodyString);
+            return findFirstFieldIn(rootNode);
         } catch (Exception e) {
-            log.warn("Failed to extract message from FeignException response body: {}", e.getMessage(), e);
+            log.warn("Failed to extract message from FeignException body: {}", e.getMessage(), e);
             return Optional.empty();
         }
     }
@@ -685,6 +716,15 @@ public class ExceptionHandlerMessageHelper {
     private static JsonNode parseJson(final String json) throws JsonProcessingException {
         return new ObjectMapper().readTree(json);
     }
+
+    private static Optional<String> findFirstFieldIn(JsonNode rootNode) {
+        return MESSAGE_FIELD_CANDIDATES.stream()
+                .map(field -> findFieldRecursively(rootNode, field))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+    }
+
 
     private static Optional<String> findFieldRecursively(JsonNode node, String fieldName) {
         if (isNullNode(node)) {
