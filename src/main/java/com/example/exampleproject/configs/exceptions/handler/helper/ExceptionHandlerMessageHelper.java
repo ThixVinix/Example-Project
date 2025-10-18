@@ -104,7 +104,7 @@ public class ExceptionHandlerMessageHelper {
     private static final String FEIGN_CLIENT_FIELD_ERRO = "erro";
     private static final String FEIGN_CLIENT_FIELD_ERROR = "error";
 
-    private static final List<String> MESSAGE_FIELD_CANDIDATES = List.of(
+    private static final List<String> MESSAGE_FIELD_CANDIDATES_LIST = List.of(
             FEIGN_CLIENT_FIELD_MESSAGE,
             FEIGN_CLIENT_FIELD_MSG,
             FEIGN_CLIENT_FIELD_MENSAGEM,
@@ -718,7 +718,7 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Optional<String> findFirstFieldIn(JsonNode rootNode) {
-        return MESSAGE_FIELD_CANDIDATES.stream()
+        return MESSAGE_FIELD_CANDIDATES_LIST.stream()
                 .map(field -> findFieldRecursively(rootNode, field))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
