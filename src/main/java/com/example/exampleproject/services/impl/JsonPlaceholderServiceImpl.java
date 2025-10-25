@@ -33,6 +33,6 @@ public class JsonPlaceholderServiceImpl implements JsonPlaceholderService {
 
     @Override
     public JsonPlaceholderPost updatePost(Long id, JsonPlaceholderPost post) {
-        return jsonPlaceholderClient.updatePost(id, post, "PATCH");
+        return jsonPlaceholderClient.updatePost(id, post);
     }
 }
