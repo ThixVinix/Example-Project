@@ -35,10 +35,29 @@ springdoc:
     display-operation-id: true
     display-request-duration: true
     tryItOutEnabled: false # Enable the "Try it out" button
-    supportedSubmitMethods: [ "get", "post" ] # Sets supported HTTP methods in "Try it out"
+    supportedSubmitMethods: [ "get", "post", "put", "delete", "path" ] # Sets supported HTTP methods in "Try it out"
     csrf:
       enabled: true
 
 logging:
   level:
     root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+rapid-api:
+  host: advanced-movie-search.p.rapidapi.com
+  baseUrl: https://advanced-movie-search.p.rapidapi.com
+  key: ${RAPIDAPI_KEY:9959e1e705msh9422956c4292a67p101207jsn3fe56966b6a1}
