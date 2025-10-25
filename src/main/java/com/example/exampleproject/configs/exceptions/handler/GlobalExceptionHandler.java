@@ -8,7 +8,6 @@ import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolati
 import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundException;
 import com.example.exampleproject.configs.exceptions.custom.UnauthorizedException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
-import feign.FeignException;
 import io.netty.channel.ConnectTimeoutException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;

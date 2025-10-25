@@ -61,10 +61,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     implementation "org.apache.commons:commons-lang3:$commonsLang3Version"
 
-    // Open Feign: HTTP client that allows you to simplify calls to RESTful services.
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-    implementation 'org.springframework.cloud:spring-cloud-openfeign-core'
-
     // Swagger OpenAPI v3
     // Swagger UI for visualization and testing
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion"
