@@ -9,6 +9,7 @@ import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundExce
 import com.example.exampleproject.configs.exceptions.custom.UnauthorizedException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
 import feign.FeignException;
+import io.netty.channel.ConnectTimeoutException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -108,7 +109,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getConflictMessage);
     }
 
-    @ExceptionHandler(TimeoutException.class)
+    @ExceptionHandler({TimeoutException.class, ConnectTimeoutException.class})
     protected ResponseEntity<ErrorSingleResponse> handleTimeoutException(Exception ex, WebRequest request) {
         return handleSingleErrorResponse(
                 ex,
