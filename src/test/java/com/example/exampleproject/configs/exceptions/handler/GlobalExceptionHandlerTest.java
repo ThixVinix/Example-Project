@@ -10,7 +10,7 @@ import com.example.exampleproject.configs.exceptions.custom.ResourceNotFoundExce
 import com.example.exampleproject.configs.exceptions.custom.UnauthorizedException;
 import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
 import com.example.exampleproject.utils.MessageUtils;
-import feign.FeignException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -36,6 +36,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,9 +83,9 @@ class GlobalExceptionHandlerTest {
     private static final String HANDLE_SERVICE_UNAVAILABLE_EXCEPTION = "handleServiceUnavailableException";
     private static final String HANDLE_BAD_GATEWAY_EXCEPTION = "handleBadGatewayException";
     private static final String HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION = "handlePayloadTooLargeException";
-    private static final String HANDLE_FEIGN_CLIENT_EXCEPTION = "handleFeignClientException";
+    private static final String HANDLE_WEB_CLIENT_RESPONSE_EXCEPTION = "handleWebClientResponseException";
 
-    record HandlerConfig(Function<FeignException, ?> function, boolean returnsString) {
+    record HandlerConfig(Function<Exception, ?> function, boolean returnsString) {
     }
 
     @InjectMocks
@@ -298,7 +299,7 @@ class GlobalExceptionHandlerTest {
     /**
      * Method test for
      * {@link GlobalExceptionHandler#handleBadRequestException(Exception, WebRequest)}
-     * when the message map contains only the "message" key
+     * When the message map contains only the "message" key
      */
     @Order(7)
     @Tag(value = HANDLE_BAD_REQUEST_EXCEPTION)
@@ -1074,33 +1075,33 @@ class GlobalExceptionHandlerTest {
 
     /**
      * Method test for
-     * {@link GlobalExceptionHandler#handleFeignClientException(FeignException, WebRequest)}
+     * {@link GlobalExceptionHandler#handleWebClientResponseException(WebClientResponseException, WebRequest)}
      */
     @Order(27)
-    @Tag(value = HANDLE_FEIGN_CLIENT_EXCEPTION)
-    @DisplayName(HANDLE_FEIGN_CLIENT_EXCEPTION + " - When FeignException is thrown then handle accordingly")
+    @Tag(value = HANDLE_WEB_CLIENT_RESPONSE_EXCEPTION)
+    @DisplayName(HANDLE_WEB_CLIENT_RESPONSE_EXCEPTION + " - When WebClientResponseException is thrown then handle accordingly")
     @ParameterizedTest(name = "Test {index} => status={0} | expectedStatus={1} | expectedMessage={2}")
-    @MethodSource("feignClientExceptionProvider")
-    void testHandleFeignClientException(int status,
-                                        HttpStatus expectedStatus,
-                                        String expectedMessage,
-                                        GlobalExceptionHandlerTest.HandlerConfig handlerConfig) {
+    @MethodSource("webClientResponseExceptionProvider")
+    void testHandleWebClientResponseException(int status,
+                                              HttpStatus expectedStatus,
+                                              String expectedMessage,
+                                              GlobalExceptionHandlerTest.HandlerConfig handlerConfig) {
 
-        FeignException ex = mock(FeignException.class);
-        when(ex.status()).thenReturn(status);
-        when(ex.getMessage()).thenReturn("Feign client error");
-
-        feign.Request requestMock = mock(feign.Request.class);
-        when(requestMock.headers()).thenReturn(new HashMap<>());
-        when(ex.request()).thenReturn(requestMock);
-        when(ex.responseBody()).thenReturn(java.util.Optional.of(java.nio.ByteBuffer.wrap("response body".getBytes())));
-        when(ex.responseHeaders()).thenReturn(new HashMap<>());
+        HttpHeaders headers = new HttpHeaders();
+        byte[] body = "response body".getBytes(StandardCharsets.UTF_8);
+        WebClientResponseException ex = WebClientResponseException.create(
+                status,
+                expectedStatus.getReasonPhrase(),
+                headers,
+                body,
+                StandardCharsets.UTF_8
+        );
 
         WebRequest request = mock(WebRequest.class);
         when(request.getDescription(false)).thenReturn("/test/path");
 
         try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            Function<FeignException, ?> messageFunction = handlerConfig.function();
+            Function<Exception, ?> messageFunction = handlerConfig.function();
 
             if (handlerConfig.returnsString()) {
                 mockedStatic.when(() -> messageFunction.apply(ex)).thenReturn(expectedMessage);
@@ -1111,7 +1112,7 @@ class GlobalExceptionHandlerTest {
             }
 
             ResponseEntity<? extends BaseError> responseEntity =
-                    exceptionHandler.handleFeignClientException(ex, request);
+                    exceptionHandler.handleWebClientResponseException(ex, request);
 
             assertNotNull(responseEntity);
             assertEquals(expectedStatus, responseEntity.getStatusCode());
@@ -1133,7 +1134,7 @@ class GlobalExceptionHandlerTest {
         }
     }
 
-    static Stream<Arguments> feignClientExceptionProvider() {
+    static Stream<Arguments> webClientResponseExceptionProvider() {
         return Stream.of(
                 Arguments.of(401, HttpStatus.UNAUTHORIZED, "Custom unauthorized message",
                         new GlobalExceptionHandlerTest.HandlerConfig(
@@ -1156,10 +1157,7 @@ class GlobalExceptionHandlerTest {
                 Arguments.of(409, HttpStatus.CONFLICT, "Custom conflict message",
                         new GlobalExceptionHandlerTest.HandlerConfig(
                                 ExceptionHandlerMessageHelper::getConflictMessage, true)),
-                Arguments.of(-1, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message1",
-                        new GlobalExceptionHandlerTest.HandlerConfig(
-                                ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
-                Arguments.of(500, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message2",
+                Arguments.of(500, HttpStatus.INTERNAL_SERVER_ERROR, "Custom internal server error message",
                         new GlobalExceptionHandlerTest.HandlerConfig(
                                 ExceptionHandlerMessageHelper::getInternalServerErrorMessage, true)),
                 Arguments.of(406, HttpStatus.NOT_ACCEPTABLE, "Custom not acceptable message",

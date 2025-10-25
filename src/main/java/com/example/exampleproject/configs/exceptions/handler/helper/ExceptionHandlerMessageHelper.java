@@ -7,7 +7,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -31,7 +31,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -658,12 +657,12 @@ public class ExceptionHandlerMessageHelper {
 
     private static Map<String, String> getDefaultBadRequestMessage(Exception ex) {
         String message;
-        
-        if (ex instanceof FeignException feignException) {
-            Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
+
+        if (ex instanceof WebClientResponseException webClientEx) {
+            Optional<String> extractedMessageOptional = extractMessageFromWebClientResponseException(webClientEx);
             String details = extractedMessageOptional
                     .orElseGet(() -> getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
-            message = getMessageUtils("msg.exception.handler.feign.client.error", details);
+            message = getMessageUtils("msg.exception.handler.web.client.error", details);
             return Map.of(DEFAULT_MESSAGE_KEY, message);
         }
         
@@ -677,11 +676,11 @@ public class ExceptionHandlerMessageHelper {
 
     private static String getErrorMessage(Exception ex, String defaultMessageValue) {
         String message;
-        
-        if (ex instanceof FeignException feignException) {
-            Optional<String> extractedMessageOptional = extractMessageFromFeignException(feignException);
+
+        if (ex instanceof WebClientResponseException webClientEx) {
+            Optional<String> extractedMessageOptional = extractMessageFromWebClientResponseException(webClientEx);
             String details = extractedMessageOptional.orElseGet(() -> getMessageUtils(defaultMessageValue));
-            message = getMessageUtils("msg.exception.handler.feign.client.error", details);
+            message = getMessageUtils("msg.exception.handler.web.client.error", details);
             return message;
         }
         
@@ -693,22 +692,20 @@ public class ExceptionHandlerMessageHelper {
         return message;
     }
 
-    private static Optional<String> extractMessageFromFeignException(final FeignException feignException) {
+    private static Optional<String> extractMessageFromWebClientResponseException(
+            final WebClientResponseException webClientEx) {
         try {
-            Optional<String> bodyOpt = feignException.responseBody()
-                    .map(bodyBytes -> new String(bodyBytes.array(), StandardCharsets.UTF_8))
-                    .map(String::trim);
+            String bodyString = Optional.of(webClientEx.getResponseBodyAsString()).map(String::trim).orElse("");
 
-            if (bodyOpt.isEmpty() || bodyOpt.get().isEmpty()) {
-                log.debug("FeignException response body missing or empty");
+            if (bodyString.isEmpty()) {
+                log.debug("WebClientResponseException response body missing or empty");
                 return Optional.empty();
             }
 
-            String bodyString = bodyOpt.get();
             JsonNode rootNode = parseJson(bodyString);
             return findFirstFieldIn(rootNode);
         } catch (Exception e) {
-            log.warn("Failed to extract message from FeignException body: {}", e.getMessage(), e);
+            log.warn("Failed to extract message from WebClientResponseException body: {}", e.getMessage(), e);
             return Optional.empty();
         }
     }

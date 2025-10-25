@@ -29,6 +29,7 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -47,23 +48,24 @@ import static java.util.Objects.nonNull;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    private final Map<HttpStatus, BiFunction<FeignException, WebRequest, ResponseEntity<? extends BaseError>>>
-            statusHandlers;
+    private final Map<HttpStatus, BiFunction
+            <WebClientResponseException, WebRequest, ResponseEntity<? extends BaseError>>> webClientStatusHandlers;
 
     private GlobalExceptionHandler() {
-        this.statusHandlers = new EnumMap<>(HttpStatus.class);
-        this.statusHandlers.put(HttpStatus.BAD_REQUEST, this::handleBadRequestException);
-        this.statusHandlers.put(HttpStatus.UNAUTHORIZED, this::handleUnauthorizedException);
-        this.statusHandlers.put(HttpStatus.FORBIDDEN, this::handleForbiddenException);
-        this.statusHandlers.put(HttpStatus.NOT_FOUND, this::handleResourceNotFoundException);
-        this.statusHandlers.put(HttpStatus.METHOD_NOT_ALLOWED, this::handleMethodNotAllowedException);
-        this.statusHandlers.put(HttpStatus.NOT_ACCEPTABLE, this::handleNotAcceptableException);
-        this.statusHandlers.put(HttpStatus.REQUEST_TIMEOUT, this::handleTimeoutException);
-        this.statusHandlers.put(HttpStatus.CONFLICT, this::handleConflictException);
-        this.statusHandlers.put(HttpStatus.UNSUPPORTED_MEDIA_TYPE, this::handleUnsupportedMediaTypeException);
-        this.statusHandlers.put(HttpStatus.PAYLOAD_TOO_LARGE, this::handlePayloadTooLargeException);
-        this.statusHandlers.put(HttpStatus.BAD_GATEWAY, this::handleBadGatewayException);
-        this.statusHandlers.put(HttpStatus.SERVICE_UNAVAILABLE, this::handleServiceUnavailableException);
+        this.webClientStatusHandlers = new EnumMap<>(HttpStatus.class);
+
+        this.webClientStatusHandlers.put(HttpStatus.BAD_REQUEST, this::handleBadRequestException);
+        this.webClientStatusHandlers.put(HttpStatus.UNAUTHORIZED, this::handleUnauthorizedException);
+        this.webClientStatusHandlers.put(HttpStatus.FORBIDDEN, this::handleForbiddenException);
+        this.webClientStatusHandlers.put(HttpStatus.NOT_FOUND, this::handleResourceNotFoundException);
+        this.webClientStatusHandlers.put(HttpStatus.METHOD_NOT_ALLOWED, this::handleMethodNotAllowedException);
+        this.webClientStatusHandlers.put(HttpStatus.NOT_ACCEPTABLE, this::handleNotAcceptableException);
+        this.webClientStatusHandlers.put(HttpStatus.REQUEST_TIMEOUT, this::handleTimeoutException);
+        this.webClientStatusHandlers.put(HttpStatus.CONFLICT, this::handleConflictException);
+        this.webClientStatusHandlers.put(HttpStatus.UNSUPPORTED_MEDIA_TYPE, this::handleUnsupportedMediaTypeException);
+        this.webClientStatusHandlers.put(HttpStatus.PAYLOAD_TOO_LARGE, this::handlePayloadTooLargeException);
+        this.webClientStatusHandlers.put(HttpStatus.BAD_GATEWAY, this::handleBadGatewayException);
+        this.webClientStatusHandlers.put(HttpStatus.SERVICE_UNAVAILABLE, this::handleServiceUnavailableException);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -367,46 +369,44 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
     }
 
+
     @SuppressWarnings("squid:S1452")
-    @ExceptionHandler(FeignException.class)
-    protected ResponseEntity<? extends BaseError> handleFeignClientException(FeignException e, WebRequest request) {
+    @ExceptionHandler(WebClientResponseException.class)
+    protected ResponseEntity<? extends BaseError> handleWebClientResponseException(WebClientResponseException e,
+                                                                                   WebRequest request) {
         String requestUri = request.getDescription(false);
-        HttpStatus status = HttpStatus.resolve(e.status());
-        int statusFeign = e.status();
+        HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
 
-        logFeignErrorDetails(e, requestUri, status);
+        logWebClientErrorDetails(e, requestUri, status);
 
-        if (statusFeign == -1 || isNull(status)) {
+        if (isNull(status)) {
             return this.handleGlobalException(e, request);
         }
 
         return getResponseByStatus(status, e, request);
     }
 
-    private void logFeignErrorDetails(FeignException e, String requestUri, HttpStatus status) {
-        String responseBody = e.responseBody().map(Object::toString).orElse("No response body");
-        String requestHeaders = e.request().headers().toString();
-        String responseHeaders = e.responseHeaders().toString();
+    private void logWebClientErrorDetails(WebClientResponseException e, String requestUri, HttpStatus status) {
+        String responseBody = e.getResponseBodyAsString();
+        HttpHeaders responseHeaders = e.getHeaders();
 
         log.error("""
-                        FEIGN CLIENT ERROR:
+                        WEBCLIENT ERROR:
                         URI: {}
                         Status: {}
-                        Request Headers: {}
                         Response Headers: {}
                         Response Body: {}
                         """,
                 requestUri,
                 nonNull(status) ? status.name() : "Unknown Status",
-                requestHeaders,
                 responseHeaders,
                 responseBody);
     }
 
     private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
-                                                                    FeignException e,
+                                                                    WebClientResponseException e,
                                                                     WebRequest request) {
-        var handler = statusHandlers.get(status);
+        var handler = webClientStatusHandlers.get(status);
 
         if (nonNull(handler)) {
             return handler.apply(e, request);
