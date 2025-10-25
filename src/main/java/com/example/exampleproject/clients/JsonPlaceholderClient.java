@@ -1,24 +1,60 @@
 package com.example.exampleproject.clients;
 
 import com.example.exampleproject.clients.models.JsonPlaceholderPost;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 
-@FeignClient(name = "jsonplaceholder", url = "https://jsonplaceholder.typicode.com")
-public interface JsonPlaceholderClient {
+@Component
+@RequiredArgsConstructor
+public class JsonPlaceholderClient {
 
-    @GetMapping("/posts/{id}")
-    JsonPlaceholderPost getPostById(@PathVariable("id") Long id);
+    public static final String POST_ID_URI = "/posts/{id}";
+    public static final String POSTS_URI = "/posts";
 
-    @PostMapping("/posts")
-    JsonPlaceholderPost createPost(@RequestBody JsonPlaceholderPost post);
+    private final WebClient jsonPlaceholderWebClient;
 
-    @DeleteMapping("/posts/{id}")
-    void deletePost(@PathVariable("id") Long id);
+    public JsonPlaceholderPost getPostById(Long id) {
+        return jsonPlaceholderWebClient
+                .get()
+                .uri(uriBuilder -> uriBuilder.path(POST_ID_URI).build(id))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(JsonPlaceholderPost.class)
+                .block();
+    }
 
-    @PostMapping("/posts/{id}")
-    JsonPlaceholderPost updatePost(@PathVariable("id") Long id,
-                                   @RequestBody JsonPlaceholderPost post,
-                                   @RequestHeader("X-HTTP-Method-Override") String methodOverride);
+    public JsonPlaceholderPost createPost(JsonPlaceholderPost post) {
+        return jsonPlaceholderWebClient
+                .post()
+                .uri(POSTS_URI)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(post)
+                .retrieve()
+                .bodyToMono(JsonPlaceholderPost.class)
+                .block();
+    }
 
+    public void deletePost(Long id) {
+        jsonPlaceholderWebClient
+                .delete()
+                .uri(uriBuilder -> uriBuilder.path(POST_ID_URI).build(id))
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
+
+    public JsonPlaceholderPost updatePost(Long id, JsonPlaceholderPost post) {
+        return jsonPlaceholderWebClient
+                .patch()
+                .uri(uriBuilder -> uriBuilder.path(POST_ID_URI).build(id))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(post)
+                .retrieve()
+                .bodyToMono(JsonPlaceholderPost.class)
+                .block();
+    }
 }
