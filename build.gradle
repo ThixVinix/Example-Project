@@ -12,6 +12,7 @@ ext {
     springdocOpenApiVersion = "2.6.0"
     junitJupiterVersion = "5.10.5"
     junitPlatformLauncherVersion = "1.11.2"
+    okHttpVersion = "5.2.1"
 }
 
 group = 'com.example'
@@ -52,6 +53,10 @@ dependencies {
 
     // Optional dependency for generating reports
     testImplementation "org.junit.platform:junit-platform-launcher:$junitPlatformLauncherVersion"
+
+    // MockWebServer for HTTP client testing
+    testImplementation "com.squareup.okhttp3:mockwebserver:$okHttpVersion"
+    testImplementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
 
     // Support for Java 8 DateTime API in Jackson (LocalDate, LocalDateTime)
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
