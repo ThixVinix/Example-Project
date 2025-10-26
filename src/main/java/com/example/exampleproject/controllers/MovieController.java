@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/movies")
 @RequiredArgsConstructor
-@Tag(name = "Movies", description = "Endpoints para integração com RapidAPI Advanced Movie Search via WebClient")
+@Tag(name = "Movies", description = "Endpoints para integração com RapidAPI Advanced Movie Search")
 public class MovieController {
 
     private final MovieService movieService;
