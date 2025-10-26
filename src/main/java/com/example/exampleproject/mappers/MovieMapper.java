@@ -13,6 +13,9 @@ import java.util.Optional;
 public class MovieMapper {
 
     public GenreListDto toGenreListDto(GenreListResponse source) {
+        if (source == null) {
+            return null;
+        }
         List<GenreDto> genres = nullSafeList(source.getGenres()).stream()
                 .filter(Objects::nonNull)
                 .map(this::toGenreDto)
@@ -23,6 +26,9 @@ public class MovieMapper {
     }
 
     public MoviePagedDto toMoviePagedDto(MoviePagedResponse source) {
+        if (source == null) {
+            return null;
+        }
         List<MovieSummaryDto> results = nullSafeList(source.getResults()).stream()
                 .filter(Objects::nonNull)
                 .map(this::toMovieSummaryDto)
@@ -36,6 +42,9 @@ public class MovieMapper {
     }
 
     public MovieDetailsDto toMovieDetailsDto(MovieDetailsResponse source) {
+        if (source == null) {
+            return null;
+        }
         return MovieDetailsDto.builder()
                 .adult(source.getAdult())
                 .backdropPath(source.getBackdropPath())
@@ -76,6 +85,9 @@ public class MovieMapper {
     }
 
     public MovieSummaryDto toMovieSummaryDto(MovieSummaryResponse source) {
+        if (source == null) {
+            return null;
+        }
         return MovieSummaryDto.builder()
                 .adult(source.getAdult())
                 .backdropPath(source.getBackdropPath())
@@ -95,6 +107,9 @@ public class MovieMapper {
     }
 
     public GenreDto toGenreDto(GenreResponse source) {
+        if (source == null) {
+            return null;
+        }
         return GenreDto.builder()
                 .id(source.getId())
                 .name(source.getName())
@@ -102,6 +117,9 @@ public class MovieMapper {
     }
 
     public BelongsToCollectionDto toBelongsToCollectionDto(BelongsToCollectionResponse source) {
+        if (source == null) {
+            return null;
+        }
         return BelongsToCollectionDto.builder()
                 .id(source.getId())
                 .name(source.getName())
@@ -111,6 +129,9 @@ public class MovieMapper {
     }
 
     public ProductionCompanyDto toProductionCompanyDto(ProductionCompanyResponse source) {
+        if (source == null) {
+            return null;
+        }
         return ProductionCompanyDto.builder()
                 .id(source.getId())
                 .logoPath(source.getLogoPath())
@@ -120,6 +141,9 @@ public class MovieMapper {
     }
 
     public ProductionCountryDto toProductionCountryDto(ProductionCountryResponse source) {
+        if (source == null) {
+            return null;
+        }
         return ProductionCountryDto.builder()
                 .iso31661(source.getIso31661())
                 .name(source.getName())
@@ -127,6 +151,9 @@ public class MovieMapper {
     }
 
     public SpokenLanguageDto toSpokenLanguageDto(SpokenLanguageResponse source) {
+        if (source == null) {
+            return null;
+        }
         return SpokenLanguageDto.builder()
                 .englishName(source.getEnglishName())
                 .iso6391(source.getIso6391())
