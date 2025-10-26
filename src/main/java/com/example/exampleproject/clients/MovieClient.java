@@ -14,13 +14,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class MovieClient {
 
+    public static final MediaType APPLICATION_JSON_MEDIA_TYPE = MediaType.APPLICATION_JSON;
+
     private final WebClient rapidApiWebClient;
 
     public GenreListResponse listGenres() {
         return rapidApiWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder.path("/genre/movie/list").build())
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .retrieve()
                 .bodyToMono(GenreListResponse.class)
                 .block();
@@ -37,7 +39,7 @@ public class MovieClient {
                         .path("/discover/movie")
                         .queryParams(params)
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .retrieve()
                 .bodyToMono(MoviePagedResponse.class)
                 .block();
@@ -51,7 +53,7 @@ public class MovieClient {
                         .queryParam("query", query)
                         .queryParam("page", page)
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .retrieve()
                 .bodyToMono(MoviePagedResponse.class)
                 .block();
@@ -64,7 +66,7 @@ public class MovieClient {
                         .path("/movies/getdetails")
                         .queryParam("movie_id", movieId)
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .retrieve()
                 .bodyToMono(MovieDetailsResponse.class)
                 .block();

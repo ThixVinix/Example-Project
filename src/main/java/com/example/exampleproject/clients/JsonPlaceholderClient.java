@@ -13,13 +13,15 @@ public class JsonPlaceholderClient {
     public static final String POST_ID_URI = "/posts/{id}";
     public static final String POSTS_URI = "/posts";
 
+    public static final MediaType APPLICATION_JSON_MEDIA_TYPE = MediaType.APPLICATION_JSON;
+
     private final WebClient jsonPlaceholderWebClient;
 
     public JsonPlaceholderPost getPostById(Long id) {
         return jsonPlaceholderWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder.path(POST_ID_URI).build(id))
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .retrieve()
                 .bodyToMono(JsonPlaceholderPost.class)
                 .block();
@@ -29,8 +31,8 @@ public class JsonPlaceholderClient {
         return jsonPlaceholderWebClient
                 .post()
                 .uri(POSTS_URI)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON_MEDIA_TYPE)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .bodyValue(post)
                 .retrieve()
                 .bodyToMono(JsonPlaceholderPost.class)
@@ -50,8 +52,8 @@ public class JsonPlaceholderClient {
         return jsonPlaceholderWebClient
                 .patch()
                 .uri(uriBuilder -> uriBuilder.path(POST_ID_URI).build(id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON_MEDIA_TYPE)
+                .accept(APPLICATION_JSON_MEDIA_TYPE)
                 .bodyValue(post)
                 .retrieve()
                 .bodyToMono(JsonPlaceholderPost.class)
