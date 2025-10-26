@@ -24,7 +24,7 @@ O projeto inclui exemplos de:
     - [Estrutura de Diretórios](#estrutura-de-diretórios)
     - [Convenções de API REST](#convenções-de-api-rest)
 6. [💻 Implementações Técnicas](#-implementações-técnicas)
-    - [Padrão de Integração com FeignClient](#-padrão-de-integração-com-feignclient)
+    - [Padrão de Integração com WebClient](#-padrão-de-integração-com-webclient)
     - [Anotações Customizadas para Validação](#-anotações-customizadas-para-validação)
     - [MessageUtils para Internacionalização](#-messageutils-para-internacionalização)
 7. [📐 Princípios SOLID](#-princípios-solid)
@@ -37,7 +37,7 @@ O projeto inclui exemplos de:
 
 - [Java 22](https://docs.oracle.com/en/java/javase/22/) - Linguagem de programação
 - [Spring Boot 3.3.2](https://spring.io/) - Framework para desenvolvimento de aplicações
-- [Spring Cloud OpenFeign](https://docs.spring.io/spring-cloud-openfeign/docs/current/reference/html/) - Cliente HTTP para chamadas a serviços RESTful
+- [Spring WebFlux WebClient](https://docs.spring.io/spring-framework/reference/web/webflux-webclient.html) - Cliente HTTP reativo para chamadas a serviços RESTful
 - [Swagger/OpenAPI](https://swagger.io/docs/) - Documentação de API
 - [JUnit 5](https://junit.org/junit5/docs/current/user-guide/) - Framework de testes
 - [Lombok](https://projectlombok.org/features/) - Redução de código boilerplate
@@ -196,58 +196,79 @@ Os métodos POST ou PUT devem retornar uma representação do recurso atualizado
 
 ## 💻 Implementações Técnicas
 
-### 🔄 Padrão de Integração com FeignClient
+### 🔄 Padrão de Integração com WebClient
 
-O projeto utiliza o Spring Cloud OpenFeign para simplificar a integração com APIs externas. O padrão implementado segue uma abordagem em camadas:
+O projeto utiliza o `Spring WebFlux WebClient` para integrações HTTP com serviços externos. O padrão implementado segue uma abordagem em camadas e prioriza um cliente leve, com controle fino de timeouts, headers e tratamento de erros:
 
-1. **Interfaces de Cliente**: 
-   Definidas com a anotação `@FeignClient`, especificando o nome do serviço e a URL base.
+1. **Configuração**:
+   Um `WebClient` (ou `WebClient.Builder`) é exposto via configuração para reutilização e padronização de headers, baseUrl, codecs e timeouts.
    ```java
-   @FeignClient(name = "name-client-example", url = "${url.client.example}")
-   public interface ExampleClient {
-       @GetMapping("/context/{id}")
-       ExampleObject getById(@PathVariable("id") Long id);
-
-       // outros métodos...
+   @Configuration
+   public class WebClientConfig {
+       @Bean
+       public WebClient webClient(WebClient.Builder builder) {
+           return builder
+               .baseUrl("${external.apis.base-url:}") // opcional
+               .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+               .build();
+       }
    }
    ```
 
-2. **Camada de Serviço**: 
-   Implementa a lógica de negócios e utiliza os clientes Feign para fazer as chamadas externas.
+2. **Camada de Serviço**:
+   A lógica de negócio utiliza o `WebClient` para realizar chamadas externas. É possível trabalhar de forma reativa (Mono/Flux) ou bloquear quando necessário.
    ```java
    @Service
    public class ExampleServiceImpl implements ExampleService {
-       private final ExampleClient exampleClient;
-
+       private final WebClient webClient;
+       
        @Autowired
-       public ExampleServiceImpl(ExampleClient exampleClient) {
-           this.exampleClient = exampleClient;
+       public ExampleServiceImpl(WebClient webClient) {
+           this.webClient = webClient;
        }
 
        @Override
        public ExampleObject getById(Long id) {
-           return exampleClient.getById(id);
+           return webClient
+               .get()
+               .uri(uriBuilder -> uriBuilder.path("/context/{id}").build(id))
+               .retrieve()
+               .onStatus(HttpStatusCode::isError, clientResponse ->
+                   clientResponse.bodyToMono(String.class)
+                       .map(body -> new RuntimeException("Erro na chamada externa: " + body))
+               )
+               .bodyToMono(ExampleObject.class)
+               .block(); // ou retorne Mono<ExampleObject> se preferir reativo
        }
 
        // outros métodos...
    }
    ```
 
-3. **Configuração**: 
-   A anotação `@EnableFeignClients` na classe principal habilita o suporte ao Feign.
+3. **Tratamento de Erros e Observabilidade**:
+   Padronize o mapeamento de erros, logging e métricas (Micrometer) na camada de serviço ou via filtros (`ExchangeFilterFunction`).
    ```java
-   @SpringBootApplication
-   @EnableFeignClients
-   public class ExampleProjectApplication {
-       // ...
+   @Bean
+   public WebClient webClientWithFilters(WebClient.Builder builder) {
+       return builder
+           .filter((request, next) -> {
+               long start = System.currentTimeMillis();
+               return next.exchange(request)
+                   .doOnNext(resp -> {
+                       long ms = System.currentTimeMillis() - start;
+                       // log/metricas por request
+                   });
+           })
+           .build();
    }
    ```
 
 #### Benefícios do Padrão
-- ✅ **Desacoplamento**: Separa a lógica de integração da lógica de negócios
-- ✅ **Testabilidade**: Facilita a criação de mocks para testes unitários
-- ✅ **Manutenibilidade**: Centraliza a configuração de chamadas externas
-- ✅ **Declarativo**: Utiliza anotações para definir endpoints e parâmetros
+- ✅ **Leve e flexível**: Sem proxies gerados; controle total sobre requisições HTTP
+- ✅ **Reativo ou bloqueante**: Suporta `Mono/Flux` e também `.block()` quando apropriado
+- ✅ **Tratamento de erros granular**: `onStatus`, filtros e mapeamentos customizados
+- ✅ **Testabilidade**: Facilita testes com `MockWebServer`/`WireMock` e mocks de `WebClient`
+- ✅ **Observabilidade**: Integração simples com logs, métricas e tracing (Micrometer/Brave/OpenTelemetry)
 
 ### ✅ Anotações Customizadas para Validação
 
