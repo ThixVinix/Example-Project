@@ -53,7 +53,8 @@ public class FileController {
             @RequestParam("file")
             MultipartFile file,
 
-            @Parameter(description = "User identifier associated with the upload", example = "user-123", required = true)
+            @Parameter(description = "User identifier associated with the upload",
+                    example = "user-123", required = true)
             @RequestParam("userId")
             String userId,
 
@@ -96,7 +97,8 @@ public class FileController {
     @PostMapping(value = "/upload-multiple-list", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String uploadMultipleFilesList(
             @Parameter(
-                    description = "Files to upload. Max 3 files. Allowed types: image/jpeg, image/png, application/pdf. Max size per file: 5 MB",
+                    description = "Files to upload. Max 3 files. Allowed types: image/jpeg, image/png, " +
+                            "application/pdf. Max size per file: 5 MB",
                     required = true,
                     content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))
