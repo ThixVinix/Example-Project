@@ -60,4 +60,4 @@ management:
 rapid-api:
   host: advanced-movie-search.p.rapidapi.com
   baseUrl: https://advanced-movie-search.p.rapidapi.com
-  key: ${RAPIDAPI_KEY:9959e1e705msh9422956c4292a67p101207jsn3fe56966b6a1}
+  key: ${rapid-api.key:}
