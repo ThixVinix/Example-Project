@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.nonNull;
 
@@ -84,44 +85,44 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String DEFAULT_MESSAGE_KEY = "message";
 
-    private static final String FEIGN_CLIENT_FIELD_MESSAGE = "message";
-    private static final String FEIGN_CLIENT_FIELD_MSG = "msg";
-    private static final String FEIGN_CLIENT_FIELD_MENSAGEM = "mensagem";
-    private static final String FEIGN_CLIENT_FIELD_DEFAULT_MESSAGE = "defaultMessage";
-    private static final String FEIGN_CLIENT_FIELD_MESSAGE_DETAIL = "messageDetail";
-    private static final String FEIGN_CLIENT_FIELD_DETAILED_MESSAGE = "detailedMessage";
-    private static final String FEIGN_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE = "message_details";
-    private static final String FEIGN_CLIENT_FIELD_DETAIL = "detail";
-    private static final String FEIGN_CLIENT_FIELD_DETAILS = "details";
-    private static final String FEIGN_CLIENT_FIELD_DESCRIPTION = "description";
-    private static final String FEIGN_CLIENT_FIELD_REASON = "reason";
-    private static final String FEIGN_CLIENT_FIELD_CAUSE = "cause";
-    private static final String FEIGN_CLIENT_FIELD_HINT = "hint";
-    private static final String FEIGN_CLIENT_FIELD_ERROR_DESCRIPTION = "error_description";
-    private static final String FEIGN_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE = "error_message";
-    private static final String FEIGN_CLIENT_FIELD_ERROR_MESSAGE = "errorMessage";
-    private static final String FEIGN_CLIENT_FIELD_ERRO = "erro";
-    private static final String FEIGN_CLIENT_FIELD_ERROR = "error";
+    private static final String WEB_CLIENT_FIELD_MESSAGE = "message";
+    private static final String WEB_CLIENT_FIELD_MSG = "msg";
+    private static final String WEB_CLIENT_FIELD_MENSAGEM = "mensagem";
+    private static final String WEB_CLIENT_FIELD_DEFAULT_MESSAGE = "defaultMessage";
+    private static final String WEB_CLIENT_FIELD_MESSAGE_DETAIL = "messageDetail";
+    private static final String WEB_CLIENT_FIELD_DETAILED_MESSAGE = "detailedMessage";
+    private static final String WEB_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE = "message_details";
+    private static final String WEB_CLIENT_FIELD_DETAIL = "detail";
+    private static final String WEB_CLIENT_FIELD_DETAILS = "details";
+    private static final String WEB_CLIENT_FIELD_DESCRIPTION = "description";
+    private static final String WEB_CLIENT_FIELD_REASON = "reason";
+    private static final String WEB_CLIENT_FIELD_CAUSE = "cause";
+    private static final String WEB_CLIENT_FIELD_HINT = "hint";
+    private static final String WEB_CLIENT_FIELD_ERROR_DESCRIPTION = "error_description";
+    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE = "error_message";
+    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE = "errorMessage";
+    private static final String WEB_CLIENT_FIELD_ERRO = "erro";
+    private static final String WEB_CLIENT_FIELD_ERROR = "error";
 
     private static final List<String> MESSAGE_FIELD_CANDIDATES_LIST = List.of(
-            FEIGN_CLIENT_FIELD_MESSAGE,
-            FEIGN_CLIENT_FIELD_MSG,
-            FEIGN_CLIENT_FIELD_MENSAGEM,
-            FEIGN_CLIENT_FIELD_DEFAULT_MESSAGE,
-            FEIGN_CLIENT_FIELD_MESSAGE_DETAIL,
-            FEIGN_CLIENT_FIELD_DETAILED_MESSAGE,
-            FEIGN_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE,
-            FEIGN_CLIENT_FIELD_DETAIL,
-            FEIGN_CLIENT_FIELD_DETAILS,
-            FEIGN_CLIENT_FIELD_DESCRIPTION,
-            FEIGN_CLIENT_FIELD_REASON,
-            FEIGN_CLIENT_FIELD_CAUSE,
-            FEIGN_CLIENT_FIELD_HINT,
-            FEIGN_CLIENT_FIELD_ERROR_DESCRIPTION,
-            FEIGN_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE,
-            FEIGN_CLIENT_FIELD_ERROR_MESSAGE,
-            FEIGN_CLIENT_FIELD_ERRO,
-            FEIGN_CLIENT_FIELD_ERROR
+            WEB_CLIENT_FIELD_MESSAGE,
+            WEB_CLIENT_FIELD_MSG,
+            WEB_CLIENT_FIELD_MENSAGEM,
+            WEB_CLIENT_FIELD_DEFAULT_MESSAGE,
+            WEB_CLIENT_FIELD_MESSAGE_DETAIL,
+            WEB_CLIENT_FIELD_DETAILED_MESSAGE,
+            WEB_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE,
+            WEB_CLIENT_FIELD_DETAIL,
+            WEB_CLIENT_FIELD_DETAILS,
+            WEB_CLIENT_FIELD_DESCRIPTION,
+            WEB_CLIENT_FIELD_REASON,
+            WEB_CLIENT_FIELD_CAUSE,
+            WEB_CLIENT_FIELD_HINT,
+            WEB_CLIENT_FIELD_ERROR_DESCRIPTION,
+            WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE,
+            WEB_CLIENT_FIELD_ERROR_MESSAGE,
+            WEB_CLIENT_FIELD_ERRO,
+            WEB_CLIENT_FIELD_ERROR
     );
 
     private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
@@ -728,19 +729,11 @@ public class ExceptionHandlerMessageHelper {
             return Optional.empty();
         }
 
-        Optional<String> direct = extractIfHasNonBlank(node, fieldName);
-        if (direct.isPresent()) {
-            return direct;
-        }
-
-        for (JsonNode child : iterableChildren(node)) {
-            Optional<String> found = findFieldRecursively(child, fieldName);
-            if (found.isPresent()) {
-                return found;
-            }
-        }
-
-        return Optional.empty();
+        return extractIfHasNonBlank(node, fieldName)
+                .or(() -> StreamSupport.stream(iterableChildren(node).spliterator(), false)
+                        .map(child -> findFieldRecursively(child, fieldName))
+                        .flatMap(Optional::stream)
+                        .findFirst());
     }
 
     private static boolean isNullNode(JsonNode node) {
@@ -755,7 +748,7 @@ public class ExceptionHandlerMessageHelper {
         if (value.isEmpty()) {
             return Optional.empty();
         }
-        log.debug("Recursively extracted '{}' field from FeignException", fieldName);
+        log.debug("Recursively extracted '{}' field from WebClientResponseException", fieldName);
         return Optional.of(value);
     }
 
