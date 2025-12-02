@@ -20,6 +20,9 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -517,6 +520,12 @@ public class ExceptionHandlerMessageHelper {
                 || getAnnotationValue(param, RequestHeader.class)
                 .map(value -> value.equals(ex.getName())).orElse(false)
                 || getAnnotationValue(param, PathVariable.class)
+                .map(value -> value.equals(ex.getName())).orElse(false)
+                || getAnnotationValue(param, RequestPart.class)
+                .map(value -> value.equals(ex.getName())).orElse(false)
+                || getAnnotationValue(param, CookieValue.class)
+                .map(value -> value.equals(ex.getName())).orElse(false)
+                || getAnnotationValue(param, MatrixVariable.class)
                 .map(value -> value.equals(ex.getName())).orElse(false);
     }
 
@@ -558,6 +567,9 @@ public class ExceptionHandlerMessageHelper {
         return getAnnotationValue(param, RequestParam.class)
                 .or(() -> getAnnotationValue(param, RequestHeader.class))
                 .or(() -> getAnnotationValue(param, PathVariable.class))
+                .or(() -> getAnnotationValue(param, RequestPart.class))
+                .or(() -> getAnnotationValue(param, CookieValue.class))
+                .or(() -> getAnnotationValue(param, MatrixVariable.class))
                 .orElse(param.getName());
     }
 
@@ -641,6 +653,12 @@ public class ExceptionHandlerMessageHelper {
                     param.getName() : requestHeader.value().trim());
             case PathVariable requestPath -> Optional.of(requestPath.value().trim().isEmpty() ?
                     param.getName() : requestPath.value().trim());
+            case RequestPart requestPart -> Optional.of(requestPart.value().trim().isEmpty() ?
+                    param.getName() : requestPart.value().trim());
+            case CookieValue cookieValue -> Optional.of(cookieValue.value().trim().isEmpty() ?
+                    param.getName() : cookieValue.value().trim());
+            case MatrixVariable matrixVariable -> Optional.of(matrixVariable.value().trim().isEmpty() ?
+                    param.getName() : matrixVariable.value().trim());
             default -> Optional.empty();
         };
 

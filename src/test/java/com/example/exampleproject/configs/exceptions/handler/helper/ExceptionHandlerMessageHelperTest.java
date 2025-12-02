@@ -34,6 +34,9 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -929,6 +932,12 @@ class ExceptionHandlerMessageHelperTest {
     @CsvSource(value = {
             "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|RequestParam",
             "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|RequestParam",
+            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|RequestPart",
+            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|RequestPart",
+            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|CookieValue",
+            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|CookieValue",
+            "java.time.LocalDate|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|MatrixVariable",
+            "java.time.LocalDate|en_US|date|yyyy-MM-dd|'dd/MM/yyyy'|Must be in the format dd/MM/yyyy, received value: yyyy-MM-dd.|MatrixVariable",
             "java.time.LocalDateTime|pt_BR|dataHora|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|Deve estar no formato dd/MM/yyyy HH:mm:ss, valor recebido: yyyy-MM-dd.|RequestHeader",
             "java.time.LocalDateTime|en_US|dateTime|yyyy-MM-dd|'dd/MM/yyyy HH:mm:ss'|Must be in the format dd/MM/yyyy HH:mm:ss, received value: yyyy-MM-dd.|RequestHeader",
             "java.util.Date|pt_BR|data|yyyy-MM-dd|'dd/MM/yyyy'|Deve estar no formato dd/MM/yyyy, valor recebido: yyyy-MM-dd.|PathVariable",
@@ -2105,12 +2114,14 @@ class ExceptionHandlerMessageHelperTest {
     }
 
     /**
-     * Mocks the specified annotation on a given method parameter.
+     * Mocks a specific annotation on a given method parameter with the provided value.
+     * Supports annotations such as RequestParam, RequestHeader, PathVariable, RequestPart,
+     * CookieValue, and MatrixVariable.
      *
-     * @param mockMethodParameter the method parameter to mock the annotation on
-     * @param annotationType      the type of annotation to mock (e.g., "RequestParam", "RequestHeader", "PathVariable")
-     * @param parameter           the value to return for the annotation's parameter
-     * @throws UnsupportedOperationException if the specified annotation type is not supported
+     * @param mockMethodParameter the parameter to which the mock annotation is applied
+     * @param annotationType the type of annotation to be mocked (e.g., "RequestParam")
+     * @param parameter the value to be set for the annotation's key or value
+     * @throws UnsupportedOperationException if the provided annotationType is not supported
      */
     private void mockAnnotation(Parameter mockMethodParameter, String annotationType, String parameter) {
         switch (annotationType) {
@@ -2131,6 +2142,24 @@ class ExceptionHandlerMessageHelperTest {
                 Mockito.lenient().when(mockPathVariable.value()).thenReturn(parameter);
                 Mockito.lenient().when(mockMethodParameter.getAnnotation(PathVariable.class))
                         .thenReturn(mockPathVariable);
+            }
+            case "RequestPart" -> {
+                RequestPart mockRequestPart = mock(RequestPart.class);
+                Mockito.lenient().when(mockRequestPart.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(RequestPart.class))
+                        .thenReturn(mockRequestPart);
+            }
+            case "CookieValue" -> {
+                CookieValue mockCookieValue = mock(CookieValue.class);
+                Mockito.lenient().when(mockCookieValue.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(CookieValue.class))
+                        .thenReturn(mockCookieValue);
+            }
+            case "MatrixVariable" -> {
+                MatrixVariable mockMatrixVariable = mock(MatrixVariable.class);
+                Mockito.lenient().when(mockMatrixVariable.value()).thenReturn(parameter);
+                Mockito.lenient().when(mockMethodParameter.getAnnotation(MatrixVariable.class))
+                        .thenReturn(mockMatrixVariable);
             }
             default -> throw new UnsupportedOperationException("Unsupported annotation type: " + annotationType);
         }
