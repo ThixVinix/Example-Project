@@ -141,6 +141,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getInternalServerErrorMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@NonNull MaxUploadSizeExceededException ex,
                                                                           @NonNull HttpHeaders headers,
@@ -155,6 +156,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             @NonNull MethodArgumentNotValidException ex,
@@ -171,6 +173,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(@NonNull HttpMessageNotReadableException ex,
                                                                   @NonNull HttpHeaders headers,
@@ -185,6 +188,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleMissingServletRequestParameter(
             @NonNull MissingServletRequestParameterException ex,
@@ -200,6 +204,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(@NonNull
                                                                          HttpRequestMethodNotSupportedException ex,
@@ -215,6 +220,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleHttpMediaTypeNotAcceptable(@NonNull HttpMediaTypeNotAcceptableException ex,
                                                                       @NonNull HttpHeaders headers,
@@ -229,6 +235,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(@NonNull HttpMediaTypeNotSupportedException ex,
                                                                      @NonNull HttpHeaders headers,
@@ -243,6 +250,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleMissingPathVariable(@NonNull MissingPathVariableException ex,
                                                                @NonNull HttpHeaders headers,
@@ -257,6 +265,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 e -> "Missing path variable: " + ((MissingPathVariableException) e).getVariableName());
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleHandlerMethodValidationException(@NonNull
                                                                             HandlerMethodValidationException ex,
@@ -272,6 +281,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleAsyncRequestTimeoutException(@NonNull AsyncRequestTimeoutException ex,
                                                                         @NonNull HttpHeaders headers,
@@ -286,6 +296,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleNoResourceFoundException(@NonNull NoResourceFoundException ex,
                                                                     @NonNull HttpHeaders headers,
@@ -300,6 +311,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getNotFoundMessage);
     }
 
+    @SuppressWarnings("squid:S2638")
     @Override
     protected ResponseEntity<Object> handleServletRequestBindingException(@NonNull ServletRequestBindingException ex,
                                                                           @NonNull HttpHeaders headers,
@@ -413,15 +425,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         }
 
         return this.handleGlobalException(e, request);
-}
+    }
 
     /**
      * Helper method to handle exceptions that return a single error response.
      *
-     * @param ex      The exception
-     * @param request The WebRequest
-     * @param status  The HTTP status
-     * @param logMessage The log message
+     * @param ex              The exception
+     * @param request         The WebRequest
+     * @param status          The HTTP status
+     * @param logMessage      The log message
      * @param messageSupplier A function that supplies the error message
      * @return A ResponseEntity with the error response
      */
@@ -541,7 +553,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * @param logMessage      The log message to be recorded with the error.
      * @param messageSupplier A function to generate the error message based on the exception.
      * @return A {@link ResponseEntity} containing the structured single error response
-     *         and appropriate HTTP status.
+     * and appropriate HTTP status.
      */
     private ResponseEntity<Object> handleOverrideSingleErrorResponse(
             Exception ex,
