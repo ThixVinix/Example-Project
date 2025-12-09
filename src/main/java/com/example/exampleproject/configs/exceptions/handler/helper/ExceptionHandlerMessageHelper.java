@@ -761,24 +761,50 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Optional<String> findFirstFieldIn(JsonNode rootNode) {
-        return MESSAGE_FIELD_CANDIDATES_LIST.stream()
-                .map(field -> findFieldRecursively(rootNode, field))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
-    }
-
-
-    private static Optional<String> findFieldRecursively(JsonNode node, String fieldName) {
-        if (isNullNode(node)) {
+        if (isNullNode(rootNode)) {
             return Optional.empty();
         }
 
-        return extractIfHasNonBlank(node, fieldName)
-                .or(() -> StreamSupport.stream(iterableChildren(node).spliterator(), false)
-                        .map(child -> findFieldRecursively(child, fieldName))
-                        .flatMap(Optional::stream)
-                        .findFirst());
+        Map<String, String> foundCandidates = collectCandidateValues(rootNode);
+
+        return MESSAGE_FIELD_CANDIDATES_LIST.stream()
+                .filter(foundCandidates::containsKey)
+                .map(foundCandidates::get)
+                .findFirst();
+    }
+
+    private static Map<String, String> collectCandidateValues(JsonNode rootNode) {
+        Map<String, String> foundCandidates = new HashMap<>();
+        Set<String> targetFields = new HashSet<>(MESSAGE_FIELD_CANDIDATES_LIST);
+
+        Queue<JsonNode> queue = new LinkedList<>();
+        queue.add(rootNode);
+
+        while (!queue.isEmpty()) {
+            JsonNode currentNode = queue.poll();
+
+            if (currentNode.isObject()) {
+                extractFromObjectFields(currentNode, targetFields, foundCandidates);
+            }
+
+            if (currentNode.isContainerNode()) {
+                currentNode.elements().forEachRemaining(queue::add);
+            }
+        }
+        return foundCandidates;
+    }
+
+    private static void extractFromObjectFields(JsonNode objectNode,
+                                                Set<String> targetFields,
+                                                Map<String, String> foundCandidates) {
+        Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            String key = field.getKey();
+            if (targetFields.contains(key) && !foundCandidates.containsKey(key)) {
+                extractIfHasNonBlank(objectNode, key).ifPresent(val -> foundCandidates.put(key, val));
+            }
+        }
     }
 
     private static boolean isNullNode(JsonNode node) {
@@ -840,28 +866,6 @@ public class ExceptionHandlerMessageHelper {
             return Optional.of(joined);
         }
         return Optional.empty();
-    }
-
-    private static Iterable<JsonNode> iterableChildren(JsonNode node) {
-        if (node.isObject()) {
-            var iterator = node.fields();
-            return () -> new Iterator<>() {
-                @Override
-                public boolean hasNext() {
-                    return iterator.hasNext();
-                }
-
-                @Override
-                public JsonNode next() {
-                    return iterator.next().getValue();
-                }
-            };
-        }
-        if (node.isArray()) {
-            var iterator = node.elements();
-            return () -> iterator;
-        }
-        return Collections::emptyIterator;
     }
 
     private static String getMessageUtils(String messageKey, Object... params) {
