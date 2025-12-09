@@ -2114,6 +2114,153 @@ class ExceptionHandlerMessageHelperTest {
     }
 
     /**
+     * Method test for when the target field 'message' is an array (container node)
+     * Covers extractIfHasNonBlank -> extractFromArray branch
+     */
+    @Order(59)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with WebClientResponseException 'message' field as array")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Primeiro; Segundo; Terceiro",
+            "en_US|An error occurred while calling the external service. Details: First; Second; Third"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithWebClientResponseExceptionMessageArray(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"message\": [\"First\", \"Second\", \"   \", \"Third\"]}";
+        // Portuguese expected elements in the array
+        if (languageTag.equals("pt_BR")) {
+            jsonResponse = "{\"message\": [\"Primeiro\", \"Segundo\", \"   \", \"Terceiro\"]}";
+        }
+        WebClientResponseException webClientEx = WebClientResponseException.create(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                new HttpHeaders(),
+                jsonResponse.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(webClientEx);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should join array elements with '; ' and place into unified WebClient error details");
+    }
+
+    /**
+     * Method test for when the target field 'message' is an object (container node)
+     * Covers extractIfHasNonBlank -> extractFromObject branch
+     */
+    @Order(60)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with WebClientResponseException 'message' field as object")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: campo1: Valor 1; campo2: Valor 2",
+            "en_US|An error occurred while calling the external service. Details: field1: Value 1; field2: Value 2"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithWebClientResponseExceptionMessageObject(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange - preserve insertion order for deterministic join
+        String jsonResponse = "{\"message\": {\"field1\": \"Value 1\", \"field2\": \"Value 2\", \"empty\": \"   \"}}";
+        if (languageTag.equals("pt_BR")) {
+            jsonResponse = "{\"message\": {\"campo1\": \"Valor 1\", \"campo2\": \"Valor 2\", \"vazio\": \"   \"}}";
+        }
+        WebClientResponseException webClientEx = WebClientResponseException.create(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                new HttpHeaders(),
+                jsonResponse.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(webClientEx);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should format 'key: value' pairs and join them with '; ' for object nodes");
+    }
+
+    /**
+     * Method test for when the target field 'error' is an array (container node) and 'message' is absent
+     */
+    @Order(61)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with WebClientResponseException 'error' field as array")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: Erro A; Erro B",
+            "en_US|An error occurred while calling the external service. Details: Error A; Error B"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithWebClientResponseExceptionErrorArray(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"error\": [\"Error A\", \"Error B\", \"   \", null]}";
+        if (languageTag.equals("pt_BR")) {
+            jsonResponse = "{\"error\": [\"Erro A\", \"Erro B\", \"   \", null]}";
+        }
+        WebClientResponseException webClientEx = WebClientResponseException.create(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                new HttpHeaders(),
+                jsonResponse.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(webClientEx);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should use 'error' array when 'message' not present, joining non-blank elements");
+    }
+
+    /**
+     * Method test for when the target field 'error' is an object (container node) and 'message' is absent
+     */
+    @Order(62)
+    @Tag(value = GET_BAD_REQUEST_MESSAGE)
+    @DisplayName(GET_BAD_REQUEST_MESSAGE + " - with WebClientResponseException 'error' field as object")
+    @ParameterizedTest(name = "Test {index} => locale={0}")
+    @CsvSource(value = {
+            "pt_BR|Ocorreu um erro ao chamar o serviço externo. Detalhes: codigo: 400; descricao: Falha",
+            "en_US|An error occurred while calling the external service. Details: code: 400; desc: Failure"
+    }, delimiter = CSV_DELIMITER)
+    void getBadRequestMessage_WithWebClientResponseExceptionErrorObject(String languageTag, String expectedMessage) {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag(languageTag.replace('_', '-')));
+
+        // Arrange
+        String jsonResponse = "{\"error\": {\"code\": \"400\", \"desc\": \"Failure\", \"blank\": \"   \"}}";
+        if (languageTag.equals("pt_BR")) {
+            jsonResponse = "{\"error\": {\"codigo\": \"400\", \"descricao\": \"Falha\", \"emBranco\": \"   \"}}";
+        }
+        WebClientResponseException webClientEx = WebClientResponseException.create(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                new HttpHeaders(),
+                jsonResponse.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8
+        );
+
+        // Act
+        Map<String, String> result = ExceptionHandlerMessageHelper.getBadRequestMessage(webClientEx);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedMessage, result.get("message"),
+                "Should format and join non-blank 'key: value' pairs for 'error' object when 'message' is absent");
+    }
+
+    /**
      * Mocks a specific annotation on a given method parameter with the provided value.
      * Supports annotations such as RequestParam, RequestHeader, PathVariable, RequestPart,
      * CookieValue, and MatrixVariable.

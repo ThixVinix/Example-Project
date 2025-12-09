@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -67,7 +69,7 @@ import static java.util.Objects.nonNull;
  * <h2>Features</h2>
  * <p>This class uses exception-specific details to construct precise and context-aware messages,
  * while providing default message options when necessary. Most of the methods are intended for
- * internal use and are designed to generate detailed error responses, assisting in debugging and
+ * internal use and are designed to generate detailed error responses, helping in debugging and
  * enhancing the user experience.</p>
  *
  * <h2>Implementation</h2>
@@ -88,9 +90,13 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String DEFAULT_MESSAGE_KEY = "message";
 
+    private static final String WEB_CLIENT_FIELD_FIELD_ERRORS = "fieldErrors";
+    private static final String WEB_CLIENT_FIELD_ERROR_FIELDS = "errorFields";
+    private static final String WEB_CLIENT_FIELD_MESSAGES = "messages";
     private static final String WEB_CLIENT_FIELD_MESSAGE = "message";
     private static final String WEB_CLIENT_FIELD_MSG = "msg";
     private static final String WEB_CLIENT_FIELD_MENSAGEM = "mensagem";
+    private static final String WEB_CLIENT_FIELD_MENSAGENS = "mensagens";
     private static final String WEB_CLIENT_FIELD_DEFAULT_MESSAGE = "defaultMessage";
     private static final String WEB_CLIENT_FIELD_MESSAGE_DETAIL = "messageDetail";
     private static final String WEB_CLIENT_FIELD_DETAILED_MESSAGE = "detailedMessage";
@@ -98,19 +104,30 @@ public class ExceptionHandlerMessageHelper {
     private static final String WEB_CLIENT_FIELD_DETAIL = "detail";
     private static final String WEB_CLIENT_FIELD_DETAILS = "details";
     private static final String WEB_CLIENT_FIELD_DESCRIPTION = "description";
+    private static final String WEB_CLIENT_FIELD_DESCRIPTIONS = "descriptions";
     private static final String WEB_CLIENT_FIELD_REASON = "reason";
+    private static final String WEB_CLIENT_FIELD_REASONS = "reasons";
     private static final String WEB_CLIENT_FIELD_CAUSE = "cause";
+    private static final String WEB_CLIENT_FIELD_CAUSES = "causes";
     private static final String WEB_CLIENT_FIELD_HINT = "hint";
+    private static final String WEB_CLIENT_FIELD_HINTS = "hints";
     private static final String WEB_CLIENT_FIELD_ERROR_DESCRIPTION = "error_description";
     private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE = "error_message";
     private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE = "errorMessage";
+    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGES = "errorMessages";
     private static final String WEB_CLIENT_FIELD_ERRO = "erro";
+    private static final String WEB_CLIENT_FIELD_ERROS = "erros";
+    private static final String WEB_CLIENT_FIELD_ERRORS = "errors";
     private static final String WEB_CLIENT_FIELD_ERROR = "error";
 
     private static final List<String> MESSAGE_FIELD_CANDIDATES_LIST = List.of(
+            WEB_CLIENT_FIELD_FIELD_ERRORS,
+            WEB_CLIENT_FIELD_ERROR_FIELDS,
+            WEB_CLIENT_FIELD_MESSAGES,
             WEB_CLIENT_FIELD_MESSAGE,
             WEB_CLIENT_FIELD_MSG,
             WEB_CLIENT_FIELD_MENSAGEM,
+            WEB_CLIENT_FIELD_MENSAGENS,
             WEB_CLIENT_FIELD_DEFAULT_MESSAGE,
             WEB_CLIENT_FIELD_MESSAGE_DETAIL,
             WEB_CLIENT_FIELD_DETAILED_MESSAGE,
@@ -118,13 +135,20 @@ public class ExceptionHandlerMessageHelper {
             WEB_CLIENT_FIELD_DETAIL,
             WEB_CLIENT_FIELD_DETAILS,
             WEB_CLIENT_FIELD_DESCRIPTION,
+            WEB_CLIENT_FIELD_DESCRIPTIONS,
             WEB_CLIENT_FIELD_REASON,
+            WEB_CLIENT_FIELD_REASONS,
             WEB_CLIENT_FIELD_CAUSE,
+            WEB_CLIENT_FIELD_CAUSES,
             WEB_CLIENT_FIELD_HINT,
+            WEB_CLIENT_FIELD_HINTS,
             WEB_CLIENT_FIELD_ERROR_DESCRIPTION,
             WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE,
             WEB_CLIENT_FIELD_ERROR_MESSAGE,
+            WEB_CLIENT_FIELD_ERROR_MESSAGES,
             WEB_CLIENT_FIELD_ERRO,
+            WEB_CLIENT_FIELD_ERROS,
+            WEB_CLIENT_FIELD_ERRORS,
             WEB_CLIENT_FIELD_ERROR
     );
 
@@ -684,7 +708,7 @@ public class ExceptionHandlerMessageHelper {
             message = getMessageUtils("msg.exception.handler.web.client.error", details);
             return Map.of(DEFAULT_MESSAGE_KEY, message);
         }
-        
+
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
@@ -702,7 +726,7 @@ public class ExceptionHandlerMessageHelper {
             message = getMessageUtils("msg.exception.handler.web.client.error", details);
             return message;
         }
-        
+
         if (nonNull(ex) && nonNull(ex.getMessage())) {
             message = ex.getMessage();
         } else {
@@ -714,7 +738,10 @@ public class ExceptionHandlerMessageHelper {
     private static Optional<String> extractMessageFromWebClientResponseException(
             final WebClientResponseException webClientEx) {
         try {
-            String bodyString = Optional.of(webClientEx.getResponseBodyAsString()).map(String::trim).orElse("");
+            String bodyString =
+                    Optional.of(webClientEx.getResponseBodyAsString())
+                            .map(String::trim)
+                            .orElse(StringUtils.EMPTY);
 
             if (bodyString.isEmpty()) {
                 log.debug("WebClientResponseException response body missing or empty");
@@ -759,23 +786,75 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Optional<String> extractIfHasNonBlank(JsonNode node, String fieldName) {
-        if (!node.has(fieldName) || node.get(fieldName).isNull()) {
+        JsonNode valueNode = node.get(fieldName);
+
+        if (isNull(valueNode) || valueNode.isNull()) {
             return Optional.empty();
         }
-        String value = node.get(fieldName).asText().trim();
-        if (value.isEmpty()) {
-            return Optional.empty();
+
+        if (valueNode.isContainerNode()) {
+            return valueNode.isArray()
+                    ? extractFromArray(valueNode, fieldName)
+                    : extractFromObject(valueNode, fieldName);
         }
-        log.debug("Recursively extracted '{}' field from WebClientResponseException", fieldName);
-        return Optional.of(value);
+
+        return Optional.of(valueNode.asText(StringUtils.EMPTY).trim())
+                .filter(text -> !text.isEmpty())
+                .map(text -> {
+                    log.debug("Recursively extracted '{}' field from WebClientResponseException", fieldName);
+                    return text;
+                });
+    }
+
+    private static Optional<String> extractFromArray(JsonNode node, String fieldName) {
+        String joined = StreamSupport.stream(node.spliterator(), false)
+                .filter(element -> nonNull(element) && !element.isNull() && element.isValueNode())
+                .map(element -> element.asText(StringUtils.EMPTY).trim())
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.joining("; "));
+
+        if (!joined.isEmpty()) {
+            log.debug("Recursively extracted '{}' field (array) from WebClientResponseException", fieldName);
+            return Optional.of(joined);
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> extractFromObject(JsonNode node, String fieldName) {
+        String joined = StreamSupport.stream(
+                        Spliterators.spliteratorUnknownSize(node.fields(), Spliterator.ORDERED), false)
+                .map(entry -> {
+                    JsonNode objectNode = entry.getValue();
+                    if (isNull(objectNode) || objectNode.isNull() || !objectNode.isValueNode()) {
+                        return StringUtils.EMPTY;
+                    }
+                    String key = Optional.ofNullable(entry.getKey()).map(String::trim).orElse(StringUtils.EMPTY);
+                    String text = objectNode.asText(StringUtils.EMPTY).trim();
+                    return (!key.isEmpty() && !text.isEmpty()) ? key + ": " + text : StringUtils.EMPTY;
+                })
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.joining("; "));
+
+        if (!joined.isEmpty()) {
+            log.debug("Recursively extracted '{}' field (object) from WebClientResponseException", fieldName);
+            return Optional.of(joined);
+        }
+        return Optional.empty();
     }
 
     private static Iterable<JsonNode> iterableChildren(JsonNode node) {
         if (node.isObject()) {
             var iterator = node.fields();
             return () -> new Iterator<>() {
-                @Override public boolean hasNext() { return iterator.hasNext(); }
-                @Override public JsonNode next() { return iterator.next().getValue(); }
+                @Override
+                public boolean hasNext() {
+                    return iterator.hasNext();
+                }
+
+                @Override
+                public JsonNode next() {
+                    return iterator.next().getValue();
+                }
             };
         }
         if (node.isArray()) {
