@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.isNull;
 
@@ -43,7 +44,7 @@ public class Base64FileMapValidator
      *   <code>file.name.pdf</code>.</li>
      * </ul>
      */
-    private static final String VALID_FILE_NAME_REGEX = "^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$";
+    private static final Pattern VALID_FILE_NAME_PATTERN = Pattern.compile("^(?!\\.)[a-zA-Z0-9_-]+\\.[a-zA-Z0-9]+$");
 
     private Base64FileCollectionValidatorHelper helper;
 
@@ -59,29 +60,25 @@ public class Base64FileMapValidator
             return true;
         }
 
-        if (validateMaxSize(values, helper.getMaxFileCount(), context)) {
-            return false;
-        }
+        return !hasValidationErrors(values, context);
+    }
 
-        if (validateTotalSize(values, helper.getMaxTotalSizeInMB(), helper::calculateBase64FileSize, context)) {
-            return false;
+    private boolean hasValidationErrors(Map<String, String> values, ConstraintValidatorContext context) {
+        if (validateMaxSize(values, helper.getMaxFileCount(), context)
+                || validateTotalSize(values, helper.getMaxTotalSizeInMB(), helper::calculateBase64FileSize, context)) {
+            return true;
         }
 
         Set<String> uniqueBase64Files = new HashSet<>();
 
         int i = 0;
         for (Map.Entry<String, String> entry : values.entrySet()) {
-            String fileName = entry.getKey();
-            String base64File = entry.getValue();
-
-            if (!validateFileEntry(fileName, base64File, uniqueBase64Files, i, context)) {
-                return false;
+            if (!validateFileEntry(entry.getKey(), entry.getValue(), uniqueBase64Files, i++, context)) {
+                return true;
             }
-
-            i++;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -97,19 +94,10 @@ public class Base64FileMapValidator
     private boolean validateFileEntry(String fileName, String base64File, Set<String> uniqueBase64Files,
                                       int index, ConstraintValidatorContext context) {
 
-        if (!validateFileNamePresence(fileName, index, context)) {
-            return false;
-        }
-
-        if (!validateBase64ContentPresence(fileName, base64File, index, context)) {
-            return false;
-        }
-
-        if (!validateFileNameFormat(fileName, index, context)) {
-            return false;
-        }
-
-        if (!validateBase64Content(base64File, index, context)) {
+        if (!validateFileNamePresence(fileName, index, context)
+                || !validateBase64ContentPresence(fileName, base64File, index, context)
+                || !validateFileNameFormat(fileName, index, context)
+                || !validateBase64Content(base64File, index, context)) {
             return false;
         }
 
@@ -120,15 +108,9 @@ public class Base64FileMapValidator
         }
 
         String fileExtension = extractExtensionFromFileName(fileName);
-        if (!validateFileExtension(fileName, fileExtension, index, context)) {
-            return false;
-        }
-
-        if (!validateExtensionMatchesMimeType(fileName, fileExtension, expectedExtension, index, context)) {
-            return false;
-        }
-
-        return validateUniqueContent(base64File, uniqueBase64Files, context);
+        return validateFileExtension(fileName, fileExtension, index, context)
+                && validateExtensionMatchesMimeType(fileName, fileExtension, expectedExtension, index, context)
+                && validateUniqueContent(base64File, uniqueBase64Files, context);
     }
 
     private boolean validateFileNamePresence(String fileName, int index, ConstraintValidatorContext context) {
@@ -219,7 +201,7 @@ public class Base64FileMapValidator
             return false;
         }
 
-        return fileName.matches(VALID_FILE_NAME_REGEX);
+        return VALID_FILE_NAME_PATTERN.matcher(fileName).matches();
     }
 
     /**

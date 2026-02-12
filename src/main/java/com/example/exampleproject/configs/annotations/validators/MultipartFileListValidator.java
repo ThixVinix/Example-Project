@@ -44,29 +44,24 @@ public class MultipartFileListValidator
             return true;
         }
 
-        if (validateMaxSize(files, maxFileCount, context,
-                "msg.validation.request.field.multipartfile.max.file.count")) {
-            return false;
-        }
+        return !hasValidationErrors(files, context);
+    }
 
-        if (validateTotalSize(files, maxTotalSizeMB, this::calculateMultipartFileSize, context,
-                "msg.validation.request.field.multipartfile.max.total.size")) {
-            return false;
-        }
-
-        if (!validateEachItem(files, this::validateMultipartFile, context,
-                "msg.validation.request.field.multipartfile.invalid.list")) {
-            return false;
-        }
-
-        return validateUniqueFileNames(files, context);
+    private boolean hasValidationErrors(List<MultipartFile> files, ConstraintValidatorContext context) {
+        return validateMaxSize(files, maxFileCount, context,
+                "msg.validation.request.field.multipartfile.max.file.count")
+                || validateTotalSize(files, maxTotalSizeMB, this::calculateMultipartFileSize, context,
+                "msg.validation.request.field.multipartfile.max.total.size")
+                || hasInvalidItem(files, this::validateMultipartFile, context,
+                "msg.validation.request.field.multipartfile.invalid.list")
+                || hasDuplicateFileNames(files, context);
     }
 
     private boolean validateMultipartFile(MultipartFile file, ConstraintValidatorContext context) {
         return isNull(file) || multipartFileValidator.isValid(file, context);
     }
 
-    private boolean validateUniqueFileNames(List<MultipartFile> files, ConstraintValidatorContext context) {
+    private boolean hasDuplicateFileNames(List<MultipartFile> files, ConstraintValidatorContext context) {
         Set<String> uniqueFileNames = new HashSet<>();
 
         for (MultipartFile file : files) {
@@ -77,11 +72,11 @@ public class MultipartFileListValidator
             String fileName = file.getOriginalFilename();
             if (nonNull(fileName) && !fileName.isEmpty() && !uniqueFileNames.add(fileName)) {
                 addConstraintViolation(context, "msg.validation.request.field.multipartfile.duplicate.file");
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     private long calculateMultipartFileSize(MultipartFile file) {

@@ -38,6 +38,10 @@ public class MultipartFileValidator
             return true;
         }
 
+        return !hasValidationErrors(file, context);
+    }
+
+    private boolean hasValidationErrors(MultipartFile file, ConstraintValidatorContext context) {
         String detectedType = detectMimeType(file);
         String originalExtension = getFileExtension(file.getOriginalFilename());
 
@@ -45,17 +49,17 @@ public class MultipartFileValidator
             addConstraintViolation(context,
                     "msg.validation.request.field.multipartfile.invalid.extension",
                     originalExtension, detectedType);
-            return false;
+            return true;
         }
 
         if (isMimeTypeNotAllowed(detectedType)) {
             String allowedMimeTypes = String.join(", ", allowedTypes);
             addConstraintViolation(context,
                     "msg.validation.request.field.multipartfile.invalid.type", allowedMimeTypes);
-            return false;
+            return true;
         }
 
-        return validateFileSize(file.getSize(), context,
+        return nonValidateFileSize(file.getSize(), context,
                 "msg.validation.request.field.multipartfile.invalid.size");
     }
 

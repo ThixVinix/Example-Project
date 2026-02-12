@@ -27,21 +27,16 @@ public class Base64FileListValidator extends AbstractListValidator
             return true;
         }
 
-        if (validateMaxSize(values, helper.getMaxFileCount(), context,
-                "msg.validation.request.field.base64file.max.file.count")) {
-            return false;
-        }
+        return !hasValidationErrors(values, context);
+    }
 
-        if (validateTotalSize(values, helper.getMaxTotalSizeInMB(), helper::calculateBase64FileSize, context,
-                "msg.validation.request.field.base64file.max.total.size")) {
-            return false;
-        }
-
-        if (!validateNoDuplicates(values, context)) {
-            return false;
-        }
-
-        return validateEachItem(values, helper::validateIndividualBase64File, context,
+    private boolean hasValidationErrors(List<String> values, ConstraintValidatorContext context) {
+        return validateMaxSize(values, helper.getMaxFileCount(), context,
+                "msg.validation.request.field.base64file.max.file.count")
+                || validateTotalSize(values, helper.getMaxTotalSizeInMB(), helper::calculateBase64FileSize, context,
+                "msg.validation.request.field.base64file.max.total.size")
+                || hasDuplicateItems(values, context)
+                || hasInvalidItem(values, helper::validateIndividualBase64File, context,
                 "msg.validation.request.field.base64file.invalid.list");
     }
 }

@@ -7,6 +7,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.ToLongFunction;
 
 import static java.util.Objects.nonNull;
 
@@ -40,47 +42,47 @@ public abstract class AbstractListValidator extends AbstractValidator {
     }
 
     /**
-     * Validates that the list does not contain duplicate items.
+     * Checks if the list contains duplicate items.
      *
      * @param list    the list to validate
      * @param context the validation context
-     * @return true if the list does not contain duplicates, false otherwise
+     * @return true if the list contains duplicates, false otherwise
      */
-    protected <T> boolean validateNoDuplicates(List<T> list, ConstraintValidatorContext context) {
+    protected <T> boolean hasDuplicateItems(List<T> list, ConstraintValidatorContext context) {
         Set<T> uniqueItems = new HashSet<>();
 
         for (T item : list) {
             if (nonNull(item) && !uniqueItems.add(item)) {
                 addConstraintViolation(context, "msg.validation.request.field.base64file.duplicate.file");
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**
-     * Validates each item in the list using the provided item validator.
+     * Checks if any item in the list is invalid using the provided item validator.
      *
      * @param list                  the list to validate
      * @param itemValidator         the validator for individual items
      * @param context               the validation context
      * @param invalidItemMessageKey the message key for invalid item error messages
-     * @return true if all items are valid, false otherwise
+     * @return true if an invalid item is found, false otherwise
      */
-    protected <T> boolean validateEachItem(List<T> list, ItemValidator<T> itemValidator,
-                                           ConstraintValidatorContext context,
-                                           String invalidItemMessageKey) {
+    protected <T> boolean hasInvalidItem(List<T> list, BiPredicate<T, ConstraintValidatorContext> itemValidator,
+                                         ConstraintValidatorContext context,
+                                         String invalidItemMessageKey) {
         for (int i = 0; i < list.size(); i++) {
             T item = list.get(i);
 
-            if (!itemValidator.isValid(item, context)) {
+            if (!itemValidator.test(item, context)) {
                 addConstraintViolation(context, invalidItemMessageKey, String.valueOf(i + 1));
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -96,7 +98,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
      */
     protected <T> boolean validateTotalSize(List<T> list,
                                             int maxTotalSizeMB,
-                                            SizeCalculator<T> sizeCalculator,
+                                            ToLongFunction<T> sizeCalculator,
                                             ConstraintValidatorContext context,
                                             String messageKey) {
 
@@ -106,7 +108,7 @@ public abstract class AbstractListValidator extends AbstractValidator {
 
         for (T item : list) {
             if (nonNull(item)) {
-                long itemSize = sizeCalculator.calculateSize(item);
+                long itemSize = sizeCalculator.applyAsLong(item);
                 totalSizeInBytes += itemSize;
             }
         }
@@ -121,36 +123,4 @@ public abstract class AbstractListValidator extends AbstractValidator {
         return false;
     }
 
-    /**
-     * Interface for calculating the size of individual items.
-     *
-     * @param <T> the type of item to calculate size for
-     */
-    @FunctionalInterface
-    public interface SizeCalculator<T> {
-        /**
-         * Calculates the size of an item in bytes.
-         *
-         * @param item the item to calculate size for
-         * @return the size in bytes
-         */
-        long calculateSize(T item);
-    }
-
-    /**
-     * Interface for validating individual items in a list.
-     *
-     * @param <T> the type of item to validate
-     */
-    @FunctionalInterface
-    public interface ItemValidator<T> {
-        /**
-         * Validates an individual item.
-         *
-         * @param item    the item to validate
-         * @param context the validation context
-         * @return true if the item is valid, false otherwise
-         */
-        boolean isValid(T item, ConstraintValidatorContext context);
-    }
 }

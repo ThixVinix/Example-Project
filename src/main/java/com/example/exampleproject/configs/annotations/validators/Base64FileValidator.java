@@ -49,43 +49,49 @@ public class Base64FileValidator
             return true;
         }
 
+        return !hasValidationErrors(value, context);
+    }
+
+    private boolean hasValidationErrors(String value, ConstraintValidatorContext context) {
         if (!BASE64_FILE_PATTERN.matcher(value).matches()) {
             addConstraintViolation(context, "msg.validation.request.field.base64file.invalid.format");
-            return false;
+            return true;
         }
 
         String base64Content = value.substring(value.indexOf(",") + NumberUtils.INTEGER_ONE);
+        boolean hasError = false;
 
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Content);
 
-            if (!validateFileSize(decodedBytes.length, context,
+            if (nonValidateFileSize(decodedBytes.length,
+                    context,
                     "msg.validation.request.field.base64file.invalid.size")) {
-                return false;
+                hasError = true;
+            } else {
+                String detectedMimeType = tika.detect(decodedBytes);
+
+                if (isMimeTypeNotAllowed(detectedMimeType)) {
+                    log.warn("The MIME detected type ({}) is not allowed. Expected types: {}",
+                            detectedMimeType, String.join(", ", allowedTypes));
+                    addConstraintViolation(context,
+                            "msg.validation.request.field.base64file.invalid.detected.type",
+                            detectedMimeType,
+                            String.join(", ", allowedTypes)
+                    );
+                    hasError = true;
+                }
             }
-
-            String detectedMimeType = tika.detect(decodedBytes);
-
-            if (isMimeTypeNotAllowed(detectedMimeType)) {
-                log.warn("The MIME detected type ({}) is not allowed. Expected types: {}",
-                        detectedMimeType, String.join(", ", allowedTypes));
-                addConstraintViolation(context,
-                        "msg.validation.request.field.base64file.invalid.detected.type",
-                        detectedMimeType,
-                        String.join(", ", allowedTypes)
-                );
-                return false;
-            }
-
-            return true;
         } catch (IllegalArgumentException e) {
             log.debug("Base64 Invalid Content: {}", e.getMessage());
             addConstraintViolation(context, "msg.validation.request.field.base64file.invalid.content");
-            return false;
+            hasError = true;
         } catch (Exception e) {
             log.error("Error when detecting mime type using Apache Tika: {}", e.getMessage(), e);
             addConstraintViolation(context, "msg.validation.request.field.base64file.invalid.general");
-            return false;
+            hasError = true;
         }
+
+        return hasError;
     }
 }

@@ -46,7 +46,7 @@ public abstract class AbstractFileValidator extends AbstractValidator {
      * @param messageKey      the message key for the error message
      * @return true if the file size is valid, false otherwise
      */
-    protected boolean validateFileSize(long fileSizeInBytes, ConstraintValidatorContext context, String messageKey) {
+    protected boolean nonValidateFileSize(long fileSizeInBytes, ConstraintValidatorContext context, String messageKey) {
         final long BYTES_IN_ONE_MB = 1024L * 1024L;
         long maxFileSizeInBytes = maxSizeInMB * BYTES_IN_ONE_MB;
 
@@ -59,9 +59,9 @@ public abstract class AbstractFileValidator extends AbstractValidator {
                     String.format("%.4f", actualFileSizeInMB),
                     String.format("%.0f", maxFileSizeInMB)
             );
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
