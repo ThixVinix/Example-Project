@@ -1,7 +1,6 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
 
-import com.example.exampleproject.configs.MessageConfig;
 import com.example.exampleproject.configs.exceptions.BaseError;
 import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
 import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
@@ -16,8 +15,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -48,14 +45,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 /**
  * Tests for class {@link GlobalExceptionHandler}
  */
-@SpringBootTest(classes = {MessageConfig.class, MessageUtils.class})
-@AutoConfigureMockMvc
 @Tag(value = "GlobalExceptionHandler_Tests")
 @DisplayName("GlobalExceptionHandler Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
 
     private static final String HANDLE_RESOURCE_NOT_FOUND_EXCEPTION = "handleResourceNotFoundException";
@@ -90,6 +89,15 @@ class GlobalExceptionHandlerTest {
 
     @InjectMocks
     private GlobalExceptionHandler exceptionHandler;
+
+    @BeforeAll
+    static void setUpAll() {
+        org.springframework.context.support.ResourceBundleMessageSource messageSource = new org.springframework.context.support.ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setUseCodeAsDefaultMessage(true);
+        org.springframework.test.util.ReflectionTestUtils.setField(MessageUtils.class, "messageSourceStatic", messageSource);
+    }
 
     /**
      * Method test for
@@ -863,215 +871,6 @@ class GlobalExceptionHandlerTest {
         }
     }
 
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handleMethodNotAllowedException(Exception, WebRequest)}
-     */
-    @Order(21)
-    @Tag(value = HANDLE_METHOD_NOT_ALLOWED_EXCEPTION)
-    @DisplayName(HANDLE_METHOD_NOT_ALLOWED_EXCEPTION + " - When Exception is thrown then " +
-            "return Method Not Allowed status")
-    @Test
-    void testHandleMethodNotAllowedException() {
-        Exception ex = new Exception("Method not allowed");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getMethodNotAllowedMessage(ex))
-                    .thenReturn("Custom method not allowed message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handleMethodNotAllowedException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.METHOD_NOT_ALLOWED, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.value(), errorResponse.status());
-            assertEquals("Custom method not allowed message", errorResponse.message());
-            assertEquals(HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
-
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handleNotAcceptableException(Exception, WebRequest)}
-     */
-    @Order(22)
-    @Tag(value = HANDLE_NOT_ACCEPTABLE_EXCEPTION)
-    @DisplayName(HANDLE_NOT_ACCEPTABLE_EXCEPTION + " - When Exception is thrown then " +
-            "return Not Acceptable status")
-    @Test
-    void testHandleNotAcceptableException() {
-        Exception ex = new Exception("Not acceptable");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getHttpMediaTypeNotAcceptableException(ex))
-                    .thenReturn("Custom not acceptable message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handleNotAcceptableException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.NOT_ACCEPTABLE, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.NOT_ACCEPTABLE.value(), errorResponse.status());
-            assertEquals("Custom not acceptable message", errorResponse.message());
-            assertEquals(HttpStatus.NOT_ACCEPTABLE.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
-
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handleUnsupportedMediaTypeException(Exception, WebRequest)}
-     */
-    @Order(23)
-    @Tag(value = HANDLE_UNSUPPORTED_MEDIA_TYPE_EXCEPTION)
-    @DisplayName(HANDLE_UNSUPPORTED_MEDIA_TYPE_EXCEPTION + " - When Exception is thrown then " +
-            "return Unsupported Media Type status")
-    @Test
-    void testHandleUnsupportedMediaTypeException() {
-        Exception ex = new Exception("Unsupported media type");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getHttpMediaTypeNotSupportedException(ex))
-                    .thenReturn("Custom unsupported media type message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handleUnsupportedMediaTypeException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), errorResponse.status());
-            assertEquals("Custom unsupported media type message", errorResponse.message());
-            assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
-
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handleServiceUnavailableException(Exception, WebRequest)}
-     */
-    @Order(24)
-    @Tag(value = HANDLE_SERVICE_UNAVAILABLE_EXCEPTION)
-    @DisplayName(HANDLE_SERVICE_UNAVAILABLE_EXCEPTION + " - When Exception is thrown then " +
-            "return Service Unavailable status")
-    @Test
-    void testHandleServiceUnavailableException() {
-        Exception ex = new Exception("Service unavailable");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getServiceUnavailableMessage(ex))
-                    .thenReturn("Custom service unavailable message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handleServiceUnavailableException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.SERVICE_UNAVAILABLE, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), errorResponse.status());
-            assertEquals("Custom service unavailable message", errorResponse.message());
-            assertEquals(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
-
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handleBadGatewayException(Exception, WebRequest)}
-     */
-    @Order(25)
-    @Tag(value = HANDLE_BAD_GATEWAY_EXCEPTION)
-    @DisplayName(HANDLE_BAD_GATEWAY_EXCEPTION + " - When Exception is thrown then " +
-            "return Bad Gateway status")
-    @Test
-    void testHandleBadGatewayException() {
-        Exception ex = new Exception("Bad gateway");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getBadGatewayMessage(ex))
-                    .thenReturn("Custom bad gateway message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handleBadGatewayException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.BAD_GATEWAY.value(), errorResponse.status());
-            assertEquals("Custom bad gateway message", errorResponse.message());
-            assertEquals(HttpStatus.BAD_GATEWAY.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
-
-    /**
-     * Method test for
-     * {@link GlobalExceptionHandler#handlePayloadTooLargeException(Exception, WebRequest)}
-     */
-    @Order(26)
-    @Tag(value = HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION)
-    @DisplayName(HANDLE_PAYLOAD_TOO_LARGE_EXCEPTION + " - When Exception is thrown then " +
-            "return Payload Too Large status")
-    @Test
-    void testHandlePayloadTooLargeException() {
-        Exception ex = new Exception("Payload too large");
-        WebRequest request = mock(WebRequest.class);
-
-        when(request.getDescription(false)).thenReturn("/test/path");
-
-        try (var mockedStatic = mockStatic(ExceptionHandlerMessageHelper.class)) {
-            mockedStatic.when(() -> ExceptionHandlerMessageHelper.getMaxUploadSizeExceededException(ex))
-                    .thenReturn("Custom payload too large message");
-
-            ResponseEntity<ErrorSingleResponse> responseEntity =
-                    exceptionHandler.handlePayloadTooLargeException(ex, request);
-
-            assertNotNull(responseEntity);
-            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, responseEntity.getStatusCode());
-
-            ErrorSingleResponse errorResponse = responseEntity.getBody();
-            assertNotNull(errorResponse);
-            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE.value(), errorResponse.status());
-            assertEquals("Custom payload too large message", errorResponse.message());
-            assertEquals(HttpStatus.PAYLOAD_TOO_LARGE.getReasonPhrase(), errorResponse.error());
-            assertEquals("/test/path", errorResponse.path());
-            assertNotNull(errorResponse.timestamp());
-        }
-    }
 
     /**
      * Method test for

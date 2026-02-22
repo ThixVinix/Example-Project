@@ -46,26 +46,12 @@ import static java.util.Objects.nonNull;
 
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler implements GlobalExceptionHandlerOperations {
 
-    private final Map<HttpStatus, BiFunction
-            <WebClientResponseException, WebRequest, ResponseEntity<? extends BaseError>>> webClientStatusHandlers;
+    private final WebClientExceptionHandlerDelegate webClientDelegate;
 
-    private GlobalExceptionHandler() {
-        this.webClientStatusHandlers = new EnumMap<>(HttpStatus.class);
-
-        this.webClientStatusHandlers.put(HttpStatus.BAD_REQUEST, this::handleBadRequestException);
-        this.webClientStatusHandlers.put(HttpStatus.UNAUTHORIZED, this::handleUnauthorizedException);
-        this.webClientStatusHandlers.put(HttpStatus.FORBIDDEN, this::handleForbiddenException);
-        this.webClientStatusHandlers.put(HttpStatus.NOT_FOUND, this::handleResourceNotFoundException);
-        this.webClientStatusHandlers.put(HttpStatus.METHOD_NOT_ALLOWED, this::handleMethodNotAllowedException);
-        this.webClientStatusHandlers.put(HttpStatus.NOT_ACCEPTABLE, this::handleNotAcceptableException);
-        this.webClientStatusHandlers.put(HttpStatus.REQUEST_TIMEOUT, this::handleTimeoutException);
-        this.webClientStatusHandlers.put(HttpStatus.CONFLICT, this::handleConflictException);
-        this.webClientStatusHandlers.put(HttpStatus.UNSUPPORTED_MEDIA_TYPE, this::handleUnsupportedMediaTypeException);
-        this.webClientStatusHandlers.put(HttpStatus.PAYLOAD_TOO_LARGE, this::handlePayloadTooLargeException);
-        this.webClientStatusHandlers.put(HttpStatus.BAD_GATEWAY, this::handleBadGatewayException);
-        this.webClientStatusHandlers.put(HttpStatus.SERVICE_UNAVAILABLE, this::handleServiceUnavailableException);
+    public GlobalExceptionHandler() {
+        this.webClientDelegate = new WebClientExceptionHandlerDelegate(this);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -124,7 +110,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             ConstraintViolationException.class
     })
     @SuppressWarnings("squid:S1452")
-    protected ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
+    @Override
+    public ResponseEntity<? extends BaseError> handleBadRequestException(Exception ex, WebRequest request) {
         return handleMultipleErrorResponse(
                 ex,
                 request,
@@ -132,7 +119,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({Exception.class, Throwable.class})
-    protected ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
+    @Override
+    public ResponseEntity<ErrorSingleResponse> handleGlobalException(Exception ex, WebRequest request) {
         return handleSingleErrorResponse(
                 ex,
                 request,
@@ -326,105 +314,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ExceptionHandlerMessageHelper::getBadRequestMessage);
     }
 
-    protected ResponseEntity<ErrorSingleResponse> handleMethodNotAllowedException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.METHOD_NOT_ALLOWED,
-                "Method not allowed: {}",
-                ExceptionHandlerMessageHelper::getMethodNotAllowedMessage);
-    }
-
-    protected ResponseEntity<ErrorSingleResponse> handleNotAcceptableException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.NOT_ACCEPTABLE,
-                "Not acceptable: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotAcceptableException);
-    }
-
-    protected ResponseEntity<ErrorSingleResponse> handleUnsupportedMediaTypeException(Exception ex,
-                                                                                      WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                "Unsupported media type: {}",
-                ExceptionHandlerMessageHelper::getHttpMediaTypeNotSupportedException);
-    }
-
-    protected ResponseEntity<ErrorSingleResponse> handleServiceUnavailableException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "Service unavailable: {}",
-                ExceptionHandlerMessageHelper::getServiceUnavailableMessage);
-    }
-
-    protected ResponseEntity<ErrorSingleResponse> handleBadGatewayException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.BAD_GATEWAY,
-                "Bad gateway: {}",
-                ExceptionHandlerMessageHelper::getBadGatewayMessage);
-    }
-
-    protected ResponseEntity<ErrorSingleResponse> handlePayloadTooLargeException(Exception ex, WebRequest request) {
-        return handleSingleErrorResponse(
-                ex,
-                request,
-                HttpStatus.PAYLOAD_TOO_LARGE,
-                "Payload too large: {}",
-                ExceptionHandlerMessageHelper::getMaxUploadSizeExceededException);
-    }
 
 
     @SuppressWarnings("squid:S1452")
     @ExceptionHandler(WebClientResponseException.class)
-    protected ResponseEntity<? extends BaseError> handleWebClientResponseException(WebClientResponseException e,
+    protected ResponseEntity<? extends BaseError> handleWebClientResponseException(WebClientResponseException ex,
                                                                                    WebRequest request) {
-        String requestUri = request.getDescription(false);
-        HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
-
-        logWebClientErrorDetails(e, requestUri, status);
-
-        if (isNull(status)) {
-            return this.handleGlobalException(e, request);
-        }
-
-        return getResponseByStatus(status, e, request);
-    }
-
-    private void logWebClientErrorDetails(WebClientResponseException e, String requestUri, HttpStatus status) {
-        String responseBody = e.getResponseBodyAsString();
-        HttpHeaders responseHeaders = e.getHeaders();
-
-        log.error("""
-                        WEBCLIENT ERROR:
-                        URI: {}
-                        Status: {}
-                        Response Headers: {}
-                        Response Body: {}
-                        """,
-                requestUri,
-                nonNull(status) ? status.name() : "Unknown Status",
-                responseHeaders,
-                responseBody);
-    }
-
-    private ResponseEntity<? extends BaseError> getResponseByStatus(HttpStatus status,
-                                                                    WebClientResponseException e,
-                                                                    WebRequest request) {
-        var handler = webClientStatusHandlers.get(status);
-
-        if (nonNull(handler)) {
-            return handler.apply(e, request);
-        }
-
-        return this.handleGlobalException(e, request);
+        return webClientDelegate.handleWebClientException(ex, request);
     }
 
     /**
@@ -437,7 +333,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * @param messageSupplier A function that supplies the error message
      * @return A ResponseEntity with the error response
      */
-    private ResponseEntity<ErrorSingleResponse> handleSingleErrorResponse(
+    @Override
+    public ResponseEntity<ErrorSingleResponse> handleSingleErrorResponse(
             Exception ex,
             WebRequest request,
             HttpStatus status,
@@ -448,7 +345,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         String path = getRequestPath(request);
         String message = messageSupplier.apply(ex);
-        ErrorSingleResponse errorResponse = createErrorSingleResponse(status, message, path);
+        ErrorSingleResponse errorResponse = ErrorResponseFactory.createErrorSingleResponse(status, message, path);
 
         return new ResponseEntity<>(errorResponse, status);
     }
@@ -461,7 +358,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * @param messagesSupplier A function that supplies the error messages map
      * @return A ResponseEntity with the appropriate error response
      */
-    private ResponseEntity<? extends BaseError> handleMultipleErrorResponse(
+    @Override
+    public ResponseEntity<? extends BaseError> handleMultipleErrorResponse(
             Exception ex,
             WebRequest request,
             Function<Exception, Map<String, String>> messagesSupplier) {
@@ -470,7 +368,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         String path = getRequestPath(request);
         Map<String, String> messages = messagesSupplier.apply(ex);
-        BaseError body = createAppropriateErrorResponse(messages, path);
+        BaseError body = ErrorResponseFactory.createAppropriateErrorResponse(messages, path);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -483,60 +381,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     private String getRequestPath(WebRequest request) {
         return request.getDescription(false);
-    }
-
-    /**
-     * Determines if the response should be a single ({@link ErrorSingleResponse})
-     * or multiple ({@link ErrorMultipleResponse}) error response.
-     *
-     * @param messages The error messages map
-     * @param path     The request path
-     * @return The appropriate BaseError object ({@link ErrorSingleResponse} or {@link ErrorMultipleResponse})
-     */
-    private BaseError createAppropriateErrorResponse(Map<String, String> messages, String path) {
-        final String DEFAULT_MESSAGE_KEY = "message";
-
-        if (messages.size() == NumberUtils.INTEGER_ONE && messages.containsKey(DEFAULT_MESSAGE_KEY)) {
-            return createErrorSingleResponse(HttpStatus.BAD_REQUEST, messages.get(DEFAULT_MESSAGE_KEY), path);
-        } else {
-            return createErrorMultipleResponse(messages, path);
-        }
-    }
-
-    /**
-     * Creates an {@link ErrorSingleResponse} object with the given parameters.
-     *
-     * @param status  The HTTP status
-     * @param message The error message
-     * @param path    The request path
-     * @return The created {@link ErrorSingleResponse} object
-     */
-    private ErrorSingleResponse createErrorSingleResponse(HttpStatus status, String message, String path) {
-        return ErrorSingleResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .path(path)
-                .build();
-    }
-
-    /**
-     * Creates an {@link ErrorMultipleResponse} object with the given parameters.
-     *
-     * @param messages The error messages map
-     * @param path     The request path
-     * @return The created {@link ErrorMultipleResponse} object
-     */
-    private ErrorMultipleResponse createErrorMultipleResponse(Map<String, String> messages,
-                                                              String path) {
-        return ErrorMultipleResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .messages(messages)
-                .path(path)
-                .build();
     }
 
     /**
@@ -570,7 +414,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         HttpStatus httpStatus = resolveHttpStatus(status);
 
-        ErrorSingleResponse errorResponse = createErrorSingleResponse(httpStatus, message, path);
+        ErrorSingleResponse errorResponse = ErrorResponseFactory.createErrorSingleResponse(httpStatus, message, path);
 
         return new ResponseEntity<>(errorResponse, headers, httpStatus);
     }
@@ -600,7 +444,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         String path = getRequestPath(request);
         Map<String, String> messages = messagesSupplier.apply(ex);
-        BaseError body = createAppropriateErrorResponse(messages, path);
+        BaseError body = ErrorResponseFactory.createAppropriateErrorResponse(messages, path);
 
         HttpStatus httpStatus = resolveHttpStatus(status);
 

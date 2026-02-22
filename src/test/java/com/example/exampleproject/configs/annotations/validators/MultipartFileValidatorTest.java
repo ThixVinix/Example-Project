@@ -246,11 +246,11 @@ class MultipartFileValidatorTest {
 
         java.lang.reflect.Method validateFileSizeMethod =
                 MultipartFileValidator.class.getSuperclass().getDeclaredMethod(
-                "validateFileSize", long.class, ConstraintValidatorContext.class, String.class);
+                "nonValidateFileSize", long.class, ConstraintValidatorContext.class, String.class);
         validateFileSizeMethod.setAccessible(true);
 
         // Act
-        boolean isValid = (boolean) validateFileSizeMethod.invoke(
+        boolean exceedsLimit = (boolean) validateFileSizeMethod.invoke(
                 multipartFileValidator, 
                 largeMultipartFile.getSize(), 
                 context, 
@@ -258,7 +258,7 @@ class MultipartFileValidatorTest {
 
         // Assert
         verify(context).buildConstraintViolationWithTemplate(anyString());
-        assertFalse(isValid, "validateFileSize should return false for a file exceeding the size limit");
+        assertTrue(exceedsLimit, "nonValidateFileSize should return true for a file exceeding the size limit");
     }
 
     /**

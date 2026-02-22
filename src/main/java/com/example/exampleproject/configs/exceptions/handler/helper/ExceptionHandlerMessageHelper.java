@@ -3,43 +3,35 @@ package com.example.exampleproject.configs.exceptions.handler.helper;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 
-import java.util.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -90,68 +82,6 @@ public class ExceptionHandlerMessageHelper {
 
     private static final String DEFAULT_MESSAGE_KEY = "message";
 
-    private static final String WEB_CLIENT_FIELD_FIELD_ERRORS = "fieldErrors";
-    private static final String WEB_CLIENT_FIELD_ERROR_FIELDS = "errorFields";
-    private static final String WEB_CLIENT_FIELD_MESSAGES = "messages";
-    private static final String WEB_CLIENT_FIELD_MESSAGE = "message";
-    private static final String WEB_CLIENT_FIELD_MSG = "msg";
-    private static final String WEB_CLIENT_FIELD_MENSAGEM = "mensagem";
-    private static final String WEB_CLIENT_FIELD_MENSAGENS = "mensagens";
-    private static final String WEB_CLIENT_FIELD_DEFAULT_MESSAGE = "defaultMessage";
-    private static final String WEB_CLIENT_FIELD_MESSAGE_DETAIL = "messageDetail";
-    private static final String WEB_CLIENT_FIELD_DETAILED_MESSAGE = "detailedMessage";
-    private static final String WEB_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE = "message_details";
-    private static final String WEB_CLIENT_FIELD_DETAIL = "detail";
-    private static final String WEB_CLIENT_FIELD_DETAILS = "details";
-    private static final String WEB_CLIENT_FIELD_DESCRIPTION = "description";
-    private static final String WEB_CLIENT_FIELD_DESCRIPTIONS = "descriptions";
-    private static final String WEB_CLIENT_FIELD_REASON = "reason";
-    private static final String WEB_CLIENT_FIELD_REASONS = "reasons";
-    private static final String WEB_CLIENT_FIELD_CAUSE = "cause";
-    private static final String WEB_CLIENT_FIELD_CAUSES = "causes";
-    private static final String WEB_CLIENT_FIELD_HINT = "hint";
-    private static final String WEB_CLIENT_FIELD_HINTS = "hints";
-    private static final String WEB_CLIENT_FIELD_ERROR_DESCRIPTION = "error_description";
-    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE = "error_message";
-    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGE = "errorMessage";
-    private static final String WEB_CLIENT_FIELD_ERROR_MESSAGES = "errorMessages";
-    private static final String WEB_CLIENT_FIELD_ERRO = "erro";
-    private static final String WEB_CLIENT_FIELD_ERROS = "erros";
-    private static final String WEB_CLIENT_FIELD_ERRORS = "errors";
-    private static final String WEB_CLIENT_FIELD_ERROR = "error";
-
-    private static final List<String> MESSAGE_FIELD_CANDIDATES_LIST = List.of(
-            WEB_CLIENT_FIELD_FIELD_ERRORS,
-            WEB_CLIENT_FIELD_ERROR_FIELDS,
-            WEB_CLIENT_FIELD_MESSAGES,
-            WEB_CLIENT_FIELD_MESSAGE,
-            WEB_CLIENT_FIELD_MSG,
-            WEB_CLIENT_FIELD_MENSAGEM,
-            WEB_CLIENT_FIELD_MENSAGENS,
-            WEB_CLIENT_FIELD_DEFAULT_MESSAGE,
-            WEB_CLIENT_FIELD_MESSAGE_DETAIL,
-            WEB_CLIENT_FIELD_DETAILED_MESSAGE,
-            WEB_CLIENT_FIELD_MESSAGE_DETAILS_UNDERSCORE,
-            WEB_CLIENT_FIELD_DETAIL,
-            WEB_CLIENT_FIELD_DETAILS,
-            WEB_CLIENT_FIELD_DESCRIPTION,
-            WEB_CLIENT_FIELD_DESCRIPTIONS,
-            WEB_CLIENT_FIELD_REASON,
-            WEB_CLIENT_FIELD_REASONS,
-            WEB_CLIENT_FIELD_CAUSE,
-            WEB_CLIENT_FIELD_CAUSES,
-            WEB_CLIENT_FIELD_HINT,
-            WEB_CLIENT_FIELD_HINTS,
-            WEB_CLIENT_FIELD_ERROR_DESCRIPTION,
-            WEB_CLIENT_FIELD_ERROR_MESSAGE_UNDERSCORE,
-            WEB_CLIENT_FIELD_ERROR_MESSAGE,
-            WEB_CLIENT_FIELD_ERROR_MESSAGES,
-            WEB_CLIENT_FIELD_ERRO,
-            WEB_CLIENT_FIELD_ERROS,
-            WEB_CLIENT_FIELD_ERRORS,
-            WEB_CLIENT_FIELD_ERROR
-    );
-
     private static final String JSON_MALFORMED_MESSAGE_VALUE = "msg.exception.handler.json.malformed";
 
     private static final Pattern TYPE_PATTERN_MESSAGE_EXCEPTION =
@@ -159,16 +89,6 @@ public class ExceptionHandlerMessageHelper {
 
     private static final Pattern MISSING_PROPERTY_PATTERN =
             Pattern.compile("Missing required creator property '(.*?)'");
-
-    private static final String LOCAL_DATE_TYPE = "LocalDate";
-
-    private static final String LOCAL_DATE_TIME_TYPE = "LocalDateTime";
-
-    private static final String ZONED_DATE_TIME_TYPE = "ZonedDateTime";
-
-    private static final String LOCAL_TIME_TYPE = "LocalTime";
-
-    private static final String DATE_TYPE = "Date";
 
     /**
      * Generates a specific message indicating that a resource or URL was not found,
@@ -185,7 +105,7 @@ public class ExceptionHandlerMessageHelper {
             return getMessageUtils("msg.exception.handler.resource.url.not.found");
         }
 
-        return getMessageUtils("msg.exception.handler.resource.not.found");
+        return getErrorMessage(ex, "msg.exception.handler.resource.not.found");
     }
 
     /**
@@ -344,32 +264,19 @@ public class ExceptionHandlerMessageHelper {
      * from the provided exception. Each message explains the specific issue.
      */
     public static Map<String, String> getBadRequestMessage(Exception ex) {
-        switch (ex) {
-            case MethodArgumentNotValidException notValidEx -> {
-                return getMethodArgumentNotValidMessage(notValidEx);
-            }
-            case HttpMessageNotReadableException notReadableEx -> {
-                return getNotReadableMessage(notReadableEx);
-            }
-            case MissingServletRequestParameterException missingEx -> {
-                return getMissingServletRequestParameterMessage(missingEx);
-            }
-            case MissingRequestHeaderException missingRequestHeaderException -> {
-                return getMissingRequestHeaderMessage(missingRequestHeaderException);
-            }
-            case MethodArgumentTypeMismatchException mismatchEx -> {
-                return getMismatchMessage(mismatchEx);
-            }
-            case ConstraintViolationException constraintViolationEx -> {
-                return getConstraintViolationMessage(constraintViolationEx);
-            }
-            case HandlerMethodValidationException handlerMethodEx -> {
-                return getHandlerMethodValidationMessage(handlerMethodEx);
-            }
-            case null, default -> {
-                return getDefaultBadRequestMessage(ex);
-            }
-        }
+        return switch (ex) {
+            case MethodArgumentNotValidException notValidEx -> getMethodArgumentNotValidMessage(notValidEx);
+            case HttpMessageNotReadableException notReadableEx -> getNotReadableMessage(notReadableEx);
+            case MissingServletRequestParameterException missingEx ->
+                    getMissingServletRequestParameterMessage(missingEx);
+            case MissingRequestHeaderException missingHeaderEx -> getMissingRequestHeaderMessage(missingHeaderEx);
+            case MethodArgumentTypeMismatchException mismatchEx ->
+                    ParameterValidationMessageHelper.getMismatchMessage(mismatchEx);
+            case ConstraintViolationException constraintEx ->
+                    ParameterValidationMessageHelper.getConstraintViolationMessage(constraintEx);
+            case HandlerMethodValidationException handlerMethodEx -> getHandlerMethodValidationMessage(handlerMethodEx);
+            case null, default -> getDefaultBadRequestMessage(ex);
+        };
     }
 
     private static Map<String, String> getMethodArgumentNotValidMessage(MethodArgumentNotValidException notValidEx) {
@@ -378,24 +285,106 @@ public class ExceptionHandlerMessageHelper {
                 .collect(Collectors.toMap(
                         error -> getFieldName(notValidEx, error.getField()),
                         ExceptionHandlerMessageHelper::getFieldErrorMessage,
-                        ExceptionHandlerMessageHelper::mergeErrorMessages
+                        ParameterValidationMessageHelper::mergeErrorMessages
                 ));
     }
 
     private static String getFieldName(MethodArgumentNotValidException notValidEx, String originalFieldName) {
-        try {
-            Object target = notValidEx.getTarget();
-            if (nonNull(target)) {
-                Field field = target.getClass().getDeclaredField(originalFieldName);
-                JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-                if (nonNull(jsonProperty) && !jsonProperty.value().trim().isEmpty()) {
-                    return jsonProperty.value().trim();
-                }
-            }
-        } catch (NoSuchFieldException | SecurityException ex) {
-            log.warn(ex.getMessage(), ex);
+        Object target = notValidEx.getTarget();
+        return (nonNull(target)) ? resolveJsonPropertyPath(target.getClass(), originalFieldName) : originalFieldName;
+    }
+
+    private static String resolveJsonPropertyPath(Class<?> clazz, String fieldPath) {
+        if (isNull(fieldPath) || fieldPath.isBlank()) {
+            return fieldPath;
         }
-        return originalFieldName;
+
+        StringJoiner resolvedPath = new StringJoiner(".");
+        Class<?> currentClass = clazz;
+
+        for (String segment : splitFieldPath(fieldPath)) {
+            String fieldName = getBaseFieldName(segment);
+            String indexSuffix = segment.substring(fieldName.length());
+
+            Field field = getFieldRecursive(currentClass, fieldName);
+            if (nonNull(field)) {
+                String mappedName = getJsonPropertyName(field);
+                resolvedPath.add(mappedName + indexSuffix);
+                currentClass = getNextClass(field);
+            } else {
+                log.debug("Field not found: {} in class: {}", fieldName, currentClass.getName());
+                resolvedPath.add(segment);
+            }
+        }
+        return resolvedPath.toString();
+    }
+
+    private static String getBaseFieldName(String segment) {
+        int bracketIndex = segment.indexOf('[');
+        return (bracketIndex == -1) ? segment : segment.substring(0, bracketIndex);
+    }
+
+    private static String getJsonPropertyName(Field field) {
+        return Optional.ofNullable(field.getAnnotation(JsonProperty.class))
+                .map(JsonProperty::value)
+                .filter(value -> !value.isBlank())
+                .map(String::trim)
+                .orElse(field.getName());
+    }
+
+    private static List<String> splitFieldPath(String fieldPath) {
+        if (isNull(fieldPath) || fieldPath.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> segments = new ArrayList<>();
+        FieldPathParserHelper parser = new FieldPathParserHelper(fieldPath);
+
+        if (!parser.parse(segments)) {
+            log.warn("Unbalanced brackets in field path: {}", fieldPath);
+            return List.of(fieldPath);
+        }
+
+        return segments;
+    }
+
+    private static Field getFieldRecursive(Class<?> clazz, String fieldName) {
+        Class<?> currentClass = clazz;
+        while (nonNull(currentClass) && currentClass != Object.class) {
+            try {
+                return currentClass.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException _) {
+                currentClass = currentClass.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static Class<?> getNextClass(Field field) {
+        Class<?> fieldType = field.getType();
+        Class<?> nextClass;
+
+        if (fieldType.isArray()) {
+            nextClass = fieldType.getComponentType();
+        } else if (Collection.class.isAssignableFrom(fieldType)) {
+            nextClass = getGenericTypeArgument(field, 0);
+        } else if (Map.class.isAssignableFrom(fieldType)) {
+            nextClass = getGenericTypeArgument(field, 1);
+        } else {
+            nextClass = fieldType;
+        }
+
+        return nextClass;
+    }
+
+    private static Class<?> getGenericTypeArgument(Field field, int index) {
+        if (field.getGenericType() instanceof ParameterizedType pt) {
+            Type[] typeArgs = pt.getActualTypeArguments();
+            if (typeArgs.length > index && typeArgs[index] instanceof Class<?> genericClass) {
+                return genericClass;
+            }
+        }
+        return Object.class;
     }
 
     private static String getFieldErrorMessage(FieldError error) {
@@ -477,217 +466,6 @@ public class ExceptionHandlerMessageHelper {
         return Map.of(missingEx.getHeaderName(), getMessageUtils("msg.exception.handler.missing.header"));
     }
 
-    private static Map<String, String> getMismatchMessage(MethodArgumentTypeMismatchException mismatchEx) {
-        Optional<Parameter> parameterOptional = searchParameter(mismatchEx);
-
-        String expectedTypeName =
-                Optional.ofNullable(mismatchEx.getRequiredType())
-                        .map(Class::getSimpleName)
-                        .orElse(null);
-
-        return switch (expectedTypeName) {
-            case null -> Map.of(mismatchEx.getName(),
-                    getMessageUtils("msg.exception.handler.argument.type.mismatch.without.format",
-                            mismatchEx.getValue()));
-            case LOCAL_DATE_TYPE,
-                 LOCAL_DATE_TIME_TYPE,
-                 ZONED_DATE_TIME_TYPE,
-                 LOCAL_TIME_TYPE,
-                 DATE_TYPE -> getDateTimeMismatchMessage(
-                    mismatchEx, expectedTypeName, parameterOptional.orElse(null));
-            default -> getDefaultMismatchMessage(mismatchEx, expectedTypeName);
-        };
-    }
-
-    private static Optional<Parameter> searchParameter(MethodArgumentTypeMismatchException mismatchEx) {
-        try {
-            Method method = mismatchEx.getParameter().getMethod();
-            if (Objects.isNull(method)) {
-                return Optional.empty();
-            }
-            return findMatchingParameter(mismatchEx, method);
-        } catch (Exception e) {
-            log.warn("Error when trying to recover request type. {}", e.getMessage());
-            return Optional.empty();
-        }
-    }
-
-    private static Optional<Parameter> findMatchingParameter(
-            MethodArgumentTypeMismatchException mismatchEx, Method method) {
-        return Arrays.stream(method.getParameters())
-                .filter(param -> containsRequestTypeAnnotation(mismatchEx, param))
-                .findFirst();
-    }
-
-
-    private static Map<String, String> getDateTimeMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
-                                                                  String expectTypeName,
-                                                                  Parameter parameter) {
-        if (nonNull(parameter)) {
-            return extractDateTimeFormatPatternMessage(mismatchEx, parameter);
-        }
-
-        return getDefaultMismatchMessage(mismatchEx, expectTypeName);
-    }
-
-    private static Map<String, String> getDefaultMismatchMessage(MethodArgumentTypeMismatchException mismatchEx,
-                                                                 String expectedTypeName) {
-        return Map.of(mismatchEx.getName(), getMessageUtils(
-                "msg.exception.handler.argument.type.mismatch.default",
-                expectedTypeName,
-                mismatchEx.getValue()));
-    }
-
-    private static boolean containsRequestTypeAnnotation(MethodArgumentTypeMismatchException ex, Parameter param) {
-        return getAnnotationValue(param, RequestParam.class)
-                .map(value -> value.equals(ex.getName())).orElse(false)
-                || getAnnotationValue(param, RequestHeader.class)
-                .map(value -> value.equals(ex.getName())).orElse(false)
-                || getAnnotationValue(param, PathVariable.class)
-                .map(value -> value.equals(ex.getName())).orElse(false)
-                || getAnnotationValue(param, RequestPart.class)
-                .map(value -> value.equals(ex.getName())).orElse(false)
-                || getAnnotationValue(param, CookieValue.class)
-                .map(value -> value.equals(ex.getName())).orElse(false)
-                || getAnnotationValue(param, MatrixVariable.class)
-                .map(value -> value.equals(ex.getName())).orElse(false);
-    }
-
-    private static Map<String, String> extractDateTimeFormatPatternMessage(MethodArgumentTypeMismatchException ex,
-                                                                           Parameter param) {
-        String paramName = getParamName(param);
-
-        if (param.isAnnotationPresent(DateTimeFormat.class)) {
-            DateTimeFormat dateTimeFormat = param.getAnnotation(DateTimeFormat.class);
-
-            if (nonNull(dateTimeFormat) && !dateTimeFormat.pattern().trim().isEmpty()) {
-                return Map.of(paramName, getMessageUtils(
-                        "msg.exception.handler.argument.type.mismatch.with.format",
-                        dateTimeFormat.pattern().trim(),
-                        ex.getValue()));
-            }
-        }
-
-        Optional<String> defaultDateTimePatternOptional = getDefaultDateTimePatternForType(param.getType());
-
-        return defaultDateTimePatternOptional
-                .map(s -> Map.of(paramName, getMessageUtils(
-                        "msg.exception.handler.argument.type.mismatch.with.format", s, ex.getValue())))
-                .orElseGet(() -> Map.of(paramName, getMessageUtils(
-                        "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
-    }
-
-    private static Optional<String> getDefaultDateTimePatternForType(Class<?> type) {
-        return switch (type.getSimpleName()) {
-            case LOCAL_DATE_TYPE -> Optional.of("yyyy-MM-dd");
-            case LOCAL_DATE_TIME_TYPE -> Optional.of("yyyy-MM-dd'T'HH:mm:ss");
-            case ZONED_DATE_TIME_TYPE -> Optional.of("yyyy-MM-dd'T'HH:mm:ss.SSSXXX'Z'");
-            case LOCAL_TIME_TYPE -> Optional.of("HH:mm:ss");
-            default -> Optional.empty();
-        };
-    }
-
-    private static String getParamName(Parameter param) {
-        return getAnnotationValue(param, RequestParam.class)
-                .or(() -> getAnnotationValue(param, RequestHeader.class))
-                .or(() -> getAnnotationValue(param, PathVariable.class))
-                .or(() -> getAnnotationValue(param, RequestPart.class))
-                .or(() -> getAnnotationValue(param, CookieValue.class))
-                .or(() -> getAnnotationValue(param, MatrixVariable.class))
-                .orElse(param.getName());
-    }
-
-    private static Map<String, String> getConstraintViolationMessage(ConstraintViolationException ex) {
-        Map<String, String> errors = new HashMap<>();
-
-        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
-            String fieldName = getParameterName(violation);
-            String errorMessage = violation.getMessage();
-            if (errors.containsKey(fieldName)) {
-                errorMessage = mergeErrorMessages(errors.get(fieldName), errorMessage);
-            }
-            errors.put(fieldName, errorMessage);
-        }
-
-        return errors;
-    }
-
-    private static String getParameterName(ConstraintViolation<?> violation) {
-        try {
-            return findParameterNameInMethod(violation).orElseGet(() -> getLastSegmentFromPropertyPath(violation));
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return getLastSegmentFromPropertyPath(violation);
-        }
-    }
-
-    private static Optional<String> findParameterNameInMethod(ConstraintViolation<?> violation) {
-        Object rootBean = violation.getRootBean();
-        String rootMethodName = getRootMethodName(violation);
-        Method matchedMethod = findMethodByName(rootBean, rootMethodName);
-
-        if (Objects.isNull(matchedMethod)) {
-            return Optional.empty();
-        }
-
-        return Arrays.stream(matchedMethod.getParameters())
-                .filter(param -> violation.getPropertyPath().toString().contains(param.getName()))
-                .map(ExceptionHandlerMessageHelper::getParamName)
-                .findFirst();
-    }
-
-    private static String getRootMethodName(ConstraintViolation<?> violation) {
-        return violation.getPropertyPath().toString().split("\\.")[0];
-    }
-
-    private static String getLastSegmentFromPropertyPath(ConstraintViolation<?> violation) {
-        String[] fieldParts = violation.getPropertyPath().toString().split("\\.");
-        return fieldParts[fieldParts.length - 1];
-    }
-
-    private static Method findMethodByName(Object rootBean, String methodName) {
-        for (Method method : rootBean.getClass().getDeclaredMethods()) {
-            if (method.getName().equals(methodName)) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private static String mergeErrorMessages(String existingValue, String newValue) {
-        if (existingValue.endsWith(".")) {
-            existingValue = existingValue.substring(0, existingValue.length() - 1) + "; " + newValue;
-        } else {
-            existingValue = existingValue + "; " + newValue;
-        }
-        return existingValue;
-    }
-
-    private static Optional<String> getAnnotationValue(Parameter param, Class<? extends Annotation> annotationClass) {
-        Annotation annotation = param.getAnnotation(annotationClass);
-
-        if (Objects.isNull(annotation)) {
-            return Optional.empty();
-        }
-
-        return switch (annotation) {
-            case RequestParam requestParam -> Optional.of(requestParam.value().trim().isEmpty() ?
-                    param.getName() : requestParam.value().trim());
-            case RequestHeader requestHeader -> Optional.of(requestHeader.value().trim().isEmpty() ?
-                    param.getName() : requestHeader.value().trim());
-            case PathVariable requestPath -> Optional.of(requestPath.value().trim().isEmpty() ?
-                    param.getName() : requestPath.value().trim());
-            case RequestPart requestPart -> Optional.of(requestPart.value().trim().isEmpty() ?
-                    param.getName() : requestPart.value().trim());
-            case CookieValue cookieValue -> Optional.of(cookieValue.value().trim().isEmpty() ?
-                    param.getName() : cookieValue.value().trim());
-            case MatrixVariable matrixVariable -> Optional.of(matrixVariable.value().trim().isEmpty() ?
-                    param.getName() : matrixVariable.value().trim());
-            default -> Optional.empty();
-        };
-
-    }
-
     private static Map<String, String> getHandlerMethodValidationMessage(HandlerMethodValidationException ex) {
         log.error(ex.getMessage(), ex);
 
@@ -702,7 +480,8 @@ public class ExceptionHandlerMessageHelper {
         String message;
 
         if (ex instanceof WebClientResponseException webClientEx) {
-            Optional<String> extractedMessageOptional = extractMessageFromWebClientResponseException(webClientEx);
+            Optional<String> extractedMessageOptional =
+                    WebClientMessageExtractorHelper.extractMessageFromWebClientResponseException(webClientEx);
             String details = extractedMessageOptional
                     .orElseGet(() -> getMessageUtils("msg.exception.handler.unknown.bad.request.error"));
             message = getMessageUtils("msg.exception.handler.web.client.error", details);
@@ -721,7 +500,8 @@ public class ExceptionHandlerMessageHelper {
         String message;
 
         if (ex instanceof WebClientResponseException webClientEx) {
-            Optional<String> extractedMessageOptional = extractMessageFromWebClientResponseException(webClientEx);
+            Optional<String> extractedMessageOptional =
+                    WebClientMessageExtractorHelper.extractMessageFromWebClientResponseException(webClientEx);
             String details = extractedMessageOptional.orElseGet(() -> getMessageUtils(defaultMessageValue));
             message = getMessageUtils("msg.exception.handler.web.client.error", details);
             return message;
@@ -733,139 +513,6 @@ public class ExceptionHandlerMessageHelper {
             message = getMessageUtils(defaultMessageValue);
         }
         return message;
-    }
-
-    private static Optional<String> extractMessageFromWebClientResponseException(
-            final WebClientResponseException webClientEx) {
-        try {
-            String bodyString =
-                    Optional.of(webClientEx.getResponseBodyAsString())
-                            .map(String::trim)
-                            .orElse(StringUtils.EMPTY);
-
-            if (bodyString.isEmpty()) {
-                log.debug("WebClientResponseException response body missing or empty");
-                return Optional.empty();
-            }
-
-            JsonNode rootNode = parseJson(bodyString);
-            return findFirstFieldIn(rootNode);
-        } catch (Exception e) {
-            log.warn("Failed to extract message from WebClientResponseException body: {}", e.getMessage(), e);
-            return Optional.empty();
-        }
-    }
-
-    private static JsonNode parseJson(final String json) throws JsonProcessingException {
-        return new ObjectMapper().readTree(json);
-    }
-
-    private static Optional<String> findFirstFieldIn(JsonNode rootNode) {
-        if (isNullNode(rootNode)) {
-            return Optional.empty();
-        }
-
-        Map<String, String> foundCandidates = collectCandidateValues(rootNode);
-
-        return MESSAGE_FIELD_CANDIDATES_LIST.stream()
-                .filter(foundCandidates::containsKey)
-                .map(foundCandidates::get)
-                .findFirst();
-    }
-
-    private static Map<String, String> collectCandidateValues(JsonNode rootNode) {
-        Map<String, String> foundCandidates = new HashMap<>();
-        Set<String> targetFields = new HashSet<>(MESSAGE_FIELD_CANDIDATES_LIST);
-
-        Queue<JsonNode> queue = new LinkedList<>();
-        queue.add(rootNode);
-
-        while (!queue.isEmpty()) {
-            JsonNode currentNode = queue.poll();
-
-            if (currentNode.isObject()) {
-                extractFromObjectFields(currentNode, targetFields, foundCandidates);
-            }
-
-            if (currentNode.isContainerNode()) {
-                currentNode.elements().forEachRemaining(queue::add);
-            }
-        }
-        return foundCandidates;
-    }
-
-    private static void extractFromObjectFields(JsonNode objectNode,
-                                                Set<String> targetFields,
-                                                Map<String, String> foundCandidates) {
-        Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
-            String key = field.getKey();
-            if (targetFields.contains(key) && !foundCandidates.containsKey(key)) {
-                extractIfHasNonBlank(objectNode, key).ifPresent(val -> foundCandidates.put(key, val));
-            }
-        }
-    }
-
-    private static boolean isNullNode(JsonNode node) {
-        return node == null || node.isNull();
-    }
-
-    private static Optional<String> extractIfHasNonBlank(JsonNode node, String fieldName) {
-        JsonNode valueNode = node.get(fieldName);
-
-        if (isNull(valueNode) || valueNode.isNull()) {
-            return Optional.empty();
-        }
-
-        if (valueNode.isContainerNode()) {
-            return valueNode.isArray()
-                    ? extractFromArray(valueNode, fieldName)
-                    : extractFromObject(valueNode, fieldName);
-        }
-
-        return Optional.of(valueNode.asText(StringUtils.EMPTY).trim())
-                .filter(text -> !text.isEmpty())
-                .map(text -> {
-                    log.debug("Recursively extracted '{}' field from WebClientResponseException", fieldName);
-                    return text;
-                });
-    }
-
-    private static Optional<String> extractFromArray(JsonNode node, String fieldName) {
-        String joined = StreamSupport.stream(node.spliterator(), false)
-                .filter(element -> nonNull(element) && !element.isNull() && element.isValueNode())
-                .map(element -> element.asText(StringUtils.EMPTY).trim())
-                .filter(text -> !text.isEmpty())
-                .collect(Collectors.joining("; "));
-
-        if (!joined.isEmpty()) {
-            log.debug("Recursively extracted '{}' field (array) from WebClientResponseException", fieldName);
-            return Optional.of(joined);
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<String> extractFromObject(JsonNode node, String fieldName) {
-        String joined = StreamSupport.stream(
-                        Spliterators.spliteratorUnknownSize(node.fields(), Spliterator.ORDERED), false)
-                .map(entry -> {
-                    JsonNode objectNode = entry.getValue();
-                    if (isNull(objectNode) || objectNode.isNull() || !objectNode.isValueNode()) {
-                        return StringUtils.EMPTY;
-                    }
-                    String key = Optional.ofNullable(entry.getKey()).map(String::trim).orElse(StringUtils.EMPTY);
-                    String text = objectNode.asText(StringUtils.EMPTY).trim();
-                    return (!key.isEmpty() && !text.isEmpty()) ? key + ": " + text : StringUtils.EMPTY;
-                })
-                .filter(text -> !text.isEmpty())
-                .collect(Collectors.joining("; "));
-
-        if (!joined.isEmpty()) {
-            log.debug("Recursively extracted '{}' field (object) from WebClientResponseException", fieldName);
-            return Optional.of(joined);
-        }
-        return Optional.empty();
     }
 
     private static String getMessageUtils(String messageKey, Object... params) {
