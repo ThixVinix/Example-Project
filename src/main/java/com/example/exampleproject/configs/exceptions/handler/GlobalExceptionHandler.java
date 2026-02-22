@@ -1,7 +1,6 @@
 package com.example.exampleproject.configs.exceptions.handler;
 
 import com.example.exampleproject.configs.exceptions.BaseError;
-import com.example.exampleproject.configs.exceptions.ErrorMultipleResponse;
 import com.example.exampleproject.configs.exceptions.ErrorSingleResponse;
 import com.example.exampleproject.configs.exceptions.custom.BusinessException;
 import com.example.exampleproject.configs.exceptions.custom.DataIntegrityViolationException;
@@ -11,7 +10,6 @@ import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHan
 import io.netty.channel.ConnectTimeoutException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.NonNull;
@@ -34,15 +32,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 @Slf4j
 @RestControllerAdvice
