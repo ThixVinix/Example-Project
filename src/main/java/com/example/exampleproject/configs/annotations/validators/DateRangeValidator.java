@@ -48,8 +48,8 @@ public class DateRangeValidator extends AbstractValidator implements ConstraintV
             dateAJsonProperty = getJsonPropertyName(clazz, dateAField);
             dateBJsonProperty = getJsonPropertyName(clazz, dateBField);
 
-            Object dateAValue = clazz.getMethod(dateAField).invoke(value);
-            Object dateBValue = clazz.getMethod(dateBField).invoke(value);
+            Object dateAValue = getFieldValue(value, clazz, dateAField);
+            Object dateBValue = getFieldValue(value, clazz, dateBField);
 
             if (isNull(dateAValue) && isNull(dateBValue)) {
                 return true;
@@ -83,6 +83,46 @@ public class DateRangeValidator extends AbstractValidator implements ConstraintV
         }
 
         return isValid;
+    }
+
+    /**
+     * Gets the value of a field from an object using a getter method or field access.
+     *
+     * @param target    the object containing the field
+     * @param clazz     the class of the object
+     * @param fieldName the name of the field
+     * @return the value of the field
+     * @throws ReflectiveOperationException if any error occurs during access
+     */
+    private Object getFieldValue(Object target, Class<?> clazz, String fieldName) throws ReflectiveOperationException {
+        String normalizedFieldName = capitalizeFirstLetter(fieldName);
+        String accessorName = resolveAccessorName(clazz, fieldName, normalizedFieldName);
+        return clazz.getMethod(accessorName).invoke(target);
+    }
+
+    private String resolveAccessorName(Class<?> clazz, String fieldName, String normalizedFieldName) {
+        if (hasMethod(clazz, "get" + normalizedFieldName)) {
+            return "get" + normalizedFieldName;
+        }
+
+        if (hasMethod(clazz, "is" + normalizedFieldName)) {
+            return "is" + normalizedFieldName;
+        }
+
+        return fieldName;
+    }
+
+    private boolean hasMethod(Class<?> clazz, String methodName) {
+        try {
+            clazz.getMethod(methodName);
+            return true;
+        } catch (NoSuchMethodException _) {
+            return false;
+        }
+    }
+
+    private String capitalizeFirstLetter(String fieldName) {
+        return fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
     }
 
     /**
