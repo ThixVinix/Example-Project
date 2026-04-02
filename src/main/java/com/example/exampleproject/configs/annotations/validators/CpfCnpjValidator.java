@@ -15,18 +15,31 @@ import java.util.regex.Pattern;
  * Implements the {@link ConstraintValidator} interface for the {@link CpfCnpjValidation} annotation.
  * <p>
  * This validator implements custom validation logic for CPF and CNPJ.
+ * <p>
+ * Supports both numeric-only CNPJ (legacy) and alphanumeric CNPJ (new format),
+ * as defined by SERPRO's specification for "CNPJ alfanumérico".
+ * <p>
+ * In the alphanumeric CNPJ format, each character (0-9, A-Z) is converted to its
+ * calculation value by subtracting 48 from its ASCII code. The verification digit
+ * algorithm (modulo 11, weights 2-9 right to left) remains the same.
  */
 @Slf4j
 public class CpfCnpjValidator extends AbstractValidator implements ConstraintValidator<CpfCnpjValidation, String> {
 
     private static final byte CPF_LENGTH = 11;
     private static final byte CNPJ_LENGTH = 14;
-    private static final Pattern DIGITS_ONLY_PATTERN = Pattern.compile("^\\d+$");
+    private static final Pattern CPF_DIGITS_ONLY_PATTERN = Pattern.compile("^\\d+$");
+    private static final Pattern CNPJ_ALPHANUMERIC_PATTERN = Pattern.compile("^[0-9A-Z]+$");
 
     // Constants for verification digit calculation
     private static final int VERIFICATION_DIGIT_MODULO = 11;
     private static final int VERIFICATION_DIGIT_THRESHOLD = 2;
     private static final int VERIFICATION_DIGIT_BASE = 11;
+
+    // ASCII offset used to convert alphanumeric characters to their calculation values
+    // '0' (ASCII 48) -> 0, '1' (ASCII 49) -> 1, ..., '9' (ASCII 57) -> 9,
+    // 'A' (ASCII 65) -> 17, 'B' (ASCII 66) -> 18, ..., 'Z' (ASCII 90) -> 42
+    private static final int ASCII_OFFSET = 48;
 
     // CPF weight constants
     private static final int CPF_WEIGHT_10 = 10;
@@ -67,19 +80,7 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
             return true;
         }
 
-        if (!hasValidFormat(value, context)) {
-            return false;
-        }
-
         return validateByLength(value, context);
-    }
-
-    private boolean hasValidFormat(String value, ConstraintValidatorContext context) {
-        if (!DIGITS_ONLY_PATTERN.matcher(value).matches()) {
-            addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalid");
-            return false;
-        }
-        return true;
     }
 
     private boolean validateByLength(String value, ConstraintValidatorContext context) {
@@ -94,6 +95,10 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     }
 
     private boolean validateCpf(String value, ConstraintValidatorContext context) {
+        if (!CPF_DIGITS_ONLY_PATTERN.matcher(value).matches()) {
+            addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalid");
+            return false;
+        }
         if (isValidCpf(value)) {
             return true;
         }
@@ -102,6 +107,15 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     }
 
     private boolean validateCnpj(String value, ConstraintValidatorContext context) {
+        // CNPJ: first 12 characters can be alphanumeric (0-9, A-Z), last 2 must be numeric digits
+        String cnpjBase = value.substring(0, CNPJ_FIRST_DIGIT_POSITION);
+        String cnpjDigits = value.substring(CNPJ_FIRST_DIGIT_POSITION);
+
+        if (!CNPJ_ALPHANUMERIC_PATTERN.matcher(cnpjBase).matches()
+                || !CPF_DIGITS_ONLY_PATTERN.matcher(cnpjDigits).matches()) {
+            addConstraintViolation(context, "msg.validation.request.field.cpfcnpj.invalid");
+            return false;
+        }
         if (isValidCnpj(value)) {
             return true;
         }
@@ -121,12 +135,12 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
         if (isRepeatedDigits(cpf) || cpf.length() != CPF_LENGTH) {
             return false;
         }
-        int digit1 = calculateVerificationDigit(cpf, new int[]{
+        int digit1 = calculateCpfVerificationDigit(cpf, new int[]{
                 CPF_WEIGHT_10, CPF_WEIGHT_9, CPF_WEIGHT_8, CPF_WEIGHT_7, CPF_WEIGHT_6,
                 CPF_WEIGHT_5, CPF_WEIGHT_4, CPF_WEIGHT_3, CPF_WEIGHT_2
         }, CPF_FIRST_DIGIT_POSITION);
 
-        int digit2 = calculateVerificationDigit(cpf, new int[]{
+        int digit2 = calculateCpfVerificationDigit(cpf, new int[]{
                 CPF_WEIGHT_11, CPF_WEIGHT_10, CPF_WEIGHT_9, CPF_WEIGHT_8, CPF_WEIGHT_7,
                 CPF_WEIGHT_6, CPF_WEIGHT_5, CPF_WEIGHT_4, CPF_WEIGHT_3, CPF_WEIGHT_2
         }, CPF_SECOND_DIGIT_POSITION);
@@ -136,23 +150,28 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     }
 
     /**
-     * Validates whether the provided CNPJ
-     * (Cadastro Nacional da Pessoa Jurídica - Brazilian company taxpayer registry number)
-     * is valid based on specific rules, including checks for repeated digits, length, and verification digits.
+     * Validates whether the provided CNPJ is valid.
+     * <p>
+     * Supports both legacy numeric-only CNPJ and the new alphanumeric CNPJ format.
+     * In the alphanumeric format, each character's value is calculated by subtracting 48
+     * from its ASCII code (e.g., '0'=0, '9'=9, 'A'=17, 'Z'=42).
+     * <p>
+     * The verification digit algorithm uses modulo 11 with weights distributed from 2 to 9
+     * (right to left, cycling back after 9).
      *
-     * @param cnpj the CNPJ string to be validated, expected to be a numeric string of length 14
+     * @param cnpj the CNPJ string to be validated, expected to be a string of length 14
      * @return true if the CNPJ is valid, according to the validation rules; false otherwise
      */
     private boolean isValidCnpj(String cnpj) {
-        if (isRepeatedDigits(cnpj) || cnpj.length() != CNPJ_LENGTH) {
+        if (isRepeatedCharacters(cnpj) || cnpj.length() != CNPJ_LENGTH) {
             return false;
         }
-        int digit1 = calculateVerificationDigit(cnpj, new int[]{
+        int digit1 = calculateCnpjVerificationDigit(cnpj, new int[]{
                 CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2, CNPJ_WEIGHT_9, CNPJ_WEIGHT_8,
                 CNPJ_WEIGHT_7, CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2
         }, CNPJ_FIRST_DIGIT_POSITION);
 
-        int digit2 = calculateVerificationDigit(cnpj, new int[]{
+        int digit2 = calculateCnpjVerificationDigit(cnpj, new int[]{
                 CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2, CNPJ_WEIGHT_9,
                 CNPJ_WEIGHT_8, CNPJ_WEIGHT_7, CNPJ_WEIGHT_6, CNPJ_WEIGHT_5, CNPJ_WEIGHT_4, CNPJ_WEIGHT_3, CNPJ_WEIGHT_2
         }, CNPJ_SECOND_DIGIT_POSITION);
@@ -162,8 +181,8 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     }
 
     /**
-     * Checks if all characters in the given string are repeated digits, i.e.,
-     * whether all characters in the string are the same.
+     * Checks if all characters in the given string are the same digit.
+     * Used for CPF validation (numeric only).
      *
      * @param value the string to be checked for repeated digits
      * @return true if all characters in the string are the same, false otherwise
@@ -173,19 +192,62 @@ public class CpfCnpjValidator extends AbstractValidator implements ConstraintVal
     }
 
     /**
-     * Calculates the verification digit for a given numeric value based on an array of weights and a specified length.
-     * This method applies a weighted sum algorithm to determine the verification digit, commonly used for validation
-     * of numeric identifiers such as CPF or CNPJ.
+     * Checks if all characters in the given string are the same character.
+     * Used for CNPJ validation (supports alphanumeric).
+     *
+     * @param value the string to be checked for repeated characters
+     * @return true if all characters in the string are the same, false otherwise
+     */
+    private boolean isRepeatedCharacters(String value) {
+        return value.chars().distinct().count() == 1;
+    }
+
+    /**
+     * Calculates the verification digit for CPF using numeric-only logic.
+     * This preserves the original behavior for CPF validation.
      *
      * @param value   the numeric string for which the verification digit should be calculated
-     * @param weights an array of integers representing the weights to be applied to each digit of the value
+     * @param weights an array of integers representing the weights to be applied to each digit
      * @param length  the number of digits from the value to be considered for the calculation
      * @return the calculated verification digit as an integer
      */
-    private int calculateVerificationDigit(String value, int[] weights, int length) {
+    private int calculateCpfVerificationDigit(String value, int[] weights, int length) {
         int sum = 0;
         for (int i = 0; i < length; i++) {
             sum += ((value.charAt(i) - '0') * weights[i]);
+        }
+        int remainder = (sum % VERIFICATION_DIGIT_MODULO);
+        return (remainder < VERIFICATION_DIGIT_THRESHOLD) ? 0 : (VERIFICATION_DIGIT_BASE - remainder);
+    }
+
+    /**
+     * Calculates the verification digit for CNPJ using alphanumeric-compatible logic.
+     * <p>
+     * Each character is converted to its calculation value by subtracting 48 from its ASCII code:
+     * <ul>
+     *   <li>'0' (ASCII 48) → 0</li>
+     *   <li>'1' (ASCII 49) → 1</li>
+     *   <li>...</li>
+     *   <li>'9' (ASCII 57) → 9</li>
+     *   <li>'A' (ASCII 65) → 17</li>
+     *   <li>'B' (ASCII 66) → 18</li>
+     *   <li>...</li>
+     *   <li>'Z' (ASCII 90) → 42</li>
+     * </ul>
+     * <p>
+     * This method is fully backward-compatible: for numeric-only CNPJs,
+     * (char - 48) produces the same result as (char - '0'), since '0' == 48.
+     *
+     * @param value   the alphanumeric string for which the verification digit should be calculated
+     * @param weights an array of integers representing the weights to be applied to each character
+     * @param length  the number of characters from the value to be considered for the calculation
+     * @return the calculated verification digit as an integer
+     */
+    private int calculateCnpjVerificationDigit(String value, int[] weights, int length) {
+        int sum = 0;
+        for (int i = 0; i < length; i++) {
+            int charValue = value.charAt(i) - ASCII_OFFSET;
+            sum += (charValue * weights[i]);
         }
         int remainder = (sum % VERIFICATION_DIGIT_MODULO);
         return (remainder < VERIFICATION_DIGIT_THRESHOLD) ? 0 : (VERIFICATION_DIGIT_BASE - remainder);
