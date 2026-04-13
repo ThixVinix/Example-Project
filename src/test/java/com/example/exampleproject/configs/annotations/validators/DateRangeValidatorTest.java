@@ -4,6 +4,7 @@ import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.utils.MessageUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.junit.jupiter.api.*;
+import org.springframework.web.bind.annotation.BindParam;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -67,6 +68,21 @@ class DateRangeValidatorTest {
     private record ExampleJsonPropertyDateObject(
             @JsonProperty(DATE_A_JSON_PROPERTY) LocalDate dateA,
             @JsonProperty(DATE_B_JSON_PROPERTY) LocalDateTime dateB) {
+    }
+
+    private static class ExampleBindParamDateObject {
+        private final LocalDate dateA;
+        private final LocalDate dateB;
+
+        public ExampleBindParamDateObject(
+                @BindParam("dataInicial") LocalDate dateA,
+                @BindParam("dataFinal") LocalDate dateB) {
+            this.dateA = dateA;
+            this.dateB = dateB;
+        }
+
+        public LocalDate getDateA() { return dateA; }
+        public LocalDate getDateB() { return dateB; }
     }
 
     private static class ExamplePojoObject {
@@ -560,5 +576,30 @@ class DateRangeValidatorTest {
         assertNotEquals(messageKey, resolved,
                 "Resolved message equals the key itself — key is MISSING from .properties: "
                 + messageKey + " | lang=" + languageTag);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "pt_BR|Ambas datas dataInicial e dataFinal devem ser preenchidas ou ambas estarem ausentes.",
+            "en|Both dates dataInicial and dataFinal must be filled in or both must be missing."
+    }, delimiter = '|')
+    @DisplayName("isValid() - When using @BindParam in constructor, use mapped names in error message")
+    void isValid_WhenBindParamInConstructorIsUsed_ThenShouldUseBindParamNamesInErrorMessages(String languageTag, String expectedMessage) {
+        // Arrange
+        setLocale(languageTag);
+        ReflectionTestUtils.setField(dateRangeValidator, "dateAField", "dateA");
+        ReflectionTestUtils.setField(dateRangeValidator, "dateBField", "dateB");
+
+        ExampleBindParamDateObject object = new ExampleBindParamDateObject(LocalDate.now(), null);
+
+        when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+        when(builder.addPropertyNode(anyString())).thenReturn(nodeBuilder);
+
+        // Act
+        boolean result = dateRangeValidator.isValid(object, context);
+
+        // Assert
+        assertFalse(result);
+        verify(context).buildConstraintViolationWithTemplate(expectedMessage);
     }
 }

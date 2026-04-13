@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -282,11 +283,14 @@ public class ExceptionHandlerMessageHelper {
     }
 
     private static Map<String, String> getMethodArgumentNotValidMessage(MethodArgumentNotValidException notValidEx) {
+        Object target = notValidEx.getTarget();
+        Class<?> targetClass = nonNull(target) ? target.getClass() : null;
+
         return notValidEx.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
                         error -> getFieldName(notValidEx, error.getField()),
-                        ExceptionHandlerMessageHelper::getFieldErrorMessage,
+                        error -> getFieldErrorMessage(targetClass, error),
                         ParameterValidationMessageHelper::mergeErrorMessages
                 ));
     }
@@ -326,7 +330,7 @@ public class ExceptionHandlerMessageHelper {
         return (bracketIndex == -1) ? segment : segment.substring(0, bracketIndex);
     }
 
-    private static String getMappedName(Class<?> clazz, Field field) {
+    public static String getMappedName(Class<?> clazz, Field field) {
         // 1. Try JsonProperty on the field
         String jsonPropertyName = getJsonPropertyName(field);
         if (!jsonPropertyName.equals(field.getName())) {
@@ -403,7 +407,7 @@ public class ExceptionHandlerMessageHelper {
         return segments;
     }
 
-    private static Field getFieldRecursive(Class<?> clazz, String fieldName) {
+    public static Field getFieldRecursive(Class<?> clazz, String fieldName) {
         Class<?> currentClass = clazz;
         while (nonNull(currentClass) && currentClass != Object.class) {
             try {
@@ -442,10 +446,56 @@ public class ExceptionHandlerMessageHelper {
         return Object.class;
     }
 
-    private static String getFieldErrorMessage(FieldError error) {
+    private static String getFieldErrorMessage(Class<?> clazz, FieldError error) {
+        if ("typeMismatch".equals(error.getCode()) || "methodInvocation".equals(error.getCode())) {
+            return getTypeMismatchMessage(clazz, error);
+        }
+
         return nonNull(error.getDefaultMessage())
                 ? error.getDefaultMessage()
                 : getMessageUtils("msg.exception.handler.argument.type.invalid");
+    }
+
+    private static String getTypeMismatchMessage(Class<?> clazz, FieldError error) {
+        Field field = getFieldRecursive(clazz, error.getField());
+
+        if (nonNull(field)) {
+            return buildTypeMismatchMessage(field, error);
+        }
+
+        return getMessageUtils("msg.exception.handler.argument.type.mismatch.without.format", error.getRejectedValue());
+    }
+
+    private static String buildTypeMismatchMessage(Field field, FieldError error) {
+        String explicitPattern = getExplicitDateTimePattern(field);
+
+        if (nonNull(explicitPattern)) {
+            return getMessageUtils(
+                    "msg.exception.handler.argument.type.mismatch.with.format",
+                    explicitPattern,
+                    error.getRejectedValue());
+        }
+
+        Class<?> type = field.getType();
+        return ParameterValidationMessageHelper.getDefaultDateTimePatternForType(type)
+                .map(pattern -> getMessageUtils(
+                        "msg.exception.handler.argument.type.mismatch.with.format",
+                        pattern,
+                        error.getRejectedValue()))
+                .orElseGet(() -> getMessageUtils(
+                        "msg.exception.handler.argument.type.mismatch.default",
+                        type.getSimpleName(),
+                        error.getRejectedValue()));
+    }
+
+    private static String getExplicitDateTimePattern(Field field) {
+        DateTimeFormat dateTimeFormat = field.getAnnotation(DateTimeFormat.class);
+        if (isNull(dateTimeFormat)) {
+            return null;
+        }
+
+        String pattern = dateTimeFormat.pattern().trim();
+        return pattern.isEmpty() ? null : pattern;
     }
 
     private static Map<String, String> getNotReadableMessage(HttpMessageNotReadableException notReadableException) {

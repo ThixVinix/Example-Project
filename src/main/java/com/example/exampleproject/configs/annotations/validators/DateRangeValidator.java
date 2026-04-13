@@ -2,14 +2,14 @@ package com.example.exampleproject.configs.annotations.validators;
 
 import com.example.exampleproject.configs.annotations.DateRangeValidation;
 import com.example.exampleproject.configs.annotations.validators.base.AbstractValidator;
+import com.example.exampleproject.configs.exceptions.handler.helper.ExceptionHandlerMessageHelper;
 import com.example.exampleproject.utils.DateUtils;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
-import java.time.*;
+import java.time.Instant;
 import java.util.Objects;
 
 import static java.util.Objects.isNull;
@@ -43,10 +43,9 @@ public class DateRangeValidator extends AbstractValidator implements ConstraintV
         boolean isValid = true;
 
         try {
-            // Get JsonProperty names from the actual object being validated
             Class<?> clazz = value.getClass();
-            dateAJsonProperty = getJsonPropertyName(clazz, dateAField);
-            dateBJsonProperty = getJsonPropertyName(clazz, dateBField);
+            dateAJsonProperty = getMappedFieldName(clazz, dateAField);
+            dateBJsonProperty = getMappedFieldName(clazz, dateBField);
 
             Object dateAValue = getFieldValue(value, clazz, dateAField);
             Object dateBValue = getFieldValue(value, clazz, dateBField);
@@ -125,25 +124,10 @@ public class DateRangeValidator extends AbstractValidator implements ConstraintV
         return fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
     }
 
-    /**
-     * Gets the JsonProperty value for a field if it exists.
-     *
-     * @param clazz     the class containing the field
-     * @param fieldName the name of the field
-     * @return the JsonProperty value if it exists, otherwise the original field name
-     */
-    private String getJsonPropertyName(Class<?> clazz, String fieldName) {
-        try {
-            Field field = clazz.getDeclaredField(fieldName);
-            JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-            if (Objects.nonNull(jsonProperty)) {
-                String value = jsonProperty.value().trim();
-                if (!value.isEmpty()) {
-                    return value;
-                }
-            }
-        } catch (NoSuchFieldException | SecurityException e) {
-            log.warn("Error getting JsonProperty for field {}: {}", fieldName, e.getMessage());
+    private String getMappedFieldName(Class<?> clazz, String fieldName) {
+        Field field = ExceptionHandlerMessageHelper.getFieldRecursive(clazz, fieldName);
+        if (Objects.nonNull(field)) {
+            return ExceptionHandlerMessageHelper.getMappedName(clazz, field);
         }
         return fieldName;
     }

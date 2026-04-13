@@ -169,7 +169,7 @@ public class ParameterValidationMessageHelper {
                         "msg.exception.handler.argument.type.mismatch.without.format", ex.getValue())));
     }
 
-    private static Optional<String> getDefaultDateTimePatternForType(Class<?> type) {
+    public static Optional<String> getDefaultDateTimePatternForType(Class<?> type) {
         return switch (type.getSimpleName()) {
             case LOCAL_DATE_TYPE -> Optional.of("yyyy-MM-dd");
             case LOCAL_DATE_TIME_TYPE -> Optional.of("yyyy-MM-dd'T'HH:mm:ss");
