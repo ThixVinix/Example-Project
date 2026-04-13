@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -66,7 +67,8 @@ public class ParameterValidationMessageHelper {
             PathVariable.class,
             RequestPart.class,
             CookieValue.class,
-            MatrixVariable.class
+            MatrixVariable.class,
+            BindParam.class
     );
 
     /**
@@ -283,6 +285,7 @@ public class ParameterValidationMessageHelper {
             case RequestPart rp -> Optional.of(resolveName(rp.value(), param));
             case CookieValue cv -> Optional.of(resolveName(cv.value(), param));
             case MatrixVariable mv -> Optional.of(resolveName(mv.value(), param));
+            case BindParam bp -> Optional.of(resolveName(bp.value(), param));
             default -> Optional.empty();
         };
     }

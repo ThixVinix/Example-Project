@@ -12,14 +12,16 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -308,7 +310,7 @@ public class ExceptionHandlerMessageHelper {
 
             Field field = getFieldRecursive(currentClass, fieldName);
             if (nonNull(field)) {
-                String mappedName = getJsonPropertyName(field);
+                String mappedName = getMappedName(currentClass, field);
                 resolvedPath.add(mappedName + indexSuffix);
                 currentClass = getNextClass(field);
             } else {
@@ -324,12 +326,65 @@ public class ExceptionHandlerMessageHelper {
         return (bracketIndex == -1) ? segment : segment.substring(0, bracketIndex);
     }
 
+    private static String getMappedName(Class<?> clazz, Field field) {
+        // 1. Try JsonProperty on the field
+        String jsonPropertyName = getJsonPropertyName(field);
+        if (!jsonPropertyName.equals(field.getName())) {
+            return jsonPropertyName;
+        }
+
+        // 2. Try BindParam on the field
+        String bindParamName = getBindParamName(field);
+        if (!bindParamName.equals(field.getName())) {
+            return bindParamName;
+        }
+
+        // 3. Try BindParam on Constructor parameters
+        return getConstructorBindParamName(clazz, field.getName()).orElse(field.getName());
+    }
+
     private static String getJsonPropertyName(Field field) {
         return Optional.ofNullable(field.getAnnotation(JsonProperty.class))
                 .map(JsonProperty::value)
                 .filter(value -> !value.isBlank())
                 .map(String::trim)
                 .orElse(field.getName());
+    }
+
+    private static String getBindParamName(Field field) {
+        return Optional.ofNullable(field.getAnnotation(BindParam.class))
+                .map(BindParam::value)
+                .filter(value -> !value.isBlank())
+                .map(String::trim)
+                .orElse(field.getName());
+    }
+
+    private static Optional<String> getConstructorBindParamName(Class<?> clazz, String fieldName) {
+        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+            Optional<String> bindParamName = findBindParamName(constructor, fieldName);
+            if (bindParamName.isPresent()) {
+                return bindParamName;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> findBindParamName(Constructor<?> constructor, String fieldName) {
+        for (Parameter parameter : constructor.getParameters()) {
+            if (!parameter.getName().equals(fieldName)) {
+                continue;
+            }
+
+            BindParam bindParam = parameter.getAnnotation(BindParam.class);
+            if (isUsableBindParam(bindParam)) {
+                return Optional.of(bindParam.value().trim());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isUsableBindParam(BindParam bindParam) {
+        return nonNull(bindParam) && !bindParam.value().isBlank();
     }
 
     private static List<String> splitFieldPath(String fieldPath) {
