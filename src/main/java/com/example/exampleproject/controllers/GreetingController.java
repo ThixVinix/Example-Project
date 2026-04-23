@@ -1,9 +1,10 @@
 package com.example.exampleproject.controllers;
 
+import com.example.exampleproject.dto.request.SearchGreetingRequest;
 import com.example.exampleproject.dto.request.TestPostRequest;
 import com.example.exampleproject.dto.response.TestPostResponse;
 import com.example.exampleproject.enums.StatusEnum;
-import com.example.exampleproject.utils.DateUtils;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,11 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,6 +27,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Map;
 
+@Slf4j
 @Tag(name = "Greeting", description = "Endpoints for managing greetings")
 @Validated
 @RestController
@@ -45,51 +47,13 @@ public class GreetingController {
     @GetMapping("/search")
     public TestPostResponse searchGreeting(
             @Parameter(description = "Name of the user", example = "John")
-            @RequestParam(value = "nome")
-            String name,
+            @RequestHeader(value = "nome")
+            String nome,
 
-            @Parameter(description = "Initial date. Format: dd/MM/yyyy", example = "01/01/2022", required = true)
-            @RequestHeader(value = "dataInicial")
-            @DateTimeFormat(pattern = "dd/MM/yyyy")
-            LocalDate initialDate,
-
-            @Parameter(description = "Final date. Format: dd/MM/yyyy", example = "31/12/2022", required = true)
-            @RequestParam(value = "dataFinal")
-            @DateTimeFormat(pattern = "dd/MM/yyyy")
-            LocalDate finalDate,
-
-            @Parameter(description = "Local date and time. Format: dd/MM/yyyy HH:mm:ss",
-                    example = "01/01/2022 00:00:00", required = true)
-            @RequestParam(value = "dataLocalDataTempo")
-            @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm:ss")
-            LocalDateTime localDateTime,
-
-            @Parameter(description = "Date and time with timezone. Format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                    example = "2023-11-04T15:20:30.123555Z")
-            @RequestParam(value = "zonaDataTempo", required = false)
-            ZonedDateTime zonedDateTime,
-
-            @Parameter(description = "Local time. Format: HH:mm:ss", example = "00:00:00",
-                    schema = @Schema(type = "string"))
-            @DateTimeFormat(pattern = "HH:mm:ss")
-            @RequestParam(value = "tempoLocal", required = false)
-            LocalTime localTime,
-
-            @Parameter(description = "Age, minimum of 0 to maximum of 127", example = "65", required = true)
-            @Min(value = 0)
-            @Max(value = Byte.MAX_VALUE)
-            @RequestParam(value = "idade")
-            Long age,
-
-            @Parameter(description = "Price, must be greater than 0.0 with up to 1 integer digit and 2 fractional " +
-                    "digits. For example, 1.42 is valid.", example = "6.23", required = true)
-            @DecimalMin(value = "0.0", inclusive = false)
-            @Digits(integer = 1, fraction = 2)
-            @RequestParam(value = "preco")
-            BigDecimal price) {
-
-        DateUtils.checkDateRange(initialDate, "dataInicial", finalDate, "dataFinal");
-
+            @ParameterObject
+            @Valid
+            SearchGreetingRequest request) {
+        log.info("Request: {}", request);
         return TestPostResponse.builder()
                 .date(new Date())
                 .localDateTime(LocalDateTime.now())
