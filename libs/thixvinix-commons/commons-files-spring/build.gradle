@@ -1,0 +1,15 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+}
+
+description = 'Jakarta Bean Validation constraint for Spring MultipartFile uploads (MIME type, size, count). Requires spring-web on the consumer classpath.'
+
+dependencies {
+    api project(':commons-files')
+    api 'org.springframework:spring-web:6.1.11'
+    implementation 'org.apache.tika:tika-core:3.2.0'
+
+    testImplementation testFixtures(project(':commons-i18n'))
+    testImplementation testFixtures(project(':commons-validation-core'))
+    testImplementation 'org.springframework:spring-test:6.1.11'
+}

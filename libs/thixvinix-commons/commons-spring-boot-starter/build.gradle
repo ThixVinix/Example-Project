@@ -1,0 +1,20 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+}
+
+description = 'Spring Boot autoconfiguration bridging thixvinix-commons message resolution to the application MessageSource/LocaleContextHolder, and (if commons-dates is present) its time zone to spring.jackson.time-zone.'
+
+dependencies {
+    api project(':commons-i18n')
+
+    compileOnly project(':commons-dates')
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.3.2'
+    compileOnly 'org.springframework:spring-context:6.1.11'
+
+    testImplementation testFixtures(project(':commons-i18n'))
+    testImplementation project(':commons-dates')
+    testImplementation 'org.springframework.boot:spring-boot-autoconfigure:3.3.2'
+    testImplementation 'org.springframework.boot:spring-boot-test:3.3.2'
+    testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure:3.3.2'
+    testImplementation 'org.springframework:spring-context:6.1.11'
+}

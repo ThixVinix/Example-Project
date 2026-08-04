@@ -1,0 +1,13 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+    id 'java-test-fixtures'
+}
+
+description = 'Framework-agnostic message resolution (i18n) SPI used by every thixvinix-commons validation module.'
+
+dependencies {
+    api 'org.slf4j:slf4j-api:2.0.16'
+
+    testFixturesImplementation platform('org.junit:junit-bom:5.10.5')
+    testFixturesApi 'org.junit.jupiter:junit-jupiter-api'
+}

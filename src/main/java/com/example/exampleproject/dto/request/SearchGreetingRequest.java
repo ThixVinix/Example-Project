@@ -1,6 +1,6 @@
 package com.example.exampleproject.dto.request;
 
-import com.example.exampleproject.configs.annotations.DateRangeValidation;
+import io.github.thixvinix.commons.dates.DateRangeValidation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;

@@ -1,0 +1,75 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'thixvinix.publishing-conventions'
+}
+
+group = 'io.github.thixvinix'
+version = rootProject.findProperty('commonsVersion') ?: '0.1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(17)
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    if (options instanceof StandardJavadocDocletOptions) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes(
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.version
+        )
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testImplementation platform('org.junit:junit-bom:5.10.5')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    systemProperty 'commons.i18n.strict', 'true'
+    jvmArgs '-XX:+EnableDynamicAgentLoading', '-Xshare:off'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = project.name
+                description = project.description ?: project.name
+            }
+        }
+    }
+}

@@ -1,6 +1,10 @@
 package com.example.exampleproject.dto.request;
 
-import com.example.exampleproject.configs.annotations.*;
+import io.github.thixvinix.commons.dates.DateRangeValidation;
+import io.github.thixvinix.commons.documents.CpfCnpjValidation;
+import io.github.thixvinix.commons.enums.EnumCodeValidation;
+import io.github.thixvinix.commons.enums.EnumValueValidation;
+import io.github.thixvinix.commons.files.Base64FileValidation;
 
 import com.example.exampleproject.enums.StatusEnum;
 import com.example.exampleproject.utils.DateUtils;

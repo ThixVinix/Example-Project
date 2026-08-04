@@ -8,7 +8,6 @@ ext {
     springCloudVersion = "2023.0.3"
     jacksonDatatypeVersion = "2.18.0"
     commonsLang3Version = '3.18.0'
-    tikaCoreVersion = "3.2.0"
     springdocOpenApiVersion = "2.6.0"
     junitJupiterVersion = "5.10.5"
     junitPlatformLauncherVersion = "1.11.2"
@@ -32,9 +31,20 @@ configurations {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
+    // thixvinix-commons: reusable Bean Validation constraints (CPF/CNPJ, ENUMs, date ranges,
+    // base64/multipart files), published locally via `./gradlew -p libs/thixvinix-commons publishToMavenLocal`.
+    implementation platform('io.github.thixvinix:commons-bom:0.1.0-SNAPSHOT')
+    implementation 'io.github.thixvinix:commons-spring-boot-starter'
+    implementation 'io.github.thixvinix:commons-documents-br'
+    implementation 'io.github.thixvinix:commons-enums'
+    implementation 'io.github.thixvinix:commons-dates'
+    implementation 'io.github.thixvinix:commons-files'
+    implementation 'io.github.thixvinix:commons-files-spring'
+
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -69,9 +79,6 @@ dependencies {
     // Swagger OpenAPI v3
     // Swagger UI for visualization and testing
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion"
-
-    // Apache Tika: used to detect and extract MIME types and content metadata
-    implementation "org.apache.tika:tika-core:$tikaCoreVersion"
 }
 
 test {

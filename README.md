@@ -272,9 +272,14 @@ O projeto utiliza o `Spring WebFlux WebClient` para integrações HTTP com servi
 
 ### ✅ Anotações Customizadas para Validação
 
-O projeto implementa diversas anotações customizadas para validação de dados, seguindo o padrão do Bean Validation:
+As anotações de Bean Validation que antes viviam neste projeto (`configs/annotations/**`) foram
+extraídas para as bibliotecas reutilizáveis **thixvinix-commons**, publicadas localmente a partir
+de `libs/thixvinix-commons/` (veja `./gradlew -p libs/thixvinix-commons publishToMavenLocal`).
+Elas funcionam sem Spring e já trazem mensagens em português e inglês; este projeto as consome
+como qualquer outra dependência, mais o `commons-spring-boot-starter` para integrá-las ao
+`MessageSource`/`LocaleContextHolder` da aplicação.
 
-#### `@Base64FileValidation`
+#### `@Base64FileValidation` — `io.github.thixvinix.commons.files`
 Valida se uma string (ou coleção de strings) contém arquivos Base64 válidos, verificando formato, tamanho, tipo MIME e quantidade.
 
 **Características:**
@@ -297,8 +302,8 @@ private List<String> attachments;
 private Map<String, String> documentFiles;
 ```
 
-#### `@MultipartFileValidation`
-Valida arquivos MultipartFile, verificando tipo MIME, tamanho individual, quantidade e tamanho total.
+#### `@MultipartFileValidation` — `io.github.thixvinix.commons.files.spring`
+Valida arquivos MultipartFile, verificando tipo MIME, tamanho individual, quantidade e tamanho total. Vive em um módulo separado (`commons-files-spring`) por depender de `spring-web`.
 
 **Características:**
 - ✅ Suporta validação de arquivos individuais e listas
@@ -316,7 +321,7 @@ private MultipartFile document;
 private List<MultipartFile> images;
 ```
 
-#### `@EnumCodeValidation`
+#### `@EnumCodeValidation` — `io.github.thixvinix.commons.enums`
 Valida se um valor numérico corresponde ao código de uma constante em uma classe Enum específica.
 
 **Características:**
@@ -329,12 +334,12 @@ Valida se um valor numérico corresponde ao código de uma constante em uma clas
 private Integer statusCode;
 ```
 
-#### `@EnumValueValidation`
-Valida se um valor de string corresponde ao valor (name) de uma constante em uma classe Enum específica.
+#### `@EnumValueValidation` — `io.github.thixvinix.commons.enums`
+Valida se um valor de string corresponde ao valor (`getValue()`) ou ao nome de uma constante em uma classe Enum específica.
 
 **Características:**
-- ✅ Validação baseada nos nomes das constantes do enum
-- ✅ Comparação case-sensitive
+- ✅ Validação baseada no valor customizado (`getValue()`) ou, na ausência dele, no nome da constante do enum
+- ✅ Comparação case-insensitive
 - ✅ Mensagens de erro localizadas
 
 ```java
@@ -342,17 +347,16 @@ Valida se um valor de string corresponde ao valor (name) de uma constante em uma
 private String statusValue;
 ```
 
-#### `@DateRangeValidation`
-Valida se um par de datas forma um intervalo válido, onde a data inicial deve ser anterior ou igual à data final.
+#### `@DateRangeValidation` — `io.github.thixvinix.commons.dates`
+Valida se um par de datas forma um intervalo válido, onde a data do campo `dateAField` deve ser anterior à data do campo `dateBField`. Ambas as datas devem estar preenchidas, ou ambas ausentes.
 
 **Características:**
 - ✅ Validação de intervalos de datas em nível de classe
-- ✅ Suporte a diferentes tipos de data (LocalDate, LocalDateTime, etc.)
-- ✅ Configuração flexível dos nomes dos campos
-- ✅ Permite datas iguais por padrão
+- ✅ Suporte a diferentes tipos de data (`Date`, `LocalDate`, `LocalDateTime`, `ZonedDateTime`, inclusive combinados)
+- ✅ Usa o nome mapeado do campo (`@JsonProperty` ou `@BindParam`) na mensagem de erro, quando presente
 
 ```java
-@DateRangeValidation(startDateField = "startDate", endDateField = "endDate")
+@DateRangeValidation(dateAField = "startDate", dateBField = "endDate")
 public class DateRangeRequest {
     private LocalDate startDate;
     private LocalDate endDate;
@@ -360,8 +364,8 @@ public class DateRangeRequest {
 
 // Múltiplas validações de intervalo na mesma classe
 @ValidDateRanges({
-    @DateRangeValidation(startDateField = "checkIn", endDateField = "checkOut"),
-    @DateRangeValidation(startDateField = "validFrom", endDateField = "validUntil")
+    @DateRangeValidation(dateAField = "checkIn", dateBField = "checkOut"),
+    @DateRangeValidation(dateAField = "validFrom", dateBField = "validUntil")
 })
 public class ReservationRequest {
     private LocalDate checkIn;
@@ -371,22 +375,22 @@ public class ReservationRequest {
 }
 ```
 
-#### `@CpfCnpjValidation`
-Valida se uma string contém um CPF (Cadastro de Pessoas Físicas) ou CNPJ (Cadastro Nacional da Pessoa Jurídica) brasileiro válido.
+#### `@CpfCnpjValidation` — `io.github.thixvinix.commons.documents`
+Valida se uma string contém um CPF (Cadastro de Pessoas Físicas) ou CNPJ (Cadastro Nacional da Pessoa Jurídica) brasileiro válido — incluindo o formato de CNPJ alfanumérico (especificação SERPRO).
 
 **Características:**
-- ✅ Validação de CPF (11 dígitos) e CNPJ (14 dígitos)
+- ✅ Validação de CPF (11 dígitos) e CNPJ (14 caracteres, numérico ou alfanumérico)
 - ✅ Verificação de dígitos verificadores
-- ✅ Aceita formatos com ou sem máscara
+- ⚠️ **Não aceita máscara**: apenas dígitos (CPF) ou caracteres `[0-9A-Z]` (CNPJ), sem pontos, barras ou hífens
 - ✅ Mensagens de erro localizadas
 
 ```java
 @CpfCnpjValidation
-private String document; // Aceita: "12345678901", "123.456.789-01", "12345678000195", "12.345.678/0001-95"
+private String document; // Aceita: "12345678901", "12345678000195" — rejeita "123.456.789-01", "12.345.678/0001-95"
 ```
 
 #### Implementação
-Cada anotação customizada possui um validador correspondente que implementa a interface `ConstraintValidator`:
+Cada anotação possui um validador correspondente que implementa a interface `ConstraintValidator`, publicado junto com o resto do módulo:
 
 ```java
 public class EnumCodeValidator implements ConstraintValidator<EnumCodeValidation, Integer> {
@@ -425,20 +429,28 @@ public class MessageUtils {
 
 #### Arquivos de Mensagens
 As mensagens são definidas em arquivos properties específicos para cada idioma:
+- `messages.properties` (fallback, sem sufixo de idioma)
 - `messages_pt_BR.properties` (Português do Brasil)
 - `messages_en.properties` (Inglês)
+
+`MessageUtils` continua responsável apenas pelas chaves próprias do app (`msg.exception.handler.*`,
+`msg.deserialization.*` e as poucas chaves de validação que ainda vivem aqui, como
+`msg.validation.request.field.date.range.*`, usada por `DateUtils.checkDateRange`). As chaves das
+annotations extraídas (`commons.validation.*`) são resolvidas pelo `Messages` do
+`commons-i18n`, conectado ao `MessageSource` da aplicação pelo `commons-spring-boot-starter` — veja
+a seção acima.
 
 #### Exemplos de Uso
 
 <details>
   <summary>📋 Clique para ver exemplos de uso</summary>
 
-1. **Em validadores customizados**:
+1. **Em validações programáticas** (ex: `DateUtils.checkDateRange`):
    ```java
    String errorMessage = MessageUtils.getMessage(
-       "msg.validation.request.field.enum.invalid.code",
-       invalidValue,
-       validValues
+       "msg.validation.request.field.date.range.invalid",
+       dateAName,
+       dateBName
    );
    ```
 

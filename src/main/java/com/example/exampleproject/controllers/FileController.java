@@ -1,6 +1,6 @@
 package com.example.exampleproject.controllers;
 
-import com.example.exampleproject.configs.annotations.MultipartFileValidation;
+import io.github.thixvinix.commons.files.spring.MultipartFileValidation;
 import com.example.exampleproject.dto.request.AdditionalDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

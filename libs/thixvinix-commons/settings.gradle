@@ -1,0 +1,20 @@
+pluginManagement {
+    includeBuild 'build-logic'
+
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'thixvinix-commons'
+
+include 'commons-bom'
+include 'commons-i18n'
+include 'commons-validation-core'
+include 'commons-enums'
+include 'commons-documents-br'
+include 'commons-dates'
+include 'commons-files'
+include 'commons-files-spring'
+include 'commons-spring-boot-starter'

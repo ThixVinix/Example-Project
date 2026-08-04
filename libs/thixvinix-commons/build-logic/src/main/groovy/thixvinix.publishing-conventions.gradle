@@ -1,0 +1,31 @@
+plugins {
+    id 'maven-publish'
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+}
+
+publishing.publications.withType(MavenPublication).configureEach {
+    pom {
+        url = 'https://github.com/ThixVinix/thixvinix-commons'
+        licenses {
+            license {
+                name = 'MIT License'
+                url = 'https://opensource.org/licenses/MIT'
+            }
+        }
+        developers {
+            developer {
+                id = 'thixvinix'
+                name = 'ThixVinix'
+            }
+        }
+        scm {
+            url = 'https://github.com/ThixVinix/thixvinix-commons'
+            connection = 'scm:git:https://github.com/ThixVinix/thixvinix-commons.git'
+        }
+    }
+}

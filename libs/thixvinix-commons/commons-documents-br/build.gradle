@@ -1,0 +1,12 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+}
+
+description = 'Brazilian CPF/CNPJ Jakarta Bean Validation constraint, including alphanumeric CNPJ (SERPRO spec).'
+
+dependencies {
+    api project(':commons-validation-core')
+
+    testImplementation testFixtures(project(':commons-i18n'))
+    testImplementation testFixtures(project(':commons-validation-core'))
+}

@@ -1,0 +1,2 @@
+// Root build file intentionally left mostly empty.
+// Shared configuration lives in convention plugins under build-logic/.

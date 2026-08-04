@@ -1,0 +1,37 @@
+plugins {
+    id 'java-platform'
+    id 'thixvinix.publishing-conventions'
+}
+
+group = 'io.github.thixvinix'
+version = rootProject.findProperty('commonsVersion') ?: '0.1.0-SNAPSHOT'
+description = 'BOM (platform) aligning versions of all thixvinix-commons modules.'
+
+javaPlatform {
+    allowDependencies()
+}
+
+dependencies {
+    constraints {
+        api project(':commons-i18n')
+        api project(':commons-validation-core')
+        api project(':commons-enums')
+        api project(':commons-documents-br')
+        api project(':commons-dates')
+        api project(':commons-files')
+        api project(':commons-files-spring')
+        api project(':commons-spring-boot-starter')
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.javaPlatform
+            pom {
+                name = project.name
+                description = project.description
+            }
+        }
+    }
+}

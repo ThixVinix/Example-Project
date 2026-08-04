@@ -1,0 +1,19 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+    id 'java-test-fixtures'
+}
+
+description = 'Shared Jakarta Bean Validation building blocks (message resolution, template escaping, list/map helpers) reused by every thixvinix-commons validation module.'
+
+dependencies {
+    api project(':commons-i18n')
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
+
+    testImplementation testFixtures(project(':commons-i18n'))
+    testImplementation testFixtures(project(':commons-validation-core'))
+
+    testFixturesImplementation platform('org.junit:junit-bom:5.10.5')
+    testFixturesApi 'org.junit.jupiter:junit-jupiter-api'
+    testFixturesApi 'org.mockito:mockito-core:5.14.2'
+    testFixturesApi 'jakarta.validation:jakarta.validation-api:3.0.2'
+}

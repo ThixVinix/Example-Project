@@ -1,0 +1,13 @@
+plugins {
+    id 'thixvinix.java-library-conventions'
+}
+
+description = 'Jakarta Bean Validation constraint for base64-encoded file uploads (format, MIME type, size, count) with Apache Tika-based content sniffing.'
+
+dependencies {
+    api project(':commons-validation-core')
+    implementation 'org.apache.tika:tika-core:3.2.0'
+
+    testImplementation testFixtures(project(':commons-i18n'))
+    testImplementation testFixtures(project(':commons-validation-core'))
+}
